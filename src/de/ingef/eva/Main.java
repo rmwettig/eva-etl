@@ -1,7 +1,9 @@
 package de.ingef.eva;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.configuration.ConfigurationReader;
@@ -25,6 +27,10 @@ public class Main {
 						configuration.getUsername(),
 						configuration.getUserpassword()
 					);
+				Statement sqlStatement = connection.createStatement();
+				String query = "SELECT * from table LIMIT 10;";
+				ResultSet result = sqlStatement.executeQuery(query);
+				sqlStatement.close();
 				connection.close();
 			}
 			catch(ClassNotFoundException cnfe){

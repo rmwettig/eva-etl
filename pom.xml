@@ -34,6 +34,7 @@
     <defaultGoal>install</defaultGoal>
     <directory>${basedir}/target</directory>
     <finalName>${artifactId}-${version}</finalName>
-    <sourceDirectory>${project.basedir}/src</sourceDirectory>
+    <sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
+	<testSourceDirectory>${project.basedir}/src/test/java</testSourceDirectory>
   </build>
 </project>

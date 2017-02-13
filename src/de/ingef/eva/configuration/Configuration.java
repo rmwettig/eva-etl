@@ -1,11 +1,10 @@
 package de.ingef.eva.configuration;
-import lombok.Getter;
 
 public class Configuration {
 	
+	private String server;
+	private String connectionUrl;
 	private String username;
-	
-	
 	private String userpassword;
 
 	public String getUsername() {
@@ -22,5 +21,25 @@ public class Configuration {
 
 	public void setUserpassword(String userpassword) {
 		this.userpassword = userpassword;
+	}
+
+	public String getUrl() {
+		return connectionUrl;
+	}
+	
+	public void setUrl(String url) {
+		this.connectionUrl = url;
+	}
+
+	public String getServer() {
+		return server;
+	}
+
+	public void setServer(String server) {
+		this.server = server;
+	}
+	
+	public String createFullConnectionUrl() {
+		return connectionUrl + server;
 	}
 }

@@ -4,10 +4,15 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Collection;
 
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.configuration.ConfigurationReader;
 import de.ingef.eva.configuration.JsonConfigurationReader;
+import de.ingef.eva.processor.CleanRowsResultProcessor;
+import de.ingef.eva.processor.ResultProcessor;
+import de.ingef.eva.writer.CsvWriter;
+import de.ingef.eva.writer.ResultWriter;
 
 public class Main {
 
@@ -30,6 +35,9 @@ public class Main {
 				Statement sqlStatement = connection.createStatement();
 				String query = "SELECT * from table LIMIT 10;";
 				ResultSet result = sqlStatement.executeQuery(query);
+				ResultProcessor resultProcessor = new CleanRowsResultProcessor();
+				Collection<String> cleanRows = resultProcessor.ProcessResults(result);
+				ResultWriter writer = new CsvWriter();
 				sqlStatement.close();
 				connection.close();
 			}

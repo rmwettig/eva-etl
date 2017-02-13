@@ -17,17 +17,19 @@ public class CleanRowsResultProcessor implements ResultProcessor {
 		ArrayList<String> processedRows = new ArrayList<String>(1000);
 		
 		try {
-			ResultSetMetaData metaData = results.getMetaData();
+			int columnCount = results.getMetaData().getColumnCount();
 			StringBuilder cleanRow = new StringBuilder();
 			while(results.next())
 			{
-				for(int i = 1; i <= metaData.getColumnCount(); i++)
+				for(int i = 1; i <= columnCount; i++)
 				{
 					cleanRow.append(removeBoundaryWhitespaces(removeControlSequences(results.getString(i))));
+					// do not append a delimiter to the last entry in a row
+					if(i != columnCount) cleanRow.append(';');
 				}
+				processedRows.add(cleanRow.toString());				
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		

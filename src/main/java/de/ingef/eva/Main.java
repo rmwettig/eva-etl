@@ -1,5 +1,7 @@
 package de.ingef.eva;
 
+import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -8,6 +10,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.configuration.ConfigurationReader;
@@ -24,9 +31,20 @@ public class Main {
 		final String configFilePath = args[0];
 		if(!configFilePath.isEmpty()){
 
+			ObjectMapper mapper = new ObjectMapper();
+			try {
+				JsonNode config = mapper.readTree(configFilePath);
+				int startYear = config.path("databases").path("startYear").asInt();
+				System.out.println("startyear: " + startYear);
+			} catch (JsonProcessingException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 			ConfigurationReader configReader = new JsonConfigurationReader();
 			Configuration configuration = configReader.ReadConfiguration(configFilePath);
-			
 			try {
 				Class.forName("com.teradata.jdbc.TeraDriver");
 				Connection connection = DriverManager.getConnection(

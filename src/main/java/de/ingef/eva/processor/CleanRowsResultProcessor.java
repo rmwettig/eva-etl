@@ -1,7 +1,5 @@
 package de.ingef.eva.processor;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -12,24 +10,19 @@ import java.util.Collection;
  */
 public class CleanRowsResultProcessor implements ResultProcessor {
 
-	public Collection<String> ProcessResults(ResultSet results) {
-		ArrayList<String> processedRows = new ArrayList<String>(1000);
-		
-		try {
-			int columnCount = results.getMetaData().getColumnCount();
-			StringBuilder cleanRow = new StringBuilder();
-			while(results.next())
-			{
-				for(int i = 1; i <= columnCount; i++)
-				{
-					cleanRow.append(removeBoundaryWhitespaces(removeControlSequences(results.getString(i))));
-					// do not append a delimiter to the last entry in a row
-					if(i != columnCount) cleanRow.append(';');
-				}
-				processedRows.add(cleanRow.toString());				
+	public Collection<String[]> ProcessResults(Collection<String[]> results) {
+		ArrayList<String[]> processedRows = new ArrayList<String[]>(1000);
+					
+		//each result is a row
+		for(String[] result : results)
+		{
+			String[] cleanRow = new String[result.length];
+			int i = 0;
+			for(String s : result)
+			{					
+				cleanRow[i++] = removeBoundaryWhitespaces(removeControlSequences(s));
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
+			processedRows.add(cleanRow);
 		}
 		
 		return processedRows;

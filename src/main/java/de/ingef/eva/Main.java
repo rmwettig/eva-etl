@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Collection;
 
 import de.ingef.eva.configuration.Configuration;
@@ -37,7 +38,7 @@ public class Main {
 				String query = "SELECT * from table LIMIT 10;";
 				ResultSet result = sqlStatement.executeQuery(query);
 				ResultProcessor resultProcessor = new CleanRowsResultProcessor();
-				Collection<String> cleanRows = resultProcessor.ProcessResults(result);
+				Collection<String[]> cleanRows = resultProcessor.ProcessResults(convertResultSet(result));
 				ResultWriter writer = new CsvWriter();
 				sqlStatement.close();
 				connection.close();
@@ -49,6 +50,27 @@ public class Main {
 			}
 
 		}
+	}
+	
+	private static Collection<String[]> convertResultSet(ResultSet results)
+	{
+		ArrayList<String[]> converted = new ArrayList<String[]>(1000);
+		try {
+			int columnCount = results.getMetaData().getColumnCount();
+			while(results.next())
+			{
+				String[] row = new String[columnCount];
+				for(int i = 0; i < columnCount; i++)
+				{
+					//index of sql set starts at 1
+					row[i] = results.getString(i+1);
+				}
+				converted.add(row);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return converted;
 	}
 
 }

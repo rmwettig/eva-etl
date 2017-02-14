@@ -50,21 +50,21 @@ public class Configuration {
 	
 	private void PrepareDatabaseConfiguration(JsonNode root) 
 	{
-		JsonNode node = root.path("databases");
-		if(node.isMissingNode())
+		JsonNode databaseNode = root.path("databases");
+		if(databaseNode.isMissingNode())
 			System.out.println("Missing 'databases' configuration entry");
-		node = node.path("startYear");
+		JsonNode node = databaseNode.path("startYear");
 		if(node.isMissingNode())
 			System.out.println("Missing 'startYear' configuration entry");
 		int startYear = node.asInt();
 		
 		int defaultEndYear = Calendar.getInstance().get(Calendar.YEAR);
-		node = root.path("endYear");
+		node = databaseNode.path("endYear");
 		if(node.isMissingNode())
 			System.out.println("Missing 'endYear' configuration entry. Using default value: "+  defaultEndYear);
 		int endYear = node.asInt(defaultEndYear);
 		
-		node = root.path("sources");
+		node = databaseNode.path("sources");
 		if(!node.isMissingNode() && node.isArray())
 		{
 			HashMap<String, Collection<String>> databaseViews = new HashMap<String, Collection<String>>();

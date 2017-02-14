@@ -12,7 +12,7 @@
 					"views": [
 						"AVK_ADB_T_AM_EVO",
 						"AVK_ADB_T_Arzt_Diagnose",
-						"AVK_ADB_T_Arzt_Fall"
+						"AVK_ADB_T_Arzt_Fall",
 						"AVK_ADB_T_Arzt_GOP",
 						"AVK_ADB_T_Arzt_OPS",
 						"AVK_ADB_T_AU_Fall",
@@ -60,7 +60,7 @@
 						"AVK_FDB_T_ZA_LEISTDATEN",
 						"AV_FDB_T_TEILNAHME"
 					]
-				},
+				}
 			]
 		}
 }

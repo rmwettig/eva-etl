@@ -3,6 +3,7 @@ package de.ingef.eva;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -25,8 +26,7 @@ public class Main {
 
 			ConfigurationReader configReader = new JsonConfigurationReader();
 			Configuration configuration = configReader.ReadConfiguration(configFilePath);
-
-
+			
 			try {
 				Class.forName("com.teradata.jdbc.TeraDriver");
 				Connection connection = DriverManager.getConnection(
@@ -35,13 +35,20 @@ public class Main {
 						configuration.getUserpassword()
 					);
 				Statement sqlStatement = connection.createStatement();
-				String query = "SELECT * from table LIMIT 10;";
+				String query = "SELECT * from ACC_FDB.AVK_FDB_T_KH_OPS sample 10;";
+				System.out.println("Executing query...");
 				ResultSet result = sqlStatement.executeQuery(query);
+				
+				System.out.println("Processing results...");
 				ResultProcessor resultProcessor = new CleanRowsResultProcessor();
 				Collection<String[]> cleanRows = resultProcessor.ProcessResults(convertResultSet(result));
+				
+				System.out.println("Writing results...");
 				ResultWriter writer = new CsvWriter();
+				writer.Write(cleanRows, "dummyout.csv");
 				sqlStatement.close();
 				connection.close();
+				System.out.println("Done.");
 			}
 			catch(ClassNotFoundException cnfe){
 				System.out.println("Error: Could not load database driver: " + cnfe.getMessage());
@@ -56,6 +63,9 @@ public class Main {
 	{
 		ArrayList<String[]> converted = new ArrayList<String[]>(1000);
 		try {
+			String[] names = extractColumnNames(results);
+			if(names != null)
+				converted.add(names);
 			int columnCount = results.getMetaData().getColumnCount();
 			while(results.next())
 			{
@@ -63,7 +73,8 @@ public class Main {
 				for(int i = 0; i < columnCount; i++)
 				{
 					//index of sql set starts at 1
-					row[i] = results.getString(i+1);
+					String content = results.getString(i+1); 
+					row[i] = content != null ? content : "";
 				}
 				converted.add(row);
 			}
@@ -71,6 +82,22 @@ public class Main {
 			e.printStackTrace();
 		}
 		return converted;
+	}
+	
+	private static String[] extractColumnNames(ResultSet results)
+	{
+		String[] names = null;
+		try {
+			ResultSetMetaData metadata = results.getMetaData();
+			int columnCount = metadata.getColumnCount();
+			names = new String[columnCount];
+			for(int i = 0; i < columnCount; i++)
+				names[i] = metadata.getColumnName(i+1);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return names;
 	}
 
 }

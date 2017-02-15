@@ -1,7 +1,5 @@
 package de.ingef.eva;
 
-import java.io.File;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -23,8 +21,9 @@ import de.ingef.eva.writer.ResultWriter;
 public class Main {
 
 	public static void main(String[] args) {
-
+		final String workingDirectory = System.getProperty("user.dir");
 		final String configFilePath = args[0];
+		
 		if(!configFilePath.isEmpty()){
 
 			ConfigurationReader configReader = new JsonConfigurationReader();
@@ -42,7 +41,7 @@ public class Main {
 				int debugBreak = 0;
 				for(String query : queries)
 				{
-					if(debugBreak++ == 2) break; //only run 3 queries for testing
+//					if(debugBreak++ == 2) break; //only run 3 queries for testing
 					System.out.println("Executing query...\n"+query);
 					ResultSet result = sqlStatement.executeQuery(query);
 					
@@ -52,7 +51,7 @@ public class Main {
 					
 					System.out.println("Writing results...");
 					
-					writer.Write(cleanRows, String.format("out/query_%s.csv", query));
+					writer.Write(cleanRows, String.format("out/query_%s.csv", query.replace("*", "star").replaceAll("=", "equals")));
 				}
 				//String query = "SELECT * from ACC_FDB.AVK_FDB_T_KH_OPS sample 10;";
 				

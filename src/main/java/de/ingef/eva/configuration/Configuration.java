@@ -83,9 +83,9 @@ public class Configuration {
 				
 				//extract view names and save in hashmap
 				ArrayList<String> viewNames = new ArrayList<String>(viewsNode.size());
-				for(String viewName : viewNames)
+				for(JsonNode viewNode : viewsNode)
 				{
-					viewNames.add(viewName);
+					viewNames.add(viewNode.asText());
 				}
 				
 				databaseViews.put(name, viewNames);

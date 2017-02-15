@@ -24,12 +24,17 @@ public class CleanRowsResultProcessorTest {
 		String[] row2 = new String[]{
 			"  key2", "  value2  "	
 		};
+		//mixed whitespaces and duplicated control sequences
+		String[] row3 = new String[]{
+				"  \nkey3 \n \n  ", "\r  value3  \n"	
+			};
 		r.add(row1);
 		r.add(row2);
+		r.add(row3);
 		Collection<String[]> cleaned = p.ProcessResults(r);
 		
 		//number of input must not change
-		assertEquals(2, cleaned.size());
+		assertEquals(3, cleaned.size());
 		
 		int i = 0;
 		for(String[] result : cleaned)
@@ -49,6 +54,15 @@ public class CleanRowsResultProcessorTest {
 				//whitespaces removed
 				assertEquals("key2", result[0]);
 				assertEquals("value2", result[1]);
+			}
+			if(i==2)//row3
+			{
+				//number of columns must not change
+				assertEquals(2, result.length);
+				//even mixed characters must be removed
+				//and potential whitespaces dropped
+				assertEquals("key3", result[0]);
+				assertEquals("value3", result[1]);
 			}
 			i++;
 		}

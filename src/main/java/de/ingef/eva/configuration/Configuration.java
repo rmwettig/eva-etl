@@ -32,7 +32,7 @@ public class Configuration {
 			System.out.println("Missing 'server' configuration entry.");
 		server = node.asText();
 		
-		node = root.path("connectionUrl");
+		node = root.path("url");
 		if(node.isMissingNode())
 			System.out.println("Missing 'connectionUrl' configuration entry.");
 		connectionUrl = node.asText();

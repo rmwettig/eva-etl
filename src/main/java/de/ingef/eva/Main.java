@@ -39,9 +39,11 @@ public class Main {
 				Collection<String> queries = createQueries(configuration.getDatabaseQueryConfiguration());
 				ResultWriter writer = new CsvWriter();
 				int debugBreak = 0;
+				long start = System.nanoTime();
 				for(String query : queries)
 				{
 //					if(debugBreak++ == 2) break; //only run 3 queries for testing
+					long queryTimeTaken = System.nanoTime();
 					System.out.println("Executing query...\n"+query);
 					ResultSet result = sqlStatement.executeQuery(query);
 					
@@ -50,11 +52,11 @@ public class Main {
 					Collection<String[]> cleanRows = resultProcessor.ProcessResults(convertResultSet(result));
 					
 					System.out.println("Writing results...");
-					
-					writer.Write(cleanRows, String.format("out/query_%s.csv", query.replace("*", "star").replaceAll("=", "equals")));
+					writer.Write(cleanRows, String.format("%s/out/query_%s.csv", workingDirectory, query.replace("*", "star").replaceAll("=", "equals")));
+					System.out.println(String.format("Time taken: %d s.", ((System.nanoTime() - queryTimeTaken)/1000000)));
 				}
 				//String query = "SELECT * from ACC_FDB.AVK_FDB_T_KH_OPS sample 10;";
-				
+				System.out.println("Time taken (ns)" + (System.nanoTime() - start));
 				sqlStatement.close();
 				connection.close();
 				System.out.println("Done.");

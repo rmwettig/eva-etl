@@ -13,6 +13,8 @@ public class Configuration {
 	private String connectionUrl;
 	private String username;
 	private String userpassword;
+	private String outDirectory;
+	private String tempDirectory;
 	private DatabaseQueryConfiguration databaseQueryConfiguration;
 	
 	public Configuration(JsonNode root)
@@ -46,6 +48,16 @@ public class Configuration {
 		if(node.isMissingNode())
 			System.out.println("Missing 'userpassword' configuration entry.");
 		userpassword = node.asText();
+		
+		node = root.path("outputdirectory");
+		if(node.isMissingNode())
+			System.out.println("Missing 'outdirectory' configuration entry.");
+		outDirectory = node.asText();
+		
+		node = root.path("tempdirectory");
+		if(node.isMissingNode())
+			System.out.println("Missing 'tempdirectory' configuration entry.");
+		tempDirectory = node.asText();
 	}
 	
 	private void PrepareDatabaseConfiguration(JsonNode root) 
@@ -137,5 +149,13 @@ public class Configuration {
 
 	public void setDatabaseQueryConfiguration(DatabaseQueryConfiguration databaseQueryConfiguration) {
 		this.databaseQueryConfiguration = databaseQueryConfiguration;
+	}
+
+	public String getOutDirectory() {
+		return outDirectory;
+	}
+
+	public String getTempDirectory() {
+		return tempDirectory;
 	}
 }

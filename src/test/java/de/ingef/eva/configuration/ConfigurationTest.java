@@ -27,6 +27,8 @@ public class ConfigurationTest {
 		assertEquals("jdbc:teradata://", config.getConnectionUrl());
 		assertEquals("user", config.getUsername());
 		assertEquals("pwd", config.getUserpassword());
+		assertEquals("out", config.getOutDirectory());
+		assertEquals("tmp", config.getTempDirectory());
 		assertTrue(config.getDatabaseQueryConfiguration() != null);
 		assertEquals(2010, config.getDatabaseQueryConfiguration().getStartYear());
 		assertEquals(Calendar.getInstance().get(Calendar.YEAR), config.getDatabaseQueryConfiguration().getEndYear());

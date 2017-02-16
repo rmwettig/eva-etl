@@ -1,7 +1,6 @@
 package de.ingef.eva.configuration;
 
 import java.util.Collection;
-import java.util.Map;
 
 
 /**

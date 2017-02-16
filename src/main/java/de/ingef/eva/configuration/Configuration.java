@@ -3,7 +3,6 @@ package de.ingef.eva.configuration;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.HashMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -79,7 +78,6 @@ public class Configuration {
 		node = databaseNode.path("sources");
 		if(!node.isMissingNode() && node.isArray())
 		{
-			HashMap<String, Collection<String>> databaseViews = new HashMap<String, Collection<String>>();
 			//for all databases
 			for(JsonNode source : node)
 			{

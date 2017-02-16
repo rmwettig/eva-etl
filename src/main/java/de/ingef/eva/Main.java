@@ -11,8 +11,8 @@ import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.configuration.ConfigurationReader;
 import de.ingef.eva.configuration.DatabaseEntry;
 import de.ingef.eva.configuration.JsonConfigurationReader;
-import de.ingef.eva.processor.CleanRowsResultProcessor;
-import de.ingef.eva.processor.ResultProcessor;
+import de.ingef.eva.processor.RemoveNewlineCharacters;
+import de.ingef.eva.processor.Processor;
 import de.ingef.eva.utility.Helper;
 import de.ingef.eva.writer.CsvWriter;
 import de.ingef.eva.writer.ResultWriter;
@@ -37,10 +37,10 @@ public class Main {
 				
 				int[] years = Helper.extractYears(configuration.getDatabaseQueryConfiguration());
 				ResultWriter writer = new CsvWriter();
-				ResultProcessor resultProcessor = new CleanRowsResultProcessor();
+				Processor resultProcessor = new RemoveNewlineCharacters();
 				int debugBreak = 0;
 				long start = System.nanoTime();
-				
+	
 				for(DatabaseEntry dbe : configuration.getDatabaseQueryConfiguration().getEntries())
 				{
 					for(String table : dbe.getTables())
@@ -56,14 +56,18 @@ public class Main {
 							System.out.println("Executing query...\n"+query);
 							ResultSet result = preparedStatement.executeQuery();
 							
-							System.out.println("Processing results...");
-							
-							Collection<String[]> cleanRows = resultProcessor.ProcessResults(Helper.convertResultSet(result));
-							
-							System.out.println("Writing results...");
-							String part = String.format(".part%d.", pid++);
-							writer.Write(cleanRows, String.format("%s/out/query_%s_%s%s.csv", workingDirectory, dbe.getName(), table, part));
+							while(result.next())
+							{
+								//TODO process column entries immediately
+								System.out.println("Processing results...");
+//								rows = resultProcessor.process(rows);
+								System.out.println("Writing results...");
+								String part = String.format(".part%d.", pid++);
+//								writer.Write(rows, String.format("%s/out/query_%s_%s%s.csv", workingDirectory, dbe.getName(), table, part));
+							}
 							System.out.println(String.format("Time taken: %d min.", Helper.NanoSecondsToMinutes(System.nanoTime() - queryTimeTaken)));
+							
+							result.close();
 						}
 						preparedStatement.close();
 					}

@@ -3,6 +3,8 @@
 	"url":"jdbc:teradata://",
 	"username":"user",
 	"userpassword":"pwd",
+	"outputdirectory":"out",
+	"tempdirectory":"tmp",
 	"databases": {
 		"startYear":"2010",
 		"endYear":"2016",

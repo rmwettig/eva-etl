@@ -2,6 +2,7 @@ package de.ingef.eva;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -35,29 +36,36 @@ public class Main {
 						configuration.getUsername(),
 						configuration.getUserpassword()
 					);
-				Statement sqlStatement = connection.createStatement();
+				//Statement sqlStatement = connection.createStatement();
 				Collection<String> queries = createQueries(configuration.getDatabaseQueryConfiguration());
+				int[] years = extractYears(configuration.getDatabaseQueryConfiguration());
 				ResultWriter writer = new CsvWriter();
+				
 				int debugBreak = 0;
 				long start = System.nanoTime();
 				for(String query : queries)
 				{
-//					if(debugBreak++ == 2) break; //only run 3 queries for testing
+					PreparedStatement preparedStatement = connection.prepareStatement(query);
+					if(debugBreak++ == 2) break; //only run 3 queries for testing
 					long queryTimeTaken = System.nanoTime();
-					System.out.println("Executing query...\n"+query);
-					ResultSet result = sqlStatement.executeQuery(query);
-					
-					System.out.println("Processing results...");
-					ResultProcessor resultProcessor = new CleanRowsResultProcessor();
-					Collection<String[]> cleanRows = resultProcessor.ProcessResults(convertResultSet(result));
-					
-					System.out.println("Writing results...");
-					writer.Write(cleanRows, String.format("%s/out/query_%s.csv", workingDirectory, query.replace("*", "star").replaceAll("=", "equals")));
-					System.out.println(String.format("Time taken: %d s.", ((System.nanoTime() - queryTimeTaken)/1000000)));
+					for(int year : years)
+					{
+						preparedStatement.setInt(1, year);
+						System.out.println("Executing query...\n"+query);
+						ResultSet result = preparedStatement.executeQuery();
+						
+						System.out.println("Processing results...");
+						ResultProcessor resultProcessor = new CleanRowsResultProcessor();
+						Collection<String[]> cleanRows = resultProcessor.ProcessResults(convertResultSet(result));
+						
+						System.out.println("Writing results...");
+						writer.Write(cleanRows, String.format("%s/out/query_%s.csv", workingDirectory, query.replace("*", "star").replaceAll("=", "equals")));
+						System.out.println(String.format("Time taken: %d s.", ((System.nanoTime() - queryTimeTaken)/1000000)));
+					}
+					preparedStatement.close();
 				}
 				//String query = "SELECT * from ACC_FDB.AVK_FDB_T_KH_OPS sample 10;";
 				System.out.println("Time taken (ns)" + (System.nanoTime() - start));
-				sqlStatement.close();
 				connection.close();
 				System.out.println("Done.");
 			}
@@ -119,7 +127,21 @@ public class Main {
 	private static Collection<String> createQueries(DatabaseQueryConfiguration queryConfig)
 	{
 		Collection<String> queries = new ArrayList<String>();
-		String sqlFormat = "SELECT * FROM %s.%s WHERE Bezugsjahr=%d AND FLAG_DEMO=1";
+		String sqlFormat = "SELECT * FROM %s.%s WHERE Bezugsjahr=? AND FLAG_DEMO=1";
+
+		for(String db : queryConfig.getDatabaseNames())
+		{
+			for(String view : queryConfig.getViews(db))
+			{
+				queries.add(String.format(sqlFormat, db, view));
+			}
+		}
+		
+		return queries;
+	}
+	
+	private static int[] extractYears(DatabaseQueryConfiguration queryConfig)
+	{
 		//include start and end year
 		int delta = queryConfig.getEndYear() - queryConfig.getStartYear() + 2;
 		int[] years = new int[delta];
@@ -127,17 +149,6 @@ public class Main {
 		{
 			years[i] = queryConfig.getStartYear() + i;
 		}
-		for(String db : queryConfig.getDatabaseNames())
-		{
-			for(String view : queryConfig.getViews(db))
-			{
-				for(int year : years)
-				{
-					queries.add(String.format(sqlFormat, db, view, year));
-				}
-			}
-		}
-		
-		return queries;
+		return years;
 	}
 }

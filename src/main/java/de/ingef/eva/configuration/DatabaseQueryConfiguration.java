@@ -11,40 +11,34 @@ import java.util.Map;
  */
 public class DatabaseQueryConfiguration {
 	
-	private int startYear;
-	private int endYear;
-	private Map<String, Collection<String>> databaseViews;
+	private int _startYear;
+	private int _endYear;
+	private Collection<DatabaseEntry> _entries;
 	
-	public DatabaseQueryConfiguration(int startYear, int endYear, Map<String, Collection<String>> views)
+	public DatabaseQueryConfiguration(int startYear, int endYear, Collection<DatabaseEntry> entries)
 	{
-		this.startYear = startYear;
-		this.endYear = endYear;
-		databaseViews = views;
+		_startYear = startYear;
+		_endYear = endYear;
+		_entries = entries;
 	}
 	
-	public Collection<String> getDatabaseNames()
-	{
-		return databaseViews.keySet();
-	}
-	
-	public Collection<String> getViews(String databaseName)
-	{
-		return databaseViews.get(databaseName);
+	public Collection<DatabaseEntry> getEntries() {
+		return _entries;
 	}
 
 	public int getStartYear() {
-		return startYear;
+		return _startYear;
 	}
 
 	public void setStartYear(int startYear) {
-		this.startYear = startYear;
+		this._startYear = startYear;
 	}
 
 	public int getEndYear() {
-		return endYear;
+		return _endYear;
 	}
 
 	public void setEndYear(int endYear) {
-		this.endYear = endYear;
+		this._endYear = endYear;
 	}
 }

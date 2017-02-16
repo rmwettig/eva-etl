@@ -75,7 +75,7 @@ public class Configuration {
 		if(node.isMissingNode())
 			System.out.println("Missing 'endYear' configuration entry. Using default value: "+  defaultEndYear);
 		int endYear = node.asInt(defaultEndYear);
-		
+		Collection<DatabaseEntry> entries = new ArrayList<DatabaseEntry>();
 		node = databaseNode.path("sources");
 		if(!node.isMissingNode() && node.isArray())
 		{
@@ -94,16 +94,18 @@ public class Configuration {
 				}
 				
 				//extract view names and save in hashmap
-				ArrayList<String> viewNames = new ArrayList<String>(viewsNode.size());
+				Collection<String> viewNames = new ArrayList<String>(viewsNode.size());
 				for(JsonNode viewNode : viewsNode)
 				{
 					viewNames.add(viewNode.asText());
 				}
 				
-				databaseViews.put(name, viewNames);
+				String fetchQuery = source.path("fetchby").asText();
+				
+				entries.add(new DatabaseEntry(name, fetchQuery, viewNames));
 			}
 			
-			databaseQueryConfiguration = new DatabaseQueryConfiguration(startYear, endYear, databaseViews);
+			databaseQueryConfiguration = new DatabaseQueryConfiguration(startYear, endYear, entries);
 		}
 		else
 		{

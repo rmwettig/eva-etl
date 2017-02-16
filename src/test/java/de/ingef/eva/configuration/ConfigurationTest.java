@@ -4,9 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
 
 import org.junit.Test;
 
@@ -32,12 +30,17 @@ public class ConfigurationTest {
 		assertTrue(config.getDatabaseQueryConfiguration() != null);
 		assertEquals(2010, config.getDatabaseQueryConfiguration().getStartYear());
 		assertEquals(Calendar.getInstance().get(Calendar.YEAR), config.getDatabaseQueryConfiguration().getEndYear());
-		assertTrue(config.getDatabaseQueryConfiguration().getDatabaseNames().contains("source1"));
-		assertEquals(1, config.getDatabaseQueryConfiguration().getViews("source1").size());
-		
-		Collection<String> mustBeContained = new ArrayList<String>();
-		mustBeContained.add("view1");
-		assertTrue(config.getDatabaseQueryConfiguration().getViews("source1").containsAll(mustBeContained));
+		assertEquals(1, config.getDatabaseQueryConfiguration().getEntries().size());
+		int i = 0;
+		for(DatabaseEntry dbe : config.getDatabaseQueryConfiguration().getEntries())
+		{
+			if(i == 0)
+			{
+				assertEquals("source1", dbe.getName());
+				assertEquals(1, dbe.getTables().size());
+				assertTrue(dbe.getTables().contains("view1"));
+			}
+		}
 	}
 
 }

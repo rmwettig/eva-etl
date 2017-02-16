@@ -16,44 +16,38 @@ public class Helper
 	}
 	
 	
-	public static Collection<String[]> convertResultSet(ResultSet results)
+	public static Collection<String[]> convertResultSet(ResultSet results) throws SQLException
 	{
 		ArrayList<String[]> converted = new ArrayList<String[]>(1000);
-		try {
-			String[] names = extractColumnNames(results);
-			if(names != null)
-				converted.add(names);
-			int columnCount = results.getMetaData().getColumnCount();
-			while(results.next())
+
+		String[] names = extractColumnNames(results);
+		if(names != null)
+			converted.add(names);
+		int columnCount = results.getMetaData().getColumnCount();
+		while(results.next())
+		{
+			String[] row = new String[columnCount];
+			for(int i = 0; i < columnCount; i++)
 			{
-				String[] row = new String[columnCount];
-				for(int i = 0; i < columnCount; i++)
-				{
-					//index of sql set starts at 1
-					String content = results.getString(i+1); 
-					row[i] = content != null ? content : "";
-				}
-				converted.add(row);
+				//index of sql set starts at 1
+				String content = results.getString(i+1); 
+				row[i] = content != null ? content : "";
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
+			converted.add(row);
 		}
+			
 		return converted;
 	}
 	
-	public static String[] extractColumnNames(ResultSet results)
+	public static String[] extractColumnNames(ResultSet results) throws SQLException
 	{
 		String[] names = null;
-		try {
-			ResultSetMetaData metadata = results.getMetaData();
-			int columnCount = metadata.getColumnCount();
-			names = new String[columnCount];
-			for(int i = 0; i < columnCount; i++)
-				names[i] = metadata.getColumnName(i+1);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		ResultSetMetaData metadata = results.getMetaData();
+		int columnCount = metadata.getColumnCount();
+		names = new String[columnCount];
+		for(int i = 0; i < columnCount; i++)
+			names[i] = metadata.getColumnName(i+1);
+
 		return names;
 	}
 	

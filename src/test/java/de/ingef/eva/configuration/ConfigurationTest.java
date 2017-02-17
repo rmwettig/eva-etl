@@ -15,10 +15,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class ConfigurationTest {
 
 	@Test
-	public void testNoEndYearPresent() throws JsonProcessingException, IOException 
+	public void testEndYearDefaultsToCurrentYear() throws JsonProcessingException, IOException 
 	{
 		ObjectMapper mapper = new ObjectMapper();
-		JsonNode root = mapper.readTree(new File("src/test/resources/testConfigNoEndYear.json"));
+		JsonNode root = mapper.readTree(new File("src/test/resources/configuration/testNoEndYear.json"));
 		Configuration config = new Configuration(root);
 		
 		assertEquals("127.0.0.1", config.getServer());
@@ -42,5 +42,45 @@ public class ConfigurationTest {
 			}
 		}
 	}
-
+	
+	@Test
+	public void testThreadCountValid() throws JsonProcessingException, IOException
+	{
+		ObjectMapper mapper = new ObjectMapper();
+		String json = "{ \"threads\":\"4\"}";
+		JsonNode root = mapper.readTree(json);
+		Configuration config = new Configuration(root);
+		assertEquals(4, config.getThreadCount());
+	}
+	
+	@Test
+	public void testThreadCountInvalidNegative() throws JsonProcessingException, IOException
+	{
+		ObjectMapper mapper = new ObjectMapper();
+		String json = "{ \"threads\":\"-4\"}";
+		JsonNode root = mapper.readTree(json);
+		Configuration config = new Configuration(root);
+		assertEquals(1, config.getThreadCount());
+		
+	}
+	
+	@Test
+	public void testThreadCountInvalidType() throws JsonProcessingException, IOException
+	{
+		ObjectMapper mapper = new ObjectMapper();
+		String json = "{ \"threads\":\"fd\"}";
+		JsonNode root = mapper.readTree(json);
+		Configuration config = new Configuration(root);
+		assertEquals(1, config.getThreadCount());
+	}
+	
+	@Test
+	public void testThreadCountInvalidZero() throws JsonProcessingException, IOException
+	{
+		ObjectMapper mapper = new ObjectMapper();
+		String json = "{ \"threads\":\"0\"}";
+		JsonNode root = mapper.readTree(json);
+		Configuration config = new Configuration(root);
+		assertEquals(1, config.getThreadCount());
+	}
 }

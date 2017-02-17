@@ -8,22 +8,26 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 public class Configuration {
 	
-	private String server;
-	private String connectionUrl;
-	private String username;
-	private String userpassword;
-	private String outDirectory;
-	private String tempDirectory;
-	private DatabaseQueryConfiguration databaseQueryConfiguration;
+	private String _server;
+	private String _connectionUrl;
+	private String _connectionParameters;
+	private String _username;
+	private String _userpassword;
+	private String _outDirectory;
+	private String _tempDirectory;
+	private int _threadCount;
+	private DatabaseQueryConfiguration _databaseQueryConfiguration;
+	private FastExportConfiguration _fastExportConfiguration;
 	
 	public Configuration(JsonNode root)
 	{
 		PrepareConnectionConfiguration(root);
-		PrepareDatabaseConfiguration(root);		
+		PrepareDatabaseConfiguration(root);
+		_fastExportConfiguration = new FastExportConfiguration(root);
 	}
 	
 	public String createFullConnectionUrl() {
-		return connectionUrl + server;
+		return String.format("%s%s/%s", _connectionUrl, _server, _connectionParameters);
 	}
 	
 	private void PrepareConnectionConfiguration(JsonNode root)
@@ -31,32 +35,51 @@ public class Configuration {
 		JsonNode node = root.path("server");
 		if(node.isMissingNode())
 			System.out.println("Missing 'server' configuration entry.");
-		server = node.asText();
+		_server = node.asText();
 		
 		node = root.path("url");
 		if(node.isMissingNode())
 			System.out.println("Missing 'connectionUrl' configuration entry.");
-		connectionUrl = node.asText();
+		_connectionUrl = node.asText();
+		
+		node = root.path("parameters");
+		_connectionParameters = (!node.isMissingNode()) ? node.asText() : "";
 		
 		node = root.path("username");
 		if(node.isMissingNode())
 			System.out.println("Missing 'username' configuration entry.");
-		username = node.asText();
+		_username = node.asText();
 		
 		node = root.path("userpassword");
 		if(node.isMissingNode())
 			System.out.println("Missing 'userpassword' configuration entry.");
-		userpassword = node.asText();
+		_userpassword = node.asText();
 		
 		node = root.path("outputdirectory");
 		if(node.isMissingNode())
 			System.out.println("Missing 'outdirectory' configuration entry.");
-		outDirectory = node.asText();
+		_outDirectory = node.asText();
 		
 		node = root.path("tempdirectory");
 		if(node.isMissingNode())
 			System.out.println("Missing 'tempdirectory' configuration entry.");
-		tempDirectory = node.asText();
+		_tempDirectory = node.asText();
+		
+		node = root.path("threads");
+		if(node.isMissingNode())
+			System.out.println("Missing 'threads' configuration entry.");
+		try
+		{
+			_threadCount = Integer.parseInt(node.asText());
+			if (_threadCount < 1)
+				_threadCount = 1;
+		}
+		catch(NumberFormatException e)
+		{
+			System.out.println("Error: 'threadCount' has an invalid value.");
+			_threadCount = 1;
+		}
+		
 	}
 	
 	private void PrepareDatabaseConfiguration(JsonNode root) 
@@ -98,12 +121,10 @@ public class Configuration {
 					viewNames.add(viewNode.asText());
 				}
 				
-				String fetchQuery = source.path("fetchby").asText();
-				
-				entries.add(new DatabaseEntry(name, fetchQuery, viewNames));
+				entries.add(new DatabaseEntry(name, viewNames));
 			}
 			
-			databaseQueryConfiguration = new DatabaseQueryConfiguration(startYear, endYear, entries);
+			_databaseQueryConfiguration = new DatabaseQueryConfiguration(startYear, endYear, entries);
 		}
 		else
 		{
@@ -112,50 +133,58 @@ public class Configuration {
 	}
 
 	public String getServer() {
-		return server;
+		return _server;
 	}
 
 	public void setServer(String server) {
-		this.server = server;
+		this._server = server;
 	}
 
 	public String getConnectionUrl() {
-		return connectionUrl;
+		return _connectionUrl;
 	}
 
 	public void setConnectionUrl(String connectionUrl) {
-		this.connectionUrl = connectionUrl;
+		this._connectionUrl = connectionUrl;
 	}
 
 	public String getUsername() {
-		return username;
+		return _username;
 	}
 
 	public void setUsername(String username) {
-		this.username = username;
+		this._username = username;
 	}
 
 	public String getUserpassword() {
-		return userpassword;
+		return _userpassword;
 	}
 
 	public void setUserpassword(String userpassword) {
-		this.userpassword = userpassword;
+		this._userpassword = userpassword;
 	}
 
 	public DatabaseQueryConfiguration getDatabaseQueryConfiguration() {
-		return databaseQueryConfiguration;
+		return _databaseQueryConfiguration;
 	}
 
 	public void setDatabaseQueryConfiguration(DatabaseQueryConfiguration databaseQueryConfiguration) {
-		this.databaseQueryConfiguration = databaseQueryConfiguration;
+		this._databaseQueryConfiguration = databaseQueryConfiguration;
 	}
 
 	public String getOutDirectory() {
-		return outDirectory;
+		return _outDirectory;
 	}
 
 	public String getTempDirectory() {
-		return tempDirectory;
+		return _tempDirectory;
+	}
+
+	public int getThreadCount() {
+		return _threadCount;
+	}
+	
+	public FastExportConfiguration getFastExportConfiguration()	{
+		return _fastExportConfiguration;
 	}
 }

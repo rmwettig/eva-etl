@@ -57,7 +57,7 @@ public class Main {
 							System.out.println("Executing query...\n"+query);
 							ResultSet result = preparedStatement.executeQuery();
 							
-							String part = String.format(".part%d.", pid++);
+							String part = String.format(".part%d", pid++);
 							String outfileName = String.format("%s/out/query_%s_%s%s.csv", workingDirectory, dbe.getName(), table, part);
 							BufferedWriter writer = new BufferedWriter(new FileWriter(outfileName));
 							System.out.println(String.format("Creating result file %s...", outfileName));

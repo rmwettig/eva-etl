@@ -1,0 +1,69 @@
+{
+	"server":"192.168.146.1",
+	"url":"jdbc:teradata://",
+	"username":"user",
+	"userpassword":"pwd",
+	"outputdirectory":"out",
+	"tempdirectory":"tmp",
+	"databases": {
+		"startYear":"2010",
+		"endYear":"2016",
+		"sources":[
+				{
+					"name":"ACC_ADB",
+					"views": [
+						"AVK_ADB_T_AM_EVO",
+						"AVK_ADB_T_Arzt_Diagnose",
+						"AVK_ADB_T_Arzt_Fall",
+						"AVK_ADB_T_Arzt_GOP",
+						"AVK_ADB_T_Arzt_OPS",
+						"AVK_ADB_T_AU_Fall",
+						"AVK_ADB_T_DMP_Doku",
+						"AVK_ADB_T_HeMi_EVO",
+						"AVK_ADB_T_HiMi_EVO",
+						"AVK_ADB_T_HKP_EVO",
+						"AVK_ADB_T_KH_Diagnose",
+						"AVK_ADB_T_KH_Fall",
+						"AVK_ADB_T_KH_OPS",
+						"AVK_ADB_T_Leistungskosten",
+						"AVK_ADB_T_VERS_INFO",
+						"AVK_ADB_T_Vers_Region",
+						"AVK_ADB_T_Vers_SozDem",
+						"AVK_ADB_T_Vers_Stamm",
+						"AVK_ADB_T_Vers_Tage",
+						"AVK_ADB_T_VERS_TAGE_QUARTAL",
+						"AVK_ADB_T_ZA_Fall",
+						"AVK_ADB_T_ZA_LEISTDATEN"
+					]
+				},
+				{
+					"name":"ACC_FDB",
+					"views": [
+						"AVK_FDB_T_AM_EVO",
+						"AVK_FDB_T_Arzt_Diagnose",
+						"AVK_FDB_T_Arzt_Fall",
+						"AVK_FDB_T_Arzt_GOP",
+						"AVK_FDB_T_Arzt_OPS",
+						"AVK_FDB_T_AU_Fall",
+						"AVK_FDB_T_HeMi_EVO",
+						"AVK_FDB_T_HiMi_EVO",
+						"AVK_FDB_T_HKP_EVO",
+						"AVK_FDB_T_KH_Diagnose",
+						"AVK_FDB_T_KH_Fall",
+						"AVK_FDB_T_KH_OPS",
+						"AVK_FDB_T_Leistungskosten",
+						"AVK_FDB_T_VERS_INFO",
+						"AVK_FDB_T_Vers_Region",
+						"AVK_FDB_T_Vers_SozDem",
+						"AVK_FDB_T_Vers_Stamm",
+						"AVK_FDB_T_Vers_Tage",
+						"AVK_FDB_T_VERS_TAGE_QUARTAL",
+						"AVK_FDB_T_ZA_Fall",
+						"AVK_FDB_T_ZA_LEISTDATEN",
+						"AV_FDB_T_TEILNAHME"
+					]
+				}
+			]
+		}
+}
+

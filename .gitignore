@@ -1,6 +1,7 @@
 .settings
 .classpath
 .project
-config.json
+devconfig.json
 target/
 bin/
+lib/

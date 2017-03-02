@@ -6,10 +6,8 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.logging.log4j.Logger;
@@ -67,7 +65,7 @@ public class Helper
 	public static int[] extractYears(DatabaseQueryConfiguration queryConfig)
 	{
 		//include start and end year
-		int delta = queryConfig.getEndYear() - queryConfig.getStartYear() + 2;
+		int delta = queryConfig.getEndYear() - queryConfig.getStartYear() + 1;
 		int[] years = new int[delta];
 		for(int i = 0; i < delta; i++)
 		{

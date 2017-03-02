@@ -3,6 +3,10 @@ package de.ingef.eva.configuration;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -121,7 +125,25 @@ public class Configuration {
 					viewNames.add(viewNode.asText());
 				}
 				
-				entries.add(new DatabaseEntry(name, viewNames));
+				Map<String, Collection<String>> globalConditions = null;
+				JsonNode conditions = source.path("conditions");
+				if(!conditions.isMissingNode())
+				{
+					globalConditions = new HashMap<String, Collection<String>>();
+					Iterator<Entry<String,JsonNode>> iter = conditions.fields();
+					while(iter.hasNext())
+					{
+						//this corresponds to a column name entry
+						//associated with an array of values
+						Entry<String,JsonNode> entry = iter.next();
+						JsonNode entryContent = entry.getValue();
+						Collection<String> values = new ArrayList<String>(entryContent.size());
+						for(JsonNode j : entryContent)
+							values.add(j.asText());
+						globalConditions.put(entry.getKey(), values);
+					}
+				}
+				entries.add(new DatabaseEntry(name, viewNames, globalConditions));
 			}
 			
 			_databaseQueryConfiguration = new DatabaseQueryConfiguration(startYear, endYear, entries);

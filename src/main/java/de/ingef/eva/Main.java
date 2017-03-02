@@ -124,10 +124,13 @@ public class Main {
 			StringBuilder tasks = new StringBuilder();
 			DatabaseQueryConfiguration dbConfig = configuration.getDatabaseQueryConfiguration();
 			ExecutorService threadPool = Executors.newCachedThreadPool();
+
 			for(DatabaseEntry dbEntry : dbConfig.getEntries())
 			{
 				String db = dbEntry.getName();
 				StringBuilder header = new StringBuilder();
+				String insuranceFilter = dbEntry.getCondition();
+
 				for(String table : dbEntry.getTables())
 				{
 					ResultSet rs = stm.executeQuery(String.format(Templates.QUERY_COLUMNS, db, table));
@@ -159,6 +162,7 @@ public class Main {
 						String select = columnSelectBuilder.toString();
 						for(int year : years)
 						{
+							
 							subtasks.append(
 									String.format(Templates.TASK_FORMAT, configuration.getFastExportConfiguration().getSessions())
 									.replace("$OUTFILE", String.format("%s/%s_%s.%d.csv", configuration.getTempDirectory(), db,table, year))
@@ -166,7 +170,7 @@ public class Main {
 											Templates.RESTRICTED_QUERY_FORMAT,
 											select, 
 											db,
-											table, "Bezugsjahr="+year))
+											table, insuranceFilter + "Bezugsjahr="+year))
 									);
 						}
 						task = subtasks.toString();

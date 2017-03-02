@@ -49,6 +49,8 @@ on a shell to start data dumping.
     * `sources`: array of database sources
         * `name`: name of the database
         * `views`: array of table/view names that are fetched
+        * `conditions`: object whose field names denote column names. Queried values are given as an array. Values are OR-ed, columns are AND-ed.
+            * Example: `"conditions":{ "h2ik":["7473898", "7474839"] }`
 
 ### Full example
 ```json

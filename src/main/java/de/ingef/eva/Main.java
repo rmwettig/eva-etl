@@ -63,7 +63,7 @@ public class Main {
 				{
 					final long start = System.nanoTime();
 					//remove special characters like null or ack first
-					Processor<String> removeControlSequences = new RemovePattern("[^\\p{Alnum};]");
+					Processor<String> removeControlSequences = new RemovePattern("[^\\p{Alnum};.-]");
 					//then remove leading and trailing whitespaces
 					Processor<String> removeBoundaryWhitespaces = new RemovePattern("^\\s+|\\s+$");
 					Collection<Processor<String>> processors = new ArrayList<Processor<String>>();

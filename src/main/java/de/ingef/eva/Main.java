@@ -128,11 +128,11 @@ public class Main {
 			for(DatabaseEntry dbEntry : dbConfig.getEntries())
 			{
 				String db = dbEntry.getName();
-				StringBuilder header = new StringBuilder();
 				String insuranceFilter = dbEntry.getCondition();
 
 				for(String table : dbEntry.getTables())
 				{
+					StringBuilder header = new StringBuilder();
 					ResultSet rs = stm.executeQuery(String.format(Templates.QUERY_COLUMNS, db, table));
 
 					StringBuilder columnSelectBuilder = new StringBuilder();

@@ -3,6 +3,14 @@ package de.ingef.eva.configuration;
 import java.util.Collection;
 import java.util.Map;
 
+
+/**
+ * Holds specific information about the database and included tables
+ * along with conditions that should be applied to all queries.
+ * 
+ * @author Martin Wettig
+ *
+ */
 public class DatabaseEntry {
 	private String _databaseName;
 	private Collection<String> _tables;

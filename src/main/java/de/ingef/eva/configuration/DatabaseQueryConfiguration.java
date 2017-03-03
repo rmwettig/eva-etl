@@ -13,6 +13,7 @@ public class DatabaseQueryConfiguration {
 	private int _startYear;
 	private int _endYear;
 	private Collection<DatabaseEntry> _entries;
+		
 	
 	public DatabaseQueryConfiguration(int startYear, int endYear, Collection<DatabaseEntry> entries)
 	{

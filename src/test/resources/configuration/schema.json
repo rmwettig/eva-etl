@@ -1,0 +1,11 @@
+{
+	"database1":
+	  		{
+	  			"tablename": ["columnname1", "columnname2"],
+	  			"tablename2": ["columnname3"]
+	  		},
+	"database2":
+		{
+			"tablename3":["columnname4"]
+		}
+}

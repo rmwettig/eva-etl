@@ -19,16 +19,28 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+
 import de.ingef.eva.async.AsyncDumpProcessor;
 import de.ingef.eva.async.AsyncWriter;
 import de.ingef.eva.configuration.Configuration;
+import de.ingef.eva.configuration.ConfigurationDatabaseHostLoader;
 import de.ingef.eva.configuration.ConfigurationReader;
-import de.ingef.eva.configuration.DatabaseEntry;
 import de.ingef.eva.configuration.DatabaseQueryConfiguration;
 import de.ingef.eva.configuration.JsonConfigurationReader;
+import de.ingef.eva.configuration.JsonInterpreter;
+import de.ingef.eva.configuration.SchemaDatabaseHostLoader;
+import de.ingef.eva.configuration.SqlJsonInterpreter;
 import de.ingef.eva.constant.Templates;
+import de.ingef.eva.database.Database;
+import de.ingef.eva.database.DatabaseHost;
+import de.ingef.eva.database.Table;
 import de.ingef.eva.processor.Processor;
 import de.ingef.eva.processor.RemovePattern;
+import de.ingef.eva.query.Query;
+import de.ingef.eva.query.QueryCreator;
+import de.ingef.eva.query.SimpleQueryCreator;
 import de.ingef.eva.utility.Dataset;
 import de.ingef.eva.utility.Helper;
 
@@ -50,6 +62,12 @@ public class Main {
 					createFastExportJobs(configuration, logger);
 					logger.info("Teradata FastExport job file created.");
 				}
+				else if(args[1].equalsIgnoreCase("fetchschema"))
+				{
+					DatabaseHost schema = new ConfigurationDatabaseHostLoader(logger).loadFromFile(configFilePath);
+					createHeaderLookup(configuration, schema, logger);
+					logger.info("Teradata column lookup created.");
+				}
 				else
 				{
 					logger.warn("Unknown command: {}.", args[1]);
@@ -62,16 +80,10 @@ public class Main {
 				try
 				{
 					final long start = System.nanoTime();
-					//remove special characters like null or ack first
-					Processor<String> removeControlSequences = new RemovePattern("[^\\p{Alnum};.-]");
-					//then remove leading and trailing whitespaces
-					Processor<String> removeBoundaryWhitespaces = new RemovePattern("^\\s+|\\s+$");
-					Collection<Processor<String>> processors = new ArrayList<Processor<String>>();
-					processors.add(removeControlSequences);
-					processors.add(removeBoundaryWhitespaces);
-					
+					Collection<Processor<String>> processors = createProcessors();
 					File[] filenames = new File(String.format("%s/.",configuration.getTempDirectory())).listFiles();
 					List<Dataset> dumpFiles = Helper.findDatasets(filenames);
+					
 					for(Dataset ds : dumpFiles)
 					{
 						AsyncDumpProcessor dumpCleaner = new AsyncDumpProcessor(
@@ -104,6 +116,64 @@ public class Main {
 			logger.error("No config.json file given.");
 		}
 	}
+	
+	private static Collection<Processor<String>> createProcessors() {
+		//remove special characters like null or ack first
+		Processor<String> removeControlSequences = new RemovePattern("[^\\p{Alnum};.-]");
+		//then remove leading and trailing whitespaces
+		Processor<String> removeBoundaryWhitespaces = new RemovePattern("^\\s+|\\s+$");
+		Collection<Processor<String>> processors = new ArrayList<Processor<String>>();
+		processors.add(removeControlSequences);
+		processors.add(removeBoundaryWhitespaces);
+		return processors;
+	}
+
+	
+	/**
+	 * Creates a JSON with column names for defined tables
+	 * @param configuration
+	 * @param logger
+	 */
+	private static void createHeaderLookup(Configuration configuration, DatabaseHost schema, Logger logger) {
+		try (
+				Connection connection = DriverManager.getConnection(
+						configuration.createFullConnectionUrl(),
+						configuration.getUsername(),
+						configuration.getUserpassword()
+						);
+				Statement stm = connection.createStatement();
+				JsonGenerator jsonWriter = new JsonFactory().createGenerator(new FileWriter(configuration.getSchemaFilePath()));
+				) {
+			 
+			jsonWriter.writeStartObject(); //json start
+			for(Database dbEntry : schema.getAllDatabases())
+			{
+				String db = dbEntry.getName();
+				jsonWriter.writeObjectFieldStart(db); //db object
+				for(Table table : dbEntry.getAllTables())
+				{
+					jsonWriter.writeFieldName(table.getName()); //array name
+					jsonWriter.writeStartArray(); //array bracket
+					
+					ResultSet rs = stm.executeQuery(String.format(Templates.QUERY_COLUMNS, db, table.getName()));
+
+					while(rs.next())
+					{
+						String column = rs.getString(1).trim();
+						jsonWriter.writeString(column);
+					}
+					rs.close();
+					jsonWriter.writeEndArray();// table
+				}
+				jsonWriter.writeEndObject();//db
+			}
+			jsonWriter.writeEndObject();//json
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+	}
 
 	/**
 	 * Creates a Teradata FastExport script for dumping data
@@ -122,71 +192,25 @@ public class Main {
 				BufferedWriter writer = new BufferedWriter(new FileWriter(configuration.getFastExportConfiguration().getJobFilename()))
 				) {
 			StringBuilder tasks = new StringBuilder();
-			DatabaseQueryConfiguration dbConfig = configuration.getDatabaseQueryConfiguration();
 			ExecutorService threadPool = Executors.newCachedThreadPool();
-
-			for(DatabaseEntry dbEntry : dbConfig.getEntries())
+			DatabaseHost schema = new SchemaDatabaseHostLoader().loadFromFile(configuration.getSchemaFilePath());
+			QueryCreator queryCreator = new SimpleQueryCreator();
+			JsonInterpreter jsonInterpreter = new SqlJsonInterpreter(queryCreator, schema, logger);
+			Collection<Query> jobs = jsonInterpreter.interpret(configuration.getDatabaseNode());
+			/**
+			 * need select clause formatter 
+			 */
+			
+			for(Query q : jobs)
 			{
-				String db = dbEntry.getName();
-				String insuranceFilter = dbEntry.getCondition();
-
-				for(String table : dbEntry.getTables())
-				{
-					StringBuilder header = new StringBuilder();
-					ResultSet rs = stm.executeQuery(String.format(Templates.QUERY_COLUMNS, db, table));
-
-					StringBuilder columnSelectBuilder = new StringBuilder();
-					columnSelectBuilder.append(String.format("';%s'||", configuration.getFastExportConfiguration().getRowPrefix()));
-					boolean hasYearColumn = false;
-					while(rs.next())
-					{
-						String column = rs.getString(1).trim();
-						header.append(column);
-						header.append(";");
-						//set only once
-						hasYearColumn = (!hasYearColumn) ? column.equalsIgnoreCase("Bezugsjahr") : true;
-						columnSelectBuilder.append(String.format(Templates.COLUMN_PROCESSING, column));
-						columnSelectBuilder.append("||';'||");
-					}
-					rs.close();
-					startHeaderWriterTask(configuration, logger, threadPool, db, header, table);
-					int unusedSemicolonIndex = columnSelectBuilder.lastIndexOf(";");
-					//remove trailing semicolon
-					columnSelectBuilder = columnSelectBuilder.delete(unusedSemicolonIndex - 3, columnSelectBuilder.length());
-					
-					String task;
-					if(hasYearColumn)
-					{
-						int[] years = Helper.extractYears(configuration.getDatabaseQueryConfiguration());
-						StringBuilder subtasks = new StringBuilder();
-						String select = columnSelectBuilder.toString();
-						for(int year : years)
-						{
-							
-							subtasks.append(
-									String.format(Templates.TASK_FORMAT, configuration.getFastExportConfiguration().getSessions())
-									.replace("$OUTFILE", String.format("%s/%s_%s.%d.csv", configuration.getTempDirectory(), db,table, year))
-									.replace("$QUERY", String.format(
-											Templates.RESTRICTED_QUERY_FORMAT,
-											select, 
-											db,
-											table, insuranceFilter + "Bezugsjahr="+year))
-									);
-						}
-						task = subtasks.toString();
-					}
-					else
-					{
-						task = String.format(Templates.TASK_FORMAT, configuration.getFastExportConfiguration().getSessions())
-								.replace("$OUTFILE", String.format("%s/%s_%s.csv", configuration.getTempDirectory(), db, table))
-								.replace("$QUERY", 
-										String.format(Templates.QUERY_FORMAT, columnSelectBuilder.toString(), db, table)
-										);
-					}
-
-					tasks.append(task);
-				}
+				tasks.append(String.format(Templates.TASK_FORMAT,
+							configuration.getFastExportConfiguration().getSessions(),
+							configuration.getOutDirectory()+"/"+ q.getName()+".csv",
+							q.getQuery())
+						);
+				threadPool.execute(createHeaderWriterTask(configuration.getTempDirectory(), logger, q));
 			}
+			
 			threadPool.shutdown();
 			
 			String job = String.format(Templates.JOB_FORMAT,
@@ -231,15 +255,27 @@ public class Main {
 			}
 		}
 	}
+	
+	private static Runnable createHeaderWriterTask(String directory, Logger logger, Query q) {
 
-	private static void startHeaderWriterTask(Configuration configuration, Logger logger, ExecutorService threadPool,
-			String db, StringBuilder header, String table) {
+		List<String> headerList = new ArrayList<String>(1);
+		headerList.add(combineColumnHeaders(q.getSelectedColumns()));
+		return new AsyncWriter(directory+"/"+q.getName()+".header.csv",
+				headerList,
+				logger);
+	}
+	
+	private static String combineColumnHeaders(Collection<String> columns) {
+		StringBuilder header = new StringBuilder();
+		
+		for(String s : columns)
+		{
+			header.append(s);
+			header.append(",");
+		}
 		//remove trailing semicolon
 		header.deleteCharAt(header.length()-1);
-		List<String> headerList = new ArrayList<String>(1);
-		headerList.add(header.toString());
-		threadPool.execute(new AsyncWriter(configuration.getTempDirectory()+"/"+db+"_"+table+".header.csv",
-				headerList,
-				logger));
+		
+		return header.toString();
 	}
 }

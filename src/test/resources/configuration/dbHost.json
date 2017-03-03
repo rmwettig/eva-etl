@@ -1,0 +1,19 @@
+{
+	"databases": {
+		"sources": [
+			{
+				"name":"database1",
+				"views" : [
+					{"table1":{}}
+				]
+			},
+			{
+				"name":"database2",
+				"views" : [
+					{"table2":{}},
+					{"table3":{}}
+				]
+			}
+		]
+	}
+}

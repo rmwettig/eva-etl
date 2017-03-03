@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -64,12 +65,17 @@ public class Helper
 	 */
 	public static int[] extractYears(DatabaseQueryConfiguration queryConfig)
 	{
+		return extractYears(queryConfig.getStartYear(), queryConfig.getEndYear());
+	}
+	
+	public static int[] extractYears(int start, int end)
+	{
 		//include start and end year
-		int delta = queryConfig.getEndYear() - queryConfig.getStartYear() + 1;
+		int delta = end - start + 1;
 		int[] years = new int[delta];
 		for(int i = 0; i < delta; i++)
 		{
-			years[i] = queryConfig.getStartYear() + i;
+			years[i] = start + i;
 		}
 		return years;
 	}
@@ -126,4 +132,16 @@ public class Helper
 		return datasets;
 	}
 	
+	public static StringBuilder mergeStrings(Collection<String> elements, String delimiter)
+	{
+		StringBuilder merged = new StringBuilder();
+		Iterator<String> iter = elements.iterator();
+		while(iter.hasNext())
+		{
+			merged.append(iter.next());
+			if(iter.hasNext())
+				merged.append(delimiter);
+		}
+		return merged;
+	}
 }

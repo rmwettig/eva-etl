@@ -19,14 +19,16 @@ public class Configuration {
 	private String _userpassword;
 	private String _outDirectory;
 	private String _tempDirectory;
+	private String _schemaFilePath;
 	private int _threadCount;
 	private DatabaseQueryConfiguration _databaseQueryConfiguration;
 	private FastExportConfiguration _fastExportConfiguration;
+	private JsonNode _databasesNode;
 	
 	public Configuration(JsonNode root)
 	{
-		PrepareConnectionConfiguration(root);
-		PrepareDatabaseConfiguration(root);
+		prepareConnectionConfiguration(root);
+		prepareDatabaseConfiguration(root);
 		_fastExportConfiguration = new FastExportConfiguration(root);
 	}
 	
@@ -34,7 +36,7 @@ public class Configuration {
 		return String.format("%s%s/%s", _connectionUrl, _server, _connectionParameters);
 	}
 	
-	private void PrepareConnectionConfiguration(JsonNode root)
+	private void prepareConnectionConfiguration(JsonNode root)
 	{
 		JsonNode node = root.path("server");
 		if(node.isMissingNode())
@@ -69,9 +71,15 @@ public class Configuration {
 			System.out.println("Missing 'tempdirectory' configuration entry.");
 		_tempDirectory = node.asText();
 		
+		node = root.path("schemafile");
+		if(node.isMissingNode())
+			System.out.println("Missing 'schemafile' configuration entry.");
+		_schemaFilePath = node.asText();
+		
 		node = root.path("threads");
 		if(node.isMissingNode())
 			System.out.println("Missing 'threads' configuration entry.");
+		
 		try
 		{
 			_threadCount = Integer.parseInt(node.asText());
@@ -86,11 +94,12 @@ public class Configuration {
 		
 	}
 	
-	private void PrepareDatabaseConfiguration(JsonNode root) 
+	private void prepareDatabaseConfiguration(JsonNode root) 
 	{
 		JsonNode databaseNode = root.path("databases");
 		if(databaseNode.isMissingNode())
 			System.out.println("Missing 'databases' configuration entry");
+		_databasesNode = databaseNode;
 		JsonNode node = databaseNode.path("startYear");
 		if(node.isMissingNode())
 			System.out.println("Missing 'startYear' configuration entry");
@@ -208,5 +217,13 @@ public class Configuration {
 	
 	public FastExportConfiguration getFastExportConfiguration()	{
 		return _fastExportConfiguration;
+	}
+
+	public String getSchemaFilePath() {
+		return _schemaFilePath;
+	}
+	
+	public JsonNode getDatabaseNode() {
+		return _databasesNode;
 	}
 }

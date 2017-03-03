@@ -7,14 +7,21 @@ In a second step data parts are validated and combined into a single CSV file.
 
 ## Usage
 
-### 1. Create FastExport script (optional)
+### 1. Create Database schema file 
+Call
+
+        `java -jar eva-data.jar <config.json> fetchschema`
+
+to create a json representation of the database.
+
+### 2. Create FastExport script
 Call 
 
         `java -jar eva-data.jar <config>.json makejob`
 
 to create a FastExport script.
 
-### 2. Run FastExport
+### 3. Run FastExport
 Call
 
         `fexp < <fastExportJob>.fx`
@@ -34,7 +41,7 @@ on a shell to start data dumping.
     * Example: `'out'` would specify a directory that lies in the same directory where the jar was executed.
 * `tempdirectory`: intermediate files are placed here
 * `threads`: determine the number of used threads. Only numbers equal to or larger than 1 are valid. Defaults to `1`.
-* `fastexport`: configuration of Teradata's FastExport tool
+* `fastexport` **_object_**: configuration of Teradata's FastExport tool
     * `logDatabase`: database where the log table should be created
     * `logTable`: name of the log table
     * `sessions`: number of sessions used to retrieve data
@@ -43,16 +50,42 @@ on a shell to start data dumping.
     * `postDumpAction`: shell command that is run after dumping has completed
         * Example: `java -jar absolute/path/to/<jar>.jar <config>.json`
         * Example 2: `java -jar ./<jar>.jar <config>.json`
-* `databases`: contains global year filter and database sources
+* `databases` **_object_**: contains global year filter and database sources
     * `startYear`: earliest year that should be fetched
-    * `endYear`: latest year that should be fetched
-    * `sources`: array of database sources
+    * `endYear`: latest year that should be fetched. *optional*
+    * `sources` **_array(object)_**: representing database sources
         * `name`: name of the database
-        * `views`: array of table/view names that are fetched
-        * `conditions`: object whose field names denote column names. Queried values are given as an array. Values are OR-ed, columns are AND-ed.
-            * Example: `"conditions":{ "h2ik":["7473898", "7474839"] }`
+        * `views`: array of table/view **_object_** s that are fetched. The only key is the view/table name
+            * `column` **_array(string)_** *optional*: column names. If omitted all columns are used.
+            * `where` **_object_** *optional*: keys correspond to restricted columns.
+                * `columnName` **_array(object)_**: column restrictions. Entries are OR-ed
+                    * `value`: value that this column is compared against
+                    * `type`: `NUMERIC` or `STRING`
+                    * `operator`: SQL comparing symbol
+            * `join` **array(object)** *optional*: join clause for a query
+                * Each join object has the following fields
+                    * `table`: name of the table that appears in the join clause
+                    * `type`: type of the join
+                    * `column` **array(string)** *optional*: column names that should be selected. If omitted none are taken. If '*' is specified all are taken.
+                    * `on`: name of the matched column
+                    * `where` *optional*: as above
+        * `where` **_object_**: object whose field names denote column names. Queried values are given as an array. Values are OR-ed, columns are AND-ed. Restrictions are imposed on all tables.
+            * Example: `"where":{ "h2ik":["7473898", "7474839"] }`
 
-### Full example
+### Option Nodes
+#### Where object
+```json
+{
+    ...,
+    "where" :{
+        "columnName":[
+            {"value": "10", "type":"NUMERIC", "operator":"="}
+        ]
+    }
+}
+```
+
+## Full example
 ```json
 {
 	"server":"192.168.146.1",
@@ -63,13 +96,16 @@ on a shell to start data dumping.
 	"outputdirectory":"out",
 	"tempdirectory":"tmp",
 	"threads" : "2",
+	"schemafile":"headerlookup.json",
 	"fastexport":{
-		"logDatabase": "log_db",
-		"logTable" : "log_table",
+		"logDatabase": "sb_hri",
+		"logTable" : "your_log_table_name",
 		"sessions": "24",
 		"rowPrefix" : "ROW_START;",
-        "jobFilename": "fejob.fx"
+		"postDumpAction": "java -jar ./eva-data.jar devconfig.json",
+		"jobFilename": "headerTest.json"
 	},
+	"headerFile":"headerlookup.json",
 	"databases": {
 		"startYear":"2010",
 		"endYear":"2016",
@@ -77,13 +113,36 @@ on a shell to start data dumping.
 				{
 					"name":"ACC_ADB",
 					"views": [
-						"AVK_ADB_T_Arzt_GOP"
-					]
+						{ "AVK_ADB_T_Arzt_GOP": {
+							"column":["PID"],
+							"where": {
+							"Multiplikator":[{"1":"", "type":"NUMERIC", "operator":"="}]
+						},
+						"join":[
+							{
+								"table":"tab",
+								"type":"inner",
+								"column":["*"],
+								"on": "columnname",
+								"where":{
+									"column":[
+									{"value":"38291", "type":"STRING", "operator":"="},
+									{"value":"C50", "type":"STRING", "operator":"like"}
+									]
+								}
+							}
+						]	
+						}
+					}
+					],					
+					"where":{
+						"h2ik":[{"value":"kv_h2ik", "type":"STRING", "operator":"="}]
+					}
 				},
 				{
 					"name":"ACC_FDB",
 					"views": [
-						"AVK_FDB_T_Arzt_GOP"
+						{"AVK_FDB_T_Arzt_GOP":{}}
 					]
 				}
 			]

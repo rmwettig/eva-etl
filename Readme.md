@@ -60,7 +60,7 @@ on a shell to start data dumping.
             * `where` **_object_** *optional*: keys correspond to restricted columns.
                 * `columnName` **_array(object)_**: column restrictions. Entries are OR-ed
                     * `value`: value that this column is compared against
-                    * `type`: `NUMERIC` or `STRING`
+                    * `type`: `NUMERIC`, `STRING` or `COLUMN`. `NUMERIC` indicates that the `value` term is not further modified (like adding apostrophies).
                     * `operator`: SQL comparing symbol
             * `join` **array(object)** *optional*: join clause for a query
                 * Each join object has the following fields

@@ -27,7 +27,6 @@ import de.ingef.eva.async.AsyncWriter;
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.configuration.ConfigurationDatabaseHostLoader;
 import de.ingef.eva.configuration.ConfigurationReader;
-import de.ingef.eva.configuration.DatabaseQueryConfiguration;
 import de.ingef.eva.configuration.JsonConfigurationReader;
 import de.ingef.eva.configuration.JsonInterpreter;
 import de.ingef.eva.configuration.SchemaDatabaseHostLoader;
@@ -184,12 +183,6 @@ public class Main {
 	private static void createFastExportJobs(Configuration configuration, Logger logger)
 	{
 		try (
-				Connection connection = DriverManager.getConnection(
-						configuration.createFullConnectionUrl(),
-						configuration.getUsername(),
-						configuration.getUserpassword()
-						);
-				Statement stm = connection.createStatement();
 				BufferedWriter writer = new BufferedWriter(new FileWriter(configuration.getFastExportConfiguration().getJobFilename()))
 				) {
 			StringBuilder tasks = new StringBuilder();
@@ -225,15 +218,6 @@ public class Main {
 			writer.write(job);
 			threadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
 
-		} catch (SQLException e) {
-			if(logger != null)
-			{
-				logger.error("Could not execute query.\nStackTrace: {}", e.getStackTrace());
-			}
-			else
-			{
-				e.printStackTrace();
-			}
 		} catch (IOException e1) {
 			if(logger != null)
 			{

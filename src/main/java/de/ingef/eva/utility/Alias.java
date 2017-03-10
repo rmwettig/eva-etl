@@ -1,12 +1,12 @@
 package de.ingef.eva.utility;
 
-public final class Aliaser {
+public final class Alias {
 	
 	private int _position = 0;
 	private char _currentChar = 'a';
 	private char[] _alias;
 	
-	public Aliaser(int maxLength)
+	public Alias(int maxLength)
 	{
 		_alias = new char[maxLength];
 	}
@@ -54,5 +54,13 @@ public final class Aliaser {
 		//if no 'z' was found begin a new position
 		if(i < 0)
 			_alias[++_position] = _currentChar;
+	}
+
+	public void reset() {
+		_position = 0;
+		_currentChar = 'a';
+		int i = 0;
+		while(_alias[i] != '\u0000')
+			_alias[i++] = '\u0000';
 	}
 }

@@ -41,6 +41,7 @@ import de.ingef.eva.processor.RemovePattern;
 import de.ingef.eva.query.Query;
 import de.ingef.eva.query.QueryCreator;
 import de.ingef.eva.query.SimpleQueryCreator;
+import de.ingef.eva.utility.Alias;
 import de.ingef.eva.utility.Dataset;
 import de.ingef.eva.utility.Helper;
 
@@ -195,11 +196,9 @@ public class Main {
 			ExecutorService threadPool = Executors.newCachedThreadPool();
 			DatabaseHost schema = new SchemaDatabaseHostLoader().loadFromFile(configuration.getSchemaFilePath());
 			QueryCreator queryCreator = new SimpleQueryCreator();
+			queryCreator.setAliasFactory(new Alias(120));
 			JsonInterpreter jsonInterpreter = new SqlJsonInterpreter(queryCreator, schema, logger);
 			Collection<Query> jobs = jsonInterpreter.interpret(configuration.getDatabaseNode());
-			/**
-			 * need select clause formatter 
-			 */
 			
 			for(Query q : jobs)
 			{

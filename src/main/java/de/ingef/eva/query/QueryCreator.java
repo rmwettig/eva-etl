@@ -1,5 +1,7 @@
 package de.ingef.eva.query;
 
+import de.ingef.eva.utility.Alias;
+
 public interface QueryCreator {
 	public void setDatabase(String name);
 	public void addTable(String name);
@@ -8,5 +10,6 @@ public interface QueryCreator {
 	public void addWhere(String table, String column, String value, String operator, String type);
 	public void startOrGroup();
 	public void endOrGroup(String table);
+	public void setAliasFactory(Alias alias);
 	public Query buildQuery();
 }

@@ -4,11 +4,11 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-public class AliaserTest {
+public class AliasTest {
 
 	@Test
 	public void testHasNext() {
-		Aliaser a = new Aliaser(1);
+		Alias a = new Alias(1);
 		for(int i = 0; i < 26; i++)
 			a.findNextAlias();
 		
@@ -17,7 +17,7 @@ public class AliaserTest {
 
 	@Test
 	public void testFindNextAlias() {
-		Aliaser a = new Aliaser(2);
+		Alias a = new Alias(2);
 		a.findNextAlias();
 		String shouldBeB = a.findNextAlias();
 		assertEquals("b", shouldBeB);
@@ -25,7 +25,7 @@ public class AliaserTest {
 	
 	@Test
 	public void testAliasOverflow() {
-		Aliaser a = new Aliaser(2);
+		Alias a = new Alias(2);
 		for(int i = 0; i < 26; i++)
 			a.findNextAlias();
 		String shouldBeZA = a.findNextAlias();

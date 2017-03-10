@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import de.ingef.eva.database.Column;
 import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
+import de.ingef.eva.database.Table;
 import de.ingef.eva.query.Query;
 import de.ingef.eva.query.QueryCreator;
 import de.ingef.eva.utility.Helper;
@@ -136,10 +137,19 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 			//there is only a single key per object
 			String tableName = tableNames.next();
 			//do not return here as one view might fail but others work
-			if(schemaDatabase.findTableByName(tableName).findColumnByName("Bezugsjahr") != null)
-				processViewByYear(source, view, tableName, "Bezugsjahr", schemaDatabase, years);
+			Table t = schemaDatabase.findTableByName(tableName);
+			if(t != null)
+			{
+				if(t.findColumnByName("Bezugsjahr") != null)
+					processViewByYear(source, view, tableName, "Bezugsjahr", schemaDatabase, years);
+				else
+					processView(source, view, tableName, schemaDatabase);
+			}
 			else
-				processView(source, view, tableName, schemaDatabase);
+			{
+				if(_logger != null) _logger.warn("Did not found an table entry for '{}' in database '{}'", tableName, schemaDatabase.getName());
+			}
+			
 		}
 		
 		return true;

@@ -1,10 +1,22 @@
 {
 	"server":"192.168.146.1",
 	"url":"jdbc:teradata://",
-	"username":"user",
-	"userpassword":"pwd",
+	"parameters":"TYPE=FASTEXPORT,CHARSET=UTF8",
+	"username":"",
+	"userpassword":"",
 	"outputdirectory":"out",
 	"tempdirectory":"tmp",
+	"threads" : "2",
+	"schemafile":"headerlookup.json",
+	"fastexport":{
+		"logDatabase": "sb_hri",
+		"logTable" : "mw_fexp_log",
+		"sessions": "24",
+		"rowPrefix" : "ROW_START;",
+		"postDumpAction": "java -jar ./eva-data.jar config.json",
+		"jobFilename": "eva-dump.fx"
+	},
+	"headerFile":"headerlookup.json",
 	"databases": {
 		"startYear":"2010",
 		"endYear":"2016",
@@ -12,56 +24,139 @@
 				{
 					"name":"ACC_ADB",
 					"views": [
-						"AVK_ADB_T_AM_EVO",
-						"AVK_ADB_T_Arzt_Diagnose",
-						"AVK_ADB_T_Arzt_Fall",
-						"AVK_ADB_T_Arzt_GOP",
-						"AVK_ADB_T_Arzt_OPS",
-						"AVK_ADB_T_AU_Fall",
-						"AVK_ADB_T_DMP_Doku",
-						"AVK_ADB_T_HeMi_EVO",
-						"AVK_ADB_T_HiMi_EVO",
-						"AVK_ADB_T_HKP_EVO",
-						"AVK_ADB_T_KH_Diagnose",
-						"AVK_ADB_T_KH_Fall",
-						"AVK_ADB_T_KH_OPS",
-						"AVK_ADB_T_Leistungskosten",
-						"AVK_ADB_T_VERS_INFO",
-						"AVK_ADB_T_Vers_Region",
-						"AVK_ADB_T_Vers_SozDem",
-						"AVK_ADB_T_Vers_Stamm",
-						"AVK_ADB_T_Vers_Tage",
-						"AVK_ADB_T_VERS_TAGE_QUARTAL",
-						"AVK_ADB_T_ZA_Fall",
-						"AVK_ADB_T_ZA_LEISTDATEN"
-					]
+					  {"AVK_ADB_T_AM_EVO": {} },
+						{"AVK_ADB_T_Arzt_Diagnose": {}},
+						{"AVK_ADB_T_Arzt_Fall": {}},
+            {"AVK_ADB_T_Arzt_GOP": {}},
+            {"AVK_ADB_T_Arzt_OPS": {}},
+						{"AVK_ADB_T_AU_Fall": {}},
+            {"AVK_ADB_T_DMP_Doku": {}},
+            {"AVK_ADB_T_HeMi_EVO": {}},
+            {"AVK_ADB_T_HiMi_EVO": {}},
+						{"AVK_ADB_T_HKP_EVO": {}},
+						{"AVK_ADB_T_KH_Diagnose": {
+              "join": [
+                {
+                  "table": "AVK_ADB_T_KH_FALL",
+                  "column": ["verweildauer", "aufnahmedatum", "aufnahmegrund", "entlassungsgrund"],
+                  "type": "inner",
+                  "on": "pid",
+                  "where": {
+                    "kh_fall_id": [
+                      {
+                        "value": "AVK_ADB_T_KH_DIAGNOSE.KH_FALL_ID",
+                        "type":"COLUMN",
+                        "operator": "="
+                      }
+                    ]
+                  }
+                }
+              ]
+            }},
+						{"AVK_ADB_T_KH_Fall": {}},
+						{"AVK_ADB_T_KH_OPS": {
+               "join": [
+                {
+                  "table": "AVK_ADB_T_KH_FALL",
+                  "column": ["verweildauer", "aufnahmedatum", "aufnahmegrund", "entlassungsgrund"],
+                  "type": "inner",
+                  "on": "pid",
+                  "where": {
+                    "kh_fall_id": [
+                      {
+                        "value": "AVK_ADB_T_KH_DIAGNOSE.KH_FALL_ID",
+                        "type":"COLUMN",
+                        "operator": "="
+                      }
+                    ]
+                  }
+                }
+              ]
+            }},
+						{"AVK_ADB_T_Leistungskosten": {}},
+						{"AVK_ADB_T_VERS_INFO": {}},
+						{"AVK_ADB_T_Vers_Region": {}},
+						{"AVK_ADB_T_Vers_SozDem": {}},
+						{"AVK_ADB_T_Vers_Stamm": {}},
+						{"AVK_ADB_T_Vers_Tage": {}},
+						{"AVK_ADB_T_VERS_TAGE_QUARTAL": {}},
+						{"AVK_ADB_T_ZA_Fall": {}}, 
+						{"AVK_ADB_T_ZA_LEISTDATEN": {}}
+					],
+          "where":{
+            "h2ik": [
+              {"value": "101922757", "type": "STRING", "operator": "="},
+              {"value": "108036123", "type": "STRING", "operator": "="}
+            ]
+          }
 				},
 				{
 					"name":"ACC_FDB",
 					"views": [
-						"AVK_FDB_T_AM_EVO",
-						"AVK_FDB_T_Arzt_Diagnose",
-						"AVK_FDB_T_Arzt_Fall",
-						"AVK_FDB_T_Arzt_GOP",
-						"AVK_FDB_T_Arzt_OPS",
-						"AVK_FDB_T_AU_Fall",
-						"AVK_FDB_T_HeMi_EVO",
-						"AVK_FDB_T_HiMi_EVO",
-						"AVK_FDB_T_HKP_EVO",
-						"AVK_FDB_T_KH_Diagnose",
-						"AVK_FDB_T_KH_Fall",
-						"AVK_FDB_T_KH_OPS",
-						"AVK_FDB_T_Leistungskosten",
-						"AVK_FDB_T_VERS_INFO",
-						"AVK_FDB_T_Vers_Region",
-						"AVK_FDB_T_Vers_SozDem",
-						"AVK_FDB_T_Vers_Stamm",
-						"AVK_FDB_T_Vers_Tage",
-						"AVK_FDB_T_VERS_TAGE_QUARTAL",
-						"AVK_FDB_T_ZA_Fall",
-						"AVK_FDB_T_ZA_LEISTDATEN",
-						"AV_FDB_T_TEILNAHME"
-					]
+						{"AVK_FDB_T_AM_EVO": {}},
+						{"AVK_FDB_T_Arzt_Diagnose": {}},
+						{"AVK_FDB_T_Arzt_Fall": {}},
+            {"AVK_FDB_T_Arzt_GOP": {}},
+            {"AVK_FDB_T_Arzt_OPS": {}},
+						{"AVK_FDB_T_AU_Fall": {}},
+            {"AVK_FDB_T_HeMi_EVO": {}},
+            {"AVK_FDB_T_HiMi_EVO": {}},
+						{"AVK_FDB_T_HKP_EVO": {}},
+						{"AVK_FDB_T_KH_Diagnose": {
+               "join": [
+                {
+                  "table": "AVK_FDB_T_KH_FALL",
+                  "column": ["verweildauer", "aufnahmedatum", "aufnahmegrund", "entlassungsgrund"],
+                  "type": "inner",
+                  "on": "pid",
+                  "where": {
+                    "kh_fall_id": [
+                      {
+                        "value": "AVK_FDB_T_KH_DIAGNOSE.KH_FALL_ID",
+                        "type":"COLUMN",
+                        "operator": "="
+                      }
+                    ]
+                  }
+                }
+              ]
+            }},
+						{"AVK_FDB_T_KH_Fall": {}},
+						{"AVK_FDB_T_KH_OPS": {
+               "join": [
+                {
+                  "table": "AVK_FDB_T_KH_FALL",
+                  "column": ["verweildauer", "aufnahmedatum", "aufnahmegrund", "entlassungsgrund"],
+                  "type": "inner",
+                  "on": "pid",
+                  "where": {
+                    "kh_fall_id": [
+                      {
+                        "value": "AVK_FDB_T_KH_DIAGNOSE.KH_FALL_ID",
+                        "type":"COLUMN",
+                        "operator": "="
+                      }
+                    ]
+                  }
+                }
+              ]
+            }},
+						{"AVK_FDB_T_Leistungskosten": {}},
+						{"AVK_FDB_T_VERS_INFO": {}},
+						{"AVK_FDB_T_Vers_Region": {}},
+						{"AVK_FDB_T_Vers_SozDem": {}},
+						{"AVK_FDB_T_Vers_Stamm": {}},
+						{"AVK_FDB_T_Vers_Tage": {}},
+						{"AVK_FDB_T_VERS_TAGE_QUARTAL": {}},
+						{"AVK_FDB_T_ZA_Fall": {}},
+						{"AVK_FDB_T_ZA_LEISTDATEN": {}},
+						{"AV_FDB_T_TEILNAHME": {}}
+					],
+          "where":{
+            "flag_destatis": [
+              {"value": 1, "type":"NUMERIC", "operator": "="}
+            ]
+          }
 				}
 			]
 		}

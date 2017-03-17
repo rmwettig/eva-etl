@@ -25,7 +25,7 @@ public class SqlJsonInterpreterTest {
 		
 		JsonInterpreter sqlInterpreter = new SqlJsonInterpreter(new SimpleQueryCreator(), host, null);
 		JsonNode root = new ObjectMapper().readTree(new File("src/test/resources/configuration/sql.config.json"));
-		Collection<Query> jobs = sqlInterpreter.interpret(root);
+		Collection<Query> jobs = sqlInterpreter.interpret(root.path("databases"));
 		
 		assertEquals(2, jobs.size());
 		/**
@@ -46,13 +46,20 @@ public class SqlJsonInterpreterTest {
 		
 		//select clause
 		String part = job.substring(0, job.indexOf("from"));
-		assertTrue("No select", part.contains("select"));
-		assertTrue("No select entries", part.contains("database1.tablename.columnname1,database1.tablename.columnname2,database1.tablename2.columnname3"));
-		
+		assertTrue("No select", part.startsWith("select"));
+		String[] arr = part.split("\\|\\|';'\\|\\|");
+		assertEquals(4, arr.length);
+		assertEquals("';ROW_START'", arr[0].replace("select", "").trim());
+		assertEquals("coalesce(trim(database1.tablename.columnname1),'')", arr[1].trim());
+		assertEquals("coalesce(trim(database1.tablename.columnname2),'')", arr[2].trim());
+		assertEquals("coalesce(trim(database1.tablename2.columnname3),'')", arr[3].trim());
+				
 		//from clause
 		part = job.substring(job.indexOf("from"), job.indexOf("inner"));
 		assertTrue("No from", part.contains("from"));
-		assertTrue("No from entries", part.contains("database1.tablename"));
+		arr = part.split(",");
+		assertEquals(1, arr.length);
+		assertEquals("database1.tablename", arr[0].replace("from", "").trim());
 
 		//join clause
 		part = job.substring(job.indexOf("inner"), job.indexOf("on"));
@@ -65,12 +72,14 @@ public class SqlJsonInterpreterTest {
 		assertTrue("No on entry", part.contains("database1.tablename.onColumn=database1.tablename2.onColumn"));
 		
 		//where clause
-		part = job.substring(job.indexOf("where"), job.indexOf(";"));
+		part = job.substring(job.indexOf("where"), job.lastIndexOf(";"));
 		assertTrue("No where", part.contains("where"));
-		assertTrue("No where columnname1A", part.contains("(database1.tablename.columnname1 = 'A')"));
-		assertTrue("No where commonColumn", part.contains("(database1.tablename.commonColumn = 1337)"));
-		assertTrue("No where id OrGroup", part.contains("(database1.tablename2.id < 10 or database1.tablename2.id = 20 or database1.tablename2.id > 100)"));
-		
+		arr = part.replace("where", "").split("and");
+		assertEquals(3, arr.length);
+		assertEquals("(database1.tablename.columnname1 = 'A')", arr[0].trim());
+		assertEquals("(database1.tablename.commonColumn = 1337)", arr[1].trim());
+		assertEquals("(database1.tablename2.id < 10 or database1.tablename2.id = 20 or database1.tablename2.id > 100)", arr[2].trim());
+				
 		//count number of ands
 		int andCount = 0;
 		int start = 0;
@@ -94,7 +103,7 @@ public class SqlJsonInterpreterTest {
 		assertTrue("No select entries", part.contains("database2.tablename3.columnname4"));
 				
 		//from clause
-		part = job.substring(job.indexOf("from"), job.indexOf(";"));
+		part = job.substring(job.indexOf("from"), job.lastIndexOf(";"));
 		assertTrue("No from", part.contains("from"));
 		assertTrue("No from entries", part.contains("database2.tablename3"));
 		

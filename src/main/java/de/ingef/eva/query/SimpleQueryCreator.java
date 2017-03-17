@@ -193,7 +193,7 @@ public class SimpleQueryCreator implements QueryCreator {
 		_joins.clear();
 		_where.clear();
 		_tableAlias.clear();
-		_alias.reset();
+		if(_alias != null) _alias.reset();
 	}
 
 	private Query buildSelect() {

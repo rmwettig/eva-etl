@@ -8,12 +8,12 @@ public class SimpleQuery implements Query {
 	private String _name;
 	private String _query;
 	private Collection<String> _columns = new ArrayList<String>(10);
-	
+
 	public SimpleQuery(String query, Collection<String> columns) {
 		_query = query;
 		_columns = columns;
 	}
-	
+
 	@Override
 	public String getName() {
 		return _name;

@@ -7,11 +7,11 @@ public class TextTable implements Table {
 
 	private String _name = "";
 	private Collection<Column> _columns = new ArrayList<Column>();
-	
-	public TextTable(String name){
+
+	public TextTable(String name) {
 		_name = name;
 	}
-	
+
 	@Override
 	public void addColumn(Column c) {
 		_columns.add(c);
@@ -19,9 +19,8 @@ public class TextTable implements Table {
 
 	@Override
 	public Column findColumnByName(String name) {
-		for(Column c : _columns)
-		{
-			if(c.getName().equalsIgnoreCase(name))
+		for (Column c : _columns) {
+			if (c.getName().equalsIgnoreCase(name))
 				return c;
 		}
 		return null;

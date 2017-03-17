@@ -20,15 +20,10 @@ import de.ingef.eva.database.TextTable;
 public class SchemaDatabaseHostLoader implements DatabaseHostLoader {
 
 	/**
-	 * Processes a JSON file with the following structure:
-	 * {
-	 * 	"databasename":
-	 * 		{
-	 * 			"tablename": ["columnname1", "columnname2" ...],
-	 * 			"tablename2": [...],
-	 * 		},
-	 * 	"databasename2":{...}
-	 * }
+	 * Processes a JSON file with the following structure: { "databasename": {
+	 * "tablename": ["columnname1", "columnname2" ...], "tablename2": [...], },
+	 * "databasename2":{...} }
+	 * 
 	 * @param root
 	 */
 	@Override
@@ -38,20 +33,17 @@ public class SchemaDatabaseHostLoader implements DatabaseHostLoader {
 			JsonNode root = mapper.readTree(new File(file));
 			TextSchema schema = new TextSchema();
 			Iterator<String> dbIter = root.fieldNames();
-			
-			while(dbIter.hasNext())
-			{
+
+			while (dbIter.hasNext()) {
 				String dbName = dbIter.next();
 				Database db = new TextDatabase(dbName);
 				JsonNode tables = root.path(dbName);
 				Iterator<String> tableIter = tables.fieldNames();
-				while(tableIter.hasNext())
-				{
+				while (tableIter.hasNext()) {
 					String tableName = tableIter.next();
 					Table t = new TextTable(tableName);
 					JsonNode columns = tables.path(tableName);
-					for(JsonNode column : columns)
-					{
+					for (JsonNode column : columns) {
 						Column c = new TextColumn(column.asText());
 						t.addColumn(c);
 					}
@@ -59,7 +51,7 @@ public class SchemaDatabaseHostLoader implements DatabaseHostLoader {
 				}
 				schema.addDatabase(db);
 			}
-			
+
 			return schema;
 		} catch (JsonProcessingException e) {
 			e.printStackTrace();

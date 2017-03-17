@@ -1,7 +1,6 @@
 package de.ingef.eva.constant;
 
-public final class Templates 
-{
+public final class Templates {
 	public static final String QUERY_COLUMNS = "help table %s.%s";
 	public static final String COLUMN_PROCESSING = "coalesce(trim(%s),'')";
 	public static final String QUERY_FORMAT = "select\n%s\nfrom %s.%s;";

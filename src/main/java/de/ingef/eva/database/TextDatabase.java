@@ -7,16 +7,15 @@ public class TextDatabase implements Database {
 
 	private Collection<Table> _tables = new ArrayList<Table>();
 	private String _name;
-	
-	public TextDatabase(String name){
+
+	public TextDatabase(String name) {
 		_name = name;
 	}
-	
+
 	@Override
 	public Table findTableByName(String name) {
-		for(Table t : _tables)
-		{
-			if(t.getName().equalsIgnoreCase(name))
+		for (Table t : _tables) {
+			if (t.getName().equalsIgnoreCase(name))
 				return t;
 		}
 		return null;

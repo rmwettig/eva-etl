@@ -11,7 +11,7 @@ import java.util.Map.Entry;
 import com.fasterxml.jackson.databind.JsonNode;
 
 public class Configuration {
-	
+
 	private String _server;
 	private String _connectionUrl;
 	private String _connectionParameters;
@@ -24,141 +24,127 @@ public class Configuration {
 	private DatabaseQueryConfiguration _databaseQueryConfiguration;
 	private FastExportConfiguration _fastExportConfiguration;
 	private JsonNode _databasesNode;
-	
-	public Configuration(JsonNode root)
-	{
+
+	public Configuration(JsonNode root) {
 		prepareConnectionConfiguration(root);
 		prepareDatabaseConfiguration(root);
 		_fastExportConfiguration = new FastExportConfiguration(root);
 	}
-	
+
 	public String createFullConnectionUrl() {
 		return String.format("%s%s/%s", _connectionUrl, _server, _connectionParameters);
 	}
-	
-	private void prepareConnectionConfiguration(JsonNode root)
-	{
+
+	private void prepareConnectionConfiguration(JsonNode root) {
 		JsonNode node = root.path("server");
-		if(node.isMissingNode())
+		if (node.isMissingNode())
 			System.out.println("Missing 'server' configuration entry.");
 		_server = node.asText();
-		
+
 		node = root.path("url");
-		if(node.isMissingNode())
+		if (node.isMissingNode())
 			System.out.println("Missing 'connectionUrl' configuration entry.");
 		_connectionUrl = node.asText();
-		
+
 		node = root.path("parameters");
 		_connectionParameters = (!node.isMissingNode()) ? node.asText() : "";
-		
+
 		node = root.path("username");
-		if(node.isMissingNode())
+		if (node.isMissingNode())
 			System.out.println("Missing 'username' configuration entry.");
 		_username = node.asText();
-		
+
 		node = root.path("userpassword");
-		if(node.isMissingNode())
+		if (node.isMissingNode())
 			System.out.println("Missing 'userpassword' configuration entry.");
 		_userpassword = node.asText();
-		
+
 		node = root.path("outputdirectory");
-		if(node.isMissingNode())
+		if (node.isMissingNode())
 			System.out.println("Missing 'outdirectory' configuration entry.");
 		_outDirectory = node.asText();
-		
+
 		node = root.path("tempdirectory");
-		if(node.isMissingNode())
+		if (node.isMissingNode())
 			System.out.println("Missing 'tempdirectory' configuration entry.");
 		_tempDirectory = node.asText();
-		
+
 		node = root.path("schemafile");
-		if(node.isMissingNode())
+		if (node.isMissingNode())
 			System.out.println("Missing 'schemafile' configuration entry.");
 		_schemaFilePath = node.asText();
-		
+
 		node = root.path("threads");
-		if(node.isMissingNode())
+		if (node.isMissingNode())
 			System.out.println("Missing 'threads' configuration entry.");
-		
-		try
-		{
+
+		try {
 			_threadCount = Integer.parseInt(node.asText());
 			if (_threadCount < 1)
 				_threadCount = 1;
-		}
-		catch(NumberFormatException e)
-		{
+		} catch (NumberFormatException e) {
 			System.out.println("Error: 'threadCount' has an invalid value.");
 			_threadCount = 1;
 		}
-		
+
 	}
-	
-	private void prepareDatabaseConfiguration(JsonNode root) 
-	{
+
+	private void prepareDatabaseConfiguration(JsonNode root) {
 		JsonNode databaseNode = root.path("databases");
-		if(databaseNode.isMissingNode())
+		if (databaseNode.isMissingNode())
 			System.out.println("Missing 'databases' configuration entry");
 		_databasesNode = databaseNode;
 		JsonNode node = databaseNode.path("startYear");
-		if(node.isMissingNode())
+		if (node.isMissingNode())
 			System.out.println("Missing 'startYear' configuration entry");
 		int startYear = node.asInt();
-		
+
 		int defaultEndYear = Calendar.getInstance().get(Calendar.YEAR);
 		node = databaseNode.path("endYear");
-		if(node.isMissingNode())
-			System.out.println("Missing 'endYear' configuration entry. Using default value: "+  defaultEndYear);
+		if (node.isMissingNode())
+			System.out.println("Missing 'endYear' configuration entry. Using default value: " + defaultEndYear);
 		int endYear = node.asInt(defaultEndYear);
 		Collection<DatabaseEntry> entries = new ArrayList<DatabaseEntry>();
 		node = databaseNode.path("sources");
-		if(!node.isMissingNode() && node.isArray())
-		{
-			//for all databases
-			for(JsonNode source : node)
-			{
-				//get the name and associated views
+		if (!node.isMissingNode() && node.isArray()) {
+			// for all databases
+			for (JsonNode source : node) {
+				// get the name and associated views
 				String name = source.path("name").asText();
 				JsonNode viewsNode = source.path("views");
-				//skip current processing if views is not an array
-				if(!viewsNode.isArray())
-				{
+				// skip current processing if views is not an array
+				if (!viewsNode.isArray()) {
 					System.out.println(String.format("Views entry is not an array. Skipping '%s'.", name));
 					continue;
 				}
-				
-				//extract view names and save in hashmap
+
+				// extract view names and save in hashmap
 				Collection<String> viewNames = new ArrayList<String>(viewsNode.size());
-				for(JsonNode viewNode : viewsNode)
-				{
+				for (JsonNode viewNode : viewsNode) {
 					viewNames.add(viewNode.asText());
 				}
-				
+
 				Map<String, Collection<String>> globalConditions = null;
 				JsonNode conditions = source.path("conditions");
-				if(!conditions.isMissingNode())
-				{
+				if (!conditions.isMissingNode()) {
 					globalConditions = new HashMap<String, Collection<String>>();
-					Iterator<Entry<String,JsonNode>> iter = conditions.fields();
-					while(iter.hasNext())
-					{
-						//this corresponds to a column name entry
-						//associated with an array of values
-						Entry<String,JsonNode> entry = iter.next();
+					Iterator<Entry<String, JsonNode>> iter = conditions.fields();
+					while (iter.hasNext()) {
+						// this corresponds to a column name entry
+						// associated with an array of values
+						Entry<String, JsonNode> entry = iter.next();
 						JsonNode entryContent = entry.getValue();
 						Collection<String> values = new ArrayList<String>(entryContent.size());
-						for(JsonNode j : entryContent)
+						for (JsonNode j : entryContent)
 							values.add(j.asText());
 						globalConditions.put(entry.getKey(), values);
 					}
 				}
 				entries.add(new DatabaseEntry(name, viewNames, globalConditions));
 			}
-			
+
 			_databaseQueryConfiguration = new DatabaseQueryConfiguration(startYear, endYear, entries);
-		}
-		else
-		{
+		} else {
 			System.out.println("Missing 'sources' configuration entry or is not an array.");
 		}
 	}
@@ -214,15 +200,15 @@ public class Configuration {
 	public int getThreadCount() {
 		return _threadCount;
 	}
-	
-	public FastExportConfiguration getFastExportConfiguration()	{
+
+	public FastExportConfiguration getFastExportConfiguration() {
 		return _fastExportConfiguration;
 	}
 
 	public String getSchemaFilePath() {
 		return _schemaFilePath;
 	}
-	
+
 	public JsonNode getDatabaseNode() {
 		return _databasesNode;
 	}

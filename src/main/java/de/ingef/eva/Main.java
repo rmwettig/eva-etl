@@ -48,79 +48,59 @@ public class Main {
 	public static void main(String[] args) {
 		final Logger logger = LogManager.getRootLogger();
 
-		//first argument given to jar is the configuration json file
+		// first argument given to jar is the configuration json file
 		final String configFilePath = args[0];
-		if(!configFilePath.isEmpty())
-		{
+		if (!configFilePath.isEmpty()) {
 			final ConfigurationReader configReader = new JsonConfigurationReader();
 			final Configuration configuration = configReader.ReadConfiguration(configFilePath);
-			
-			if(args.length > 1)
-			{
-				if(args[1].equalsIgnoreCase("makejob"))
-				{
+
+			if (args.length > 1) {
+				if (args[1].equalsIgnoreCase("makejob")) {
 					createFastExportJobs(configuration, logger);
 					logger.info("Teradata FastExport job file created.");
-				}
-				else if(args[1].equalsIgnoreCase("fetchschema"))
-				{
+				} else if (args[1].equalsIgnoreCase("fetchschema")) {
 					DatabaseHost schema = new ConfigurationDatabaseHostLoader(logger).loadFromFile(configFilePath);
 					createHeaderLookup(configuration, schema, logger);
 					logger.info("Teradata column lookup created.");
-				}
-				else
-				{
+				} else {
 					logger.warn("Unknown command: {}.", args[1]);
 				}
-			}
-			else
-			{
+			} else {
 				final ExecutorService threadPool = Executors.newFixedThreadPool(configuration.getThreadCount());
 
-				try
-				{
+				try {
 					final long start = System.nanoTime();
 					Collection<Processor<String>> processors = createProcessors();
-					File[] filenames = new File(String.format("%s/.",configuration.getTempDirectory())).listFiles();
+					File[] filenames = new File(String.format("%s/.", configuration.getTempDirectory())).listFiles();
 					List<Dataset> dumpFiles = Helper.findDatasets(filenames);
-					
-					for(Dataset ds : dumpFiles)
-					{
-						AsyncDumpProcessor dumpCleaner = new AsyncDumpProcessor(
-															processors,
-															ds,
-															configuration.getOutDirectory(),
-															String.format("%s.csv", ds.getName()),
-															configuration.getFastExportConfiguration().getRowPrefix(),
-															logger);
+
+					for (Dataset ds : dumpFiles) {
+						AsyncDumpProcessor dumpCleaner = new AsyncDumpProcessor(processors, ds,
+								configuration.getOutDirectory(), String.format("%s.csv", ds.getName()),
+								configuration.getFastExportConfiguration().getRowPrefix(), logger);
 						threadPool.execute(dumpCleaner);
 					}
-					
+
 					threadPool.shutdown();
 					threadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 					logger.info("Time taken: {} min.", Helper.NanoSecondsToMinutes(System.nanoTime() - start));
 					logger.info("Done.");
-				}
-				catch (InterruptedException e) {
+				} catch (InterruptedException e) {
 					logger.error("Thread interrupted: {}", e.getMessage());
-				}
-				finally
-				{
-					if(!threadPool.isTerminated())
+				} finally {
+					if (!threadPool.isTerminated())
 						threadPool.shutdownNow();
 				}
 			}
-		}
-		else
-		{
+		} else {
 			logger.error("No config.json file given.");
 		}
 	}
-	
+
 	private static Collection<Processor<String>> createProcessors() {
-		//remove special characters like null or ack first
+		// remove special characters like null or ack first
 		Processor<String> removeControlSequences = new RemovePattern("[^\\p{Alnum};.-]");
-		//then remove leading and trailing whitespaces
+		// then remove leading and trailing whitespaces
 		Processor<String> removeBoundaryWhitespaces = new RemovePattern("^\\s+|\\s+$");
 		Collection<Processor<String>> processors = new ArrayList<Processor<String>>();
 		processors.add(removeControlSequences);
@@ -128,46 +108,39 @@ public class Main {
 		return processors;
 	}
 
-	
 	/**
 	 * Creates a JSON with column names for defined tables
+	 * 
 	 * @param configuration
 	 * @param logger
 	 */
 	private static void createHeaderLookup(Configuration configuration, DatabaseHost schema, Logger logger) {
-		try (
-				Connection connection = DriverManager.getConnection(
-						configuration.createFullConnectionUrl(),
-						configuration.getUsername(),
-						configuration.getUserpassword()
-						);
+		try (Connection connection = DriverManager.getConnection(configuration.createFullConnectionUrl(),
+				configuration.getUsername(), configuration.getUserpassword());
 				Statement stm = connection.createStatement();
-				JsonGenerator jsonWriter = new JsonFactory().createGenerator(new FileWriter(configuration.getSchemaFilePath()));
-				) {
-			 
-			jsonWriter.writeStartObject(); //json start
-			for(Database dbEntry : schema.getAllDatabases())
-			{
+				JsonGenerator jsonWriter = new JsonFactory()
+						.createGenerator(new FileWriter(configuration.getSchemaFilePath()));) {
+
+			jsonWriter.writeStartObject(); // json start
+			for (Database dbEntry : schema.getAllDatabases()) {
 				String db = dbEntry.getName();
-				jsonWriter.writeObjectFieldStart(db); //db object
-				for(Table table : dbEntry.getAllTables())
-				{
-					jsonWriter.writeFieldName(table.getName()); //array name
-					jsonWriter.writeStartArray(); //array bracket
-					
+				jsonWriter.writeObjectFieldStart(db); // db object
+				for (Table table : dbEntry.getAllTables()) {
+					jsonWriter.writeFieldName(table.getName()); // array name
+					jsonWriter.writeStartArray(); // array bracket
+
 					ResultSet rs = stm.executeQuery(String.format(Templates.QUERY_COLUMNS, db, table.getName()));
 
-					while(rs.next())
-					{
+					while (rs.next()) {
 						String column = rs.getString(1).trim();
 						jsonWriter.writeString(column);
 					}
 					rs.close();
 					jsonWriter.writeEndArray();// table
 				}
-				jsonWriter.writeEndObject();//db
+				jsonWriter.writeEndObject();// db
 			}
-			jsonWriter.writeEndObject();//json
+			jsonWriter.writeEndObject();// json
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (IOException e1) {
@@ -177,14 +150,13 @@ public class Main {
 
 	/**
 	 * Creates a Teradata FastExport script for dumping data
+	 * 
 	 * @param configuration
 	 * @param logger
 	 */
-	private static void createFastExportJobs(Configuration configuration, Logger logger)
-	{
-		try (
-				BufferedWriter writer = new BufferedWriter(new FileWriter(configuration.getFastExportConfiguration().getJobFilename()))
-				) {
+	private static void createFastExportJobs(Configuration configuration, Logger logger) {
+		try (BufferedWriter writer = new BufferedWriter(
+				new FileWriter(configuration.getFastExportConfiguration().getJobFilename()))) {
 			StringBuilder tasks = new StringBuilder();
 			ExecutorService threadPool = Executors.newCachedThreadPool();
 			DatabaseHost schema = new SchemaDatabaseHostLoader().loadFromFile(configuration.getSchemaFilePath());
@@ -192,73 +164,57 @@ public class Main {
 			queryCreator.setAliasFactory(new Alias(120));
 			JsonInterpreter jsonInterpreter = new SqlJsonInterpreter(queryCreator, schema, logger);
 			Collection<Query> jobs = jsonInterpreter.interpret(configuration.getDatabaseNode());
-			
-			for(Query q : jobs)
-			{
-				tasks.append(String.format(Templates.TASK_FORMAT,
-							configuration.getFastExportConfiguration().getSessions(),
-							configuration.getOutDirectory()+"/"+ q.getName()+".csv",
-							q.getQuery())
-						);
+
+			for (Query q : jobs) {
+				tasks.append(
+						String.format(Templates.TASK_FORMAT, configuration.getFastExportConfiguration().getSessions(),
+								configuration.getOutDirectory() + "/" + q.getName() + ".csv", q.getQuery()));
 				threadPool.execute(createHeaderWriterTask(configuration.getTempDirectory(), logger, q));
 			}
-			
+
 			threadPool.shutdown();
-			
+
 			String job = String.format(Templates.JOB_FORMAT,
 					configuration.getFastExportConfiguration().getLogDatabase(),
-					configuration.getFastExportConfiguration().getLogTable(),
-					configuration.getServer(),
-					configuration.getUsername(), 
-					configuration.getUserpassword(),
-					tasks.toString(),
-					configuration.getFastExportConfiguration().getPostDumpAction()
-					);
-			
+					configuration.getFastExportConfiguration().getLogTable(), configuration.getServer(),
+					configuration.getUsername(), configuration.getUserpassword(), tasks.toString(),
+					configuration.getFastExportConfiguration().getPostDumpAction());
+
 			writer.write(job);
 			threadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
 
 		} catch (IOException e1) {
-			if(logger != null)
-			{
+			if (logger != null) {
 				logger.error("Could not create job file.\nStackTrace: {}", e1.getStackTrace());
-			}
-			else
-			{
+			} else {
 				e1.printStackTrace();
 			}
 		} catch (InterruptedException e) {
-			if(logger != null)
-			{
+			if (logger != null) {
 				logger.error("Could not create header files.\nStackTrace: {}", e.getStackTrace());
-			}
-			else
-			{
+			} else {
 				e.printStackTrace();
 			}
 		}
 	}
-	
+
 	private static Runnable createHeaderWriterTask(String directory, Logger logger, Query q) {
 
 		List<String> headerList = new ArrayList<String>(1);
 		headerList.add(combineColumnHeaders(q.getSelectedColumns()));
-		return new AsyncWriter(directory+"/"+q.getName()+".header.csv",
-				headerList,
-				logger);
+		return new AsyncWriter(directory + "/" + q.getName() + ".header.csv", headerList, logger);
 	}
-	
+
 	private static String combineColumnHeaders(Collection<String> columns) {
 		StringBuilder header = new StringBuilder();
-		
-		for(String s : columns)
-		{
+
+		for (String s : columns) {
 			header.append(s);
 			header.append(",");
 		}
-		//remove trailing semicolon
-		header.deleteCharAt(header.length()-1);
-		
+		// remove trailing semicolon
+		header.deleteCharAt(header.length() - 1);
+
 		return header.toString();
 	}
 }

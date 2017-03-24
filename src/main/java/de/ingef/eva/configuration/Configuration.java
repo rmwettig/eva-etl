@@ -10,13 +10,14 @@ import java.util.Map.Entry;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+
 public class Configuration {
 
 	private String _server;
 	private String _connectionUrl;
 	private String _connectionParameters;
 	private String _username;
-	private String _userpassword;
+	private String _password;
 	private String _outDirectory;
 	private String _tempDirectory;
 	private String _schemaFilePath;
@@ -24,10 +25,12 @@ public class Configuration {
 	private DatabaseQueryConfiguration _databaseQueryConfiguration;
 	private FastExportConfiguration _fastExportConfiguration;
 	private JsonNode _databasesNode;
-
+	private Collection<Mapping> _mappings; 
+	
 	public Configuration(JsonNode root) {
 		prepareConnectionConfiguration(root);
 		prepareDatabaseConfiguration(root);
+		prepareMappingConfiguration(root);
 		_fastExportConfiguration = new FastExportConfiguration(root);
 	}
 
@@ -57,7 +60,7 @@ public class Configuration {
 		node = root.path("userpassword");
 		if (node.isMissingNode())
 			System.out.println("Missing 'userpassword' configuration entry.");
-		_userpassword = node.asText();
+		_password = node.asText();
 
 		node = root.path("outputdirectory");
 		if (node.isMissingNode())
@@ -148,7 +151,43 @@ public class Configuration {
 			System.out.println("Missing 'sources' configuration entry or is not an array.");
 		}
 	}
-
+	
+	private void prepareMappingConfiguration(JsonNode root) {
+		JsonNode mappings = root.path("mappings");
+		
+		if(mappings.isMissingNode()) return;
+		
+		_mappings = new ArrayList<Mapping>();
+		
+		for(JsonNode mapping : mappings) {
+			JsonNode sourceNode = mapping.path("source");
+			JsonNode sourceKeyColumnNode = mapping.path("sourceKeyColumn");
+			JsonNode targetKeyColumnNode = mapping.path("targetKeyColumn");
+			JsonNode targets = mapping.path("targets");
+			
+			if(	sourceNode.isMissingNode() ||
+				sourceKeyColumnNode.isMissingNode() ||
+				targetKeyColumnNode.isMissingNode() ||
+				targets.isMissingNode()) return;
+			
+			Collection<Target> unmappedFiles = new ArrayList<Target>();
+			
+			for(JsonNode target : targets) {
+				JsonNode data = target.path("data");
+				JsonNode header = target.path("header");
+				
+				if(data.isMissingNode() || header.isMissingNode()) continue;
+				
+				unmappedFiles.add(new Target(header.asText(), data.asText()));
+			}
+			String source = sourceNode.asText();
+			String sourceKeyColumn = sourceKeyColumnNode.asText();
+			String targetKeyColumn = targetKeyColumnNode.asText();
+			
+			_mappings.add(new Mapping(source, sourceKeyColumn, targetKeyColumn, unmappedFiles));
+		}
+	}
+	
 	public String getServer() {
 		return _server;
 	}
@@ -173,12 +212,12 @@ public class Configuration {
 		this._username = username;
 	}
 
-	public String getUserpassword() {
-		return _userpassword;
+	public String getPassword() {
+		return _password;
 	}
 
-	public void setUserpassword(String userpassword) {
-		this._userpassword = userpassword;
+	public void setPassword(String password) {
+		this._password = password;
 	}
 
 	public DatabaseQueryConfiguration getDatabaseQueryConfiguration() {
@@ -211,5 +250,9 @@ public class Configuration {
 
 	public JsonNode getDatabaseNode() {
 		return _databasesNode;
+	}
+	
+	public Collection<Mapping> getMappings() {
+		return _mappings;
 	}
 }

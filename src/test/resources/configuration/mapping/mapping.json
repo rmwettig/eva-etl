@@ -1,0 +1,20 @@
+{
+	"threads": "2",
+	"mappings": [
+		{
+			"source": "src/test/resources/configuration/mapping/egk2pid.csv",
+			"targets": [
+				{
+					"data" : "src/test/resources/configuration/mapping/unmapped1.csv",
+					"header" : "src/test/resources/configuration/mapping/unmapped1.header.csv"
+				},
+				{
+					"data" : "src/test/resources/configuration/mapping/unmapped2.csv",
+					"header" : "src/test/resources/configuration/mapping/unmapped2.header.csv"
+				}
+			],
+			"sourceKeyColumn" : "egk_nr",
+			"targetKeyColumn" : "pid" 
+		}
+	]
+}

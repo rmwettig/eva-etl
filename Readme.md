@@ -71,6 +71,13 @@ on a shell to start data dumping.
                     * `where` *optional*: as above
         * `where` **_object_**: object whose field names denote column names. Queried values are given as an array. Values are OR-ed, columns are AND-ed. Restrictions are imposed on all tables.
             * Example: `"where":{ "h2ik":["7473898", "7474839"] }`
+* `mappings` **_array(object)_** *optional*: defines id mapping tasks 
+  * `source`: path to the id mapping
+  * `sourceKeyColumn`: column in the data file whose entries should be mapped
+  * `targetKeyColumn`: column name for the appended ids
+  * `targets` **_array(object)_**: files that can be mapped against the same mapping file
+    * `data`: path to the unmapped data file
+    * `header`: path to the header file for the data
 
 ### Option Nodes
 #### Where object
@@ -146,6 +153,17 @@ on a shell to start data dumping.
 					]
 				}
 			]
-		}
+		},
+    "mappings": [
+      {
+        "source": "path/to/map.csv",
+        "targets": [
+          { "data": "path/to/data/file", "header": "path/to/header"},
+          { "data": "path/to/data/file2", "header": "path/to/header2"}
+        ],
+        "sourceKeyColumn": "egk_nr",
+        "targetKeyColumn": "pid"
+      }
+	]
 }
 ```

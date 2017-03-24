@@ -1,15 +1,25 @@
 package de.ingef.eva.utility;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.Logger;
 
@@ -129,5 +139,47 @@ public class Helper {
 				merged.append(delimiter);
 		}
 		return merged;
+	}
+
+	public static Map<String, String> createMappingFromFile(String fileName) {
+		final Map<String, String> mapping = new HashMap<String,String>();
+		try (BufferedReader reader = new BufferedReader(new FileReader(fileName));) {
+			String line;
+			while((line = reader.readLine()) != null) {
+				int separatorIndex = line.indexOf(";");
+				mapping.put(line.substring(0, separatorIndex), line.substring(separatorIndex + 1));
+			}
+			
+			return mapping;
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return mapping;
+	}
+	
+	/**
+	 * Finds the index a named column by examining the header file
+	 * @param fileName header
+	 * @param delimiter column separator
+	 * @param columnName searched column
+	 * @return column index or -1 if column was not found
+	 */
+	public static int findColumnIndexfromHeaderFile(String fileName, String delimiter, String columnName) {
+		try (BufferedReader reader = new BufferedReader(new FileReader(fileName));) {
+			final String[] header = reader.readLine().split(delimiter);
+			
+			for(int i = 0; i < header.length; i++) {
+				if(header[i].equalsIgnoreCase(columnName)) {
+					return i;
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return -1;
 	}
 }

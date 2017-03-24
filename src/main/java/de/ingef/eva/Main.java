@@ -168,7 +168,7 @@ public class Main {
 			for (Query q : jobs) {
 				tasks.append(
 						String.format(Templates.TASK_FORMAT, configuration.getFastExportConfiguration().getSessions(),
-								configuration.getOutDirectory() + "/" + q.getName() + ".csv", q.getQuery()));
+								configuration.getTempDirectory() + "/" + q.getName() + ".csv", q.getQuery()));
 				threadPool.execute(createHeaderWriterTask(configuration.getTempDirectory(), logger, q));
 			}
 

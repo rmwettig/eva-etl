@@ -13,7 +13,7 @@
 		"logTable" : "mw_fexp_log",
 		"sessions": "24",
 		"rowPrefix" : "ROW_START;",
-		"postDumpAction": "java -jar ./eva-data.jar config.json",
+		"postDumpAction": "java -jar ./eva-data.jar P:/eva-dump-configs/config.json",
 		"jobFilename": "eva-dump.fx"
 	},
 	"headerFile":"headerlookup.json",
@@ -38,7 +38,7 @@
               "join": [
                 {
                   "table": "AVK_ADB_T_KH_FALL",
-                  "column": ["verweildauer", "aufnahmedatum", "aufnahmegrund", "entlassungsgrund"],
+                  "column": ["verweildauer", "aufnahmedatum", "aufnahmegrund", "entlassungsgrund", "behandlungstyp"],
                   "type": "inner",
                   "on": "pid",
                   "where": {
@@ -58,7 +58,7 @@
                "join": [
                 {
                   "table": "AVK_ADB_T_KH_FALL",
-                  "column": ["verweildauer", "aufnahmedatum", "aufnahmegrund", "entlassungsgrund"],
+                  "column": ["verweildauer", "aufnahmedatum", "aufnahmegrund", "entlassungsgrund", "behandlungstyp"],
                   "type": "inner",
                   "on": "pid",
                   "where": {
@@ -106,7 +106,7 @@
                "join": [
                 {
                   "table": "AVK_FDB_T_KH_FALL",
-                  "column": ["verweildauer", "aufnahmedatum", "aufnahmegrund", "entlassungsgrund"],
+                  "column": ["verweildauer", "aufnahmedatum", "aufnahmegrund", "entlassungsgrund", "behandlungstyp"],
                   "type": "inner",
                   "on": "pid",
                   "where": {
@@ -126,7 +126,7 @@
                "join": [
                 {
                   "table": "AVK_FDB_T_KH_FALL",
-                  "column": ["verweildauer", "aufnahmedatum", "aufnahmegrund", "entlassungsgrund"],
+                  "column": ["verweildauer", "aufnahmedatum", "aufnahmegrund", "entlassungsgrund", "behandlungstyp"],
                   "type": "inner",
                   "on": "pid",
                   "where": {

@@ -48,6 +48,7 @@ to add an alternative id.
     * Example: `'out'` would specify a directory that lies in the same directory where the jar was executed.
 * `tempdirectory`: intermediate files are placed here
 * `threads`: determine the number of used threads. Only numbers equal to or larger than 1 are valid. Defaults to `1`.
+* `schemafile`: file to which the database scheme is written
 * `fastexport` **_object_**: configuration of Teradata's FastExport tool
     * `logDatabase`: database where the log table should be created
     * `logTable`: name of the log table
@@ -57,6 +58,7 @@ to add an alternative id.
     * `postDumpAction`: shell command that is run after dumping has completed
         * Example: `java -jar absolute/path/to/<jar>.jar <config>.json`
         * Example 2: `java -jar ./<jar>.jar <config>.json`
+* `headerFile`: json file which contains a db -> table -> column(s) mapping. Can be identical with `schemafile`.
 * `databases` **_object_**: contains global year filter and database sources
     * `startYear`: earliest year that should be fetched
     * `endYear`: latest year that should be fetched. *optional*

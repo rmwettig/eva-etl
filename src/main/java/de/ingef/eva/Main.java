@@ -73,7 +73,7 @@ public class Main {
 					logger.warn("Unknown command: {}.\nValid commands are:\n\t makejob\n\fetchschema\n\tmap", args[1]);
 				}
 			} else {
-				dumpDatabase(logger, configuration);
+				cleanData(logger, configuration);
 			}
 		} else {
 			logger.error("No config.json file given.");
@@ -142,6 +142,7 @@ public class Main {
 				new FileWriter(configuration.getFastExportConfiguration().getJobFilename()))) {
 			StringBuilder tasks = new StringBuilder();
 			ExecutorService threadPool = Executors.newCachedThreadPool();
+			//schema is used to look up tables or columns in a table
 			DatabaseHost schema = new SchemaDatabaseHostLoader().loadFromFile(configuration.getSchemaFilePath());
 			QueryCreator queryCreator = new SimpleQueryCreator();
 			queryCreator.setAliasFactory(new Alias(120));
@@ -201,7 +202,7 @@ public class Main {
 		return header.toString();
 	}
 
-	private static void dumpDatabase(Logger logger, Configuration configuration) {
+	private static void cleanData(Logger logger, Configuration configuration) {
 		final ExecutorService threadPool = Executors.newFixedThreadPool(configuration.getThreadCount());
 
 		try {

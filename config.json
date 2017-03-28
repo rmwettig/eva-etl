@@ -10,7 +10,7 @@
 	"schemafile": "headerlookup.json",
 	"fastexport": {
 		"logDatabase": "sb_hri",
-		"logTable": "mw_fexp_log",
+		"logTable": "mw_fexp_dev_log",
 		"sessions": "24",
 		"rowPrefix": "ROW_START;",
 		"postDumpAction": "java -jar ./eva-data.jar P:/eva-dump-configs/config.json",
@@ -25,20 +25,10 @@
 				"name": "ACC_SPECTRUM",
 				"views": [
 					{
-						"AVK_AU_FALL": {
-							"mapping": {
-								"filename": "map.csv",
-								"columns": [ { "source":"egk_nr", "target":"pid"} ]
-							}
-						}
+						"AVK_AU_FALL": {}
 					},
 					{
-						"AVK_AU_FALL_DIA": {
-							"mapping": {
-								"filename": "map.csv",
-								"columns": [ { "source":"egk_nr", "target":"pid"} ]
-							}
-						}
+						"AVK_AU_FALL_DIA": {}
 					}
 				]
 			},

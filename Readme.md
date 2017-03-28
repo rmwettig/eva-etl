@@ -7,7 +7,7 @@ In a second step data parts are validated and combined into a single CSV file.
 
 ## Usage
 
-### 1. Create Database schema file 
+### 1. Create database schema file 
 Call
 
         `java -jar eva-data.jar <config.json> fetchschema`
@@ -27,6 +27,13 @@ Call
         `fexp < <fastExportJob>.fx`
 
 on a shell to start data dumping.
+
+### 4. Append id mapping
+Call
+
+        `java -jar eva-data.jar <config.json> map`
+
+to add an alternative id.
 
 ## Config.json file fields
 * `server`: server name or IP

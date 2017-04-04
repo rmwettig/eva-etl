@@ -23,6 +23,11 @@ public class Configuration {
 		prepareConnectionConfiguration(root);
 		prepareMappingConfiguration(root);
 		_fastExportConfiguration = new FastExportConfiguration(root);
+		
+		JsonNode databaseNode = root.path("databases");
+		if (databaseNode.isMissingNode())
+			System.out.println("Missing 'databases' configuration entry");
+		_databasesNode = databaseNode;
 	}
 
 	public String createFullConnectionUrl() {
@@ -71,16 +76,9 @@ public class Configuration {
 		node = root.path("threads");
 		if (node.isMissingNode())
 			System.out.println("Missing 'threads' configuration entry.");
-
-		try {
-			_threadCount = Integer.parseInt(node.asText());
-			if (_threadCount < 1)
-				_threadCount = 1;
-		} catch (NumberFormatException e) {
-			System.out.println("Error: 'threadCount' has an invalid value.");
-			_threadCount = 1;
-		}
-
+		_threadCount = node.asInt(1);
+		
+		if(_threadCount < 0) _threadCount = 1;
 	}
 	
 	private void prepareMappingConfiguration(JsonNode root) {

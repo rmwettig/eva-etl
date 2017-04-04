@@ -62,6 +62,7 @@ to add an alternative id.
 * `databases` **_object_**: contains global year filter and database sources
     * `startYear`: earliest year that should be fetched
     * `endYear`: latest year that should be fetched. *optional*
+    * `numberOfPreviousYears`: defines that number of years before the current year that are fetched. E.g. if `numberOfPreviousYears` is set to 3 and the current year is 2017 then the years 2014, 2015, 2016 and 2017 are fetched. This property excludes `startYear` and `endYear`.
     * `sources` **_array(object)_**: representing database sources
         * `name`: name of the database
         * `views`: array of table/view **_object_** s that are fetched. The only key is the view/table name
@@ -111,20 +112,21 @@ to add an alternative id.
 	"userpassword":"password",
 	"outputdirectory":"out",
 	"tempdirectory":"tmp",
-	"threads" : "2",
+	"threads" : 2,
 	"schemafile":"headerlookup.json",
 	"fastexport":{
 		"logDatabase": "sb_hri",
 		"logTable" : "your_log_table_name",
-		"sessions": "24",
+		"sessions": 24,
 		"rowPrefix" : "ROW_START;",
 		"postDumpAction": "java -jar ./eva-data.jar devconfig.json",
 		"jobFilename": "headerTest.json"
 	},
 	"headerFile":"headerlookup.json",
 	"databases": {
-		"startYear":"2010",
-		"endYear":"2016",
+		"startYear":2010,
+		"endYear":2016,
+    "numberOfPreviousYears": 3,
 		"sources":[
 				{
 					"name":"ACC_ADB",

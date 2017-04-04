@@ -88,6 +88,7 @@ public class Main {
 		Collection<Processor<String>> processors = new ArrayList<Processor<String>>();
 		processors.add(removeControlSequences);
 		processors.add(removeBoundaryWhitespaces);
+		
 		return processors;
 	}
 
@@ -153,7 +154,7 @@ public class Main {
 				tasks.append(
 						String.format(Templates.TASK_FORMAT, configuration.getFastExportConfiguration().getSessions(),
 								configuration.getTempDirectory() + "/" + q.getName() + ".csv", q.getQuery()));
-				threadPool.execute(createHeaderWriterTask(configuration.getTempDirectory(), logger, q));
+				createHeaderWriterTask(configuration.getTempDirectory(), logger, q, threadPool );
 			}
 
 			threadPool.shutdown();
@@ -182,11 +183,14 @@ public class Main {
 		}
 	}
 
-	private static Runnable createHeaderWriterTask(String directory, Logger logger, Query q) {
-
+	private static void createHeaderWriterTask(String directory, Logger logger, Query q, ExecutorService threadPool) {
 		List<String> headerList = new ArrayList<String>(1);
 		headerList.add(combineColumnHeaders(q.getSelectedColumns()));
-		return new AsyncWriter(directory + "/" + q.getName() + ".header.csv", headerList, logger);
+		String prefix = q.getName().substring(0, q.getName().indexOf("."));
+		String path = directory + "/" + prefix + ".header.csv";
+		File f = new File(path);
+		if(!f.exists())
+			threadPool.execute(new AsyncWriter(path, headerList, logger));
 	}
 
 	private static String combineColumnHeaders(Collection<String> columns) {
@@ -236,6 +240,7 @@ public class Main {
 		
 		if (mappings.size() == 0) {
 			logger.error("No mapping configuration found.");
+			
 			return;
 		}
 		for(Mapping m : mappings) {
@@ -244,6 +249,7 @@ public class Main {
 			
 			if(egk2pid == null) {
 				logger.error("Could not create mapping from file {}.", mapFile);
+				
 				return;
 			}
 			

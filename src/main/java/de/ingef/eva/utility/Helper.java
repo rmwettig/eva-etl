@@ -116,10 +116,10 @@ public class Helper {
 				for (File f : files) {
 					String fname = f.getName();
 					if (fname.startsWith(commonName)) {
-						if (!fname.contains("header"))
-							ds.addFile(f);
-						else
+						if (fname.endsWith("header.csv"))
 							ds.setHeaderFile(f);
+						else if(fname.endsWith("csv"))
+							ds.addFile(f);
 					}
 				}
 				datasets.add(ds);

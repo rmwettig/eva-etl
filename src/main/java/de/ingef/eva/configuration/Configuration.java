@@ -1,15 +1,8 @@
 package de.ingef.eva.configuration;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.fasterxml.jackson.databind.JsonNode;
-
 
 public class Configuration {
 
@@ -22,14 +15,12 @@ public class Configuration {
 	private String _tempDirectory;
 	private String _schemaFilePath;
 	private int _threadCount;
-	private DatabaseQueryConfiguration _databaseQueryConfiguration;
 	private FastExportConfiguration _fastExportConfiguration;
 	private JsonNode _databasesNode;
 	private Collection<Mapping> _mappings; 
 	
 	public Configuration(JsonNode root) {
 		prepareConnectionConfiguration(root);
-		prepareDatabaseConfiguration(root);
 		prepareMappingConfiguration(root);
 		_fastExportConfiguration = new FastExportConfiguration(root);
 	}
@@ -90,66 +81,6 @@ public class Configuration {
 			_threadCount = 1;
 		}
 
-	}
-
-	private void prepareDatabaseConfiguration(JsonNode root) {
-		JsonNode databaseNode = root.path("databases");
-		if (databaseNode.isMissingNode())
-			System.out.println("Missing 'databases' configuration entry");
-		_databasesNode = databaseNode;
-		JsonNode node = databaseNode.path("startYear");
-		if (node.isMissingNode())
-			System.out.println("Missing 'startYear' configuration entry");
-		int startYear = node.asInt();
-
-		int defaultEndYear = Calendar.getInstance().get(Calendar.YEAR);
-		node = databaseNode.path("endYear");
-		if (node.isMissingNode())
-			System.out.println("Missing 'endYear' configuration entry. Using default value: " + defaultEndYear);
-		int endYear = node.asInt(defaultEndYear);
-		Collection<DatabaseEntry> entries = new ArrayList<DatabaseEntry>();
-		node = databaseNode.path("sources");
-		if (!node.isMissingNode() && node.isArray()) {
-			// for all databases
-			for (JsonNode source : node) {
-				// get the name and associated views
-				String name = source.path("name").asText();
-				JsonNode viewsNode = source.path("views");
-				// skip current processing if views is not an array
-				if (!viewsNode.isArray()) {
-					System.out.println(String.format("Views entry is not an array. Skipping '%s'.", name));
-					continue;
-				}
-
-				// extract view names and save in hashmap
-				Collection<String> viewNames = new ArrayList<String>(viewsNode.size());
-				for (JsonNode viewNode : viewsNode) {
-					viewNames.add(viewNode.asText());
-				}
-
-				Map<String, Collection<String>> globalConditions = null;
-				JsonNode conditions = source.path("conditions");
-				if (!conditions.isMissingNode()) {
-					globalConditions = new HashMap<String, Collection<String>>();
-					Iterator<Entry<String, JsonNode>> iter = conditions.fields();
-					while (iter.hasNext()) {
-						// this corresponds to a column name entry
-						// associated with an array of values
-						Entry<String, JsonNode> entry = iter.next();
-						JsonNode entryContent = entry.getValue();
-						Collection<String> values = new ArrayList<String>(entryContent.size());
-						for (JsonNode j : entryContent)
-							values.add(j.asText());
-						globalConditions.put(entry.getKey(), values);
-					}
-				}
-				entries.add(new DatabaseEntry(name, viewNames, globalConditions));
-			}
-
-			_databaseQueryConfiguration = new DatabaseQueryConfiguration(startYear, endYear, entries);
-		} else {
-			System.out.println("Missing 'sources' configuration entry or is not an array.");
-		}
 	}
 	
 	private void prepareMappingConfiguration(JsonNode root) {
@@ -218,14 +149,6 @@ public class Configuration {
 
 	public void setPassword(String password) {
 		this._password = password;
-	}
-
-	public DatabaseQueryConfiguration getDatabaseQueryConfiguration() {
-		return _databaseQueryConfiguration;
-	}
-
-	public void setDatabaseQueryConfiguration(DatabaseQueryConfiguration databaseQueryConfiguration) {
-		this._databaseQueryConfiguration = databaseQueryConfiguration;
 	}
 
 	public String getOutDirectory() {

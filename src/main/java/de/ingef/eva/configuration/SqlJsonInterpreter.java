@@ -44,15 +44,8 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 				_logger.error("'databases' node is empty.");
 			return _jobs;
 		}
-
-		int startYear = extractStartYear(node);
-		if (startYear == -1) {
-			if (_logger != null)
-				_logger.error("Did not found 'startYear' key.");
-			return _jobs;
-		}
-		int endYear = extractEndYear(node);
-		int[] years = Helper.extractYears(startYear, endYear);
+		
+		int[] years = calculateYearSlices(node);
 
 		JsonNode sourcesNode = node.path("sources");
 		if (sourcesNode.isMissingNode() || !sourcesNode.isArray()) {
@@ -70,6 +63,29 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 				continue;
 		}
 		return _jobs;
+	}
+
+	private int[] calculateYearSlices(JsonNode node) {
+		int[] years = null;
+		JsonNode previousYears = node.path("numberOfPreviousYears");
+		
+		if(!previousYears.isMissingNode()) {
+			//take only the recent year
+			int endYear = Calendar.getInstance().get(Calendar.YEAR);
+			int startYear = endYear - previousYears.asInt();
+			years = Helper.extractYears(startYear, endYear);
+		} else {
+			int startYear = extractStartYear(node);
+			
+			if (startYear == -1) {
+				if (_logger != null)
+					_logger.error("Did not found 'startYear' key.");
+				return years;
+			}
+			int endYear = extractEndYear(node);
+			years = Helper.extractYears(startYear, endYear);
+		}
+		return years;
 	}
 
 	private int extractEndYear(JsonNode dbs) {

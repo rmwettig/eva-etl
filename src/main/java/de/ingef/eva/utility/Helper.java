@@ -5,8 +5,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -18,14 +16,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.apache.logging.log4j.Logger;
 
-import de.ingef.eva.configuration.DatabaseQueryConfiguration;
 
 public class Helper {
+	
 	public static long NanoSecondsToMinutes(long value) {
 		return value / 60000000000L;
 	}
@@ -60,17 +55,13 @@ public class Helper {
 
 		return names;
 	}
-
+	
 	/**
-	 * Calculates years that lie between start and and year
-	 * 
-	 * @param queryConfig
-	 * @return array of years including start and end years
+	 * Calculates years which lie between start and end
+	 * @param start
+	 * @param end
+	 * @return
 	 */
-	public static int[] extractYears(DatabaseQueryConfiguration queryConfig) {
-		return extractYears(queryConfig.getStartYear(), queryConfig.getEndYear());
-	}
-
 	public static int[] extractYears(int start, int end) {
 		// include start and end year
 		int delta = end - start + 1;
@@ -78,6 +69,7 @@ public class Helper {
 		for (int i = 0; i < delta; i++) {
 			years[i] = start + i;
 		}
+		
 		return years;
 	}
 
@@ -138,6 +130,7 @@ public class Helper {
 			if (iter.hasNext())
 				merged.append(delimiter);
 		}
+		
 		return merged;
 	}
 

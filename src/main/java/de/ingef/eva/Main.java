@@ -149,7 +149,8 @@ public class Main {
 			queryCreator.setAliasFactory(new Alias(120));
 			JsonInterpreter jsonInterpreter = new SqlJsonInterpreter(queryCreator, schema, logger);
 			Collection<Query> jobs = jsonInterpreter.interpret(configuration.getDatabaseNode());
-
+			
+			Helper.createFolders(configuration.getTempDirectory());
 			for (Query q : jobs) {
 				tasks.append(
 						String.format(Templates.TASK_FORMAT, configuration.getFastExportConfiguration().getSessions(),
@@ -216,6 +217,7 @@ public class Main {
 			List<Dataset> dumpFiles = Helper.findDatasets(filenames);
 
 			for (Dataset ds : dumpFiles) {
+				Helper.createFolders(configuration.getOutDirectory());
 				AsyncDumpProcessor dumpCleaner = new AsyncDumpProcessor(processors, ds, configuration.getOutDirectory(),
 						String.format("%s.csv", ds.getName()),
 						configuration.getFastExportConfiguration().getRowPrefix(), logger);

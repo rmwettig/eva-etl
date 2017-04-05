@@ -175,4 +175,10 @@ public class Helper {
 		
 		return -1;
 	}
+	
+	public static void createFolders(String path) {
+		File f = new File(path);
+		if(!f.exists())
+			f.mkdirs();
+	}
 }

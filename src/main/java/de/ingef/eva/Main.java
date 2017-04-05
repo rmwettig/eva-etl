@@ -216,8 +216,8 @@ public class Main {
 			File[] filenames = new File(String.format("%s/.", configuration.getTempDirectory())).listFiles();
 			List<Dataset> dumpFiles = Helper.findDatasets(filenames);
 
+			Helper.createFolders(configuration.getOutDirectory());
 			for (Dataset ds : dumpFiles) {
-				Helper.createFolders(configuration.getOutDirectory());
 				AsyncDumpProcessor dumpCleaner = new AsyncDumpProcessor(processors, ds, configuration.getOutDirectory(),
 						String.format("%s.csv", ds.getName()),
 						configuration.getFastExportConfiguration().getRowPrefix(), logger);

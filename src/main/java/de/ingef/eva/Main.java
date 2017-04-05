@@ -80,9 +80,10 @@ public class Main {
 	}
 
 	private static Collection<Processor<String>> createProcessors() {
-		// remove special characters like null or ack first
-		Processor<String> removeControlSequences = new ReplacePattern("[^\\p{Alnum};.-]", "");
-		// then remove leading and trailing whitespaces
+		//remove special characters like null or ack first
+		//but keep diacritics (ä, ö, ü, ß), § and € 
+		Processor<String> removeControlSequences = new ReplacePattern("[^\\p{Alnum};.\u00e4\u00f6\u00fc\u00df\u00a7\u20ac-]", "");
+		//then remove leading and trailing whitespaces
 		Processor<String> removeBoundaryWhitespaces = new ReplacePattern("^\\s+|\\s+$", "");
 		Collection<Processor<String>> processors = new ArrayList<Processor<String>>();
 		processors.add(removeControlSequences);

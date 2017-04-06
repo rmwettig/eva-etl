@@ -39,6 +39,7 @@ import de.ingef.eva.constant.Templates;
 import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
 import de.ingef.eva.database.Table;
+import de.ingef.eva.processor.Pattern;
 import de.ingef.eva.processor.Processor;
 import de.ingef.eva.processor.ReplacePattern;
 import de.ingef.eva.query.Query;
@@ -82,12 +83,25 @@ public class Main {
 	private static Collection<Processor<String>> createProcessors() {
 		//remove special characters like null or ack first
 		//but keep diacritics (ä, ö, ü, ß), § and € 
-		Processor<String> removeControlSequences = new ReplacePattern("[^\\p{Alnum};.\u00e4\u00f6\u00fc\u00df\u00a7\u20ac-]", "");
+		Processor<String> removeControlSequences = new ReplacePattern(Pattern.MATCH_CONTROLSYMBOLS, "");
+		Processor<String> replaceAe = new ReplacePattern(Pattern.MATCH_AE, "ä");
+		Processor<String> replaceOe = new ReplacePattern(Pattern.MATCH_OE, "ö");
+		Processor<String> replaceUe = new ReplacePattern(Pattern.MATCH_UE, "ü");
+		Processor<String> replaceSz = new ReplacePattern(Pattern.MATCH_SZ, "ß");
+		Processor<String> replaceParagraph = new ReplacePattern(Pattern.MATCH_PARAGRAPH, "§");
+		Processor<String> replaceEuro = new ReplacePattern(Pattern.MATCH_EURO, "€");
 		//then remove leading and trailing whitespaces
-		Processor<String> removeBoundaryWhitespaces = new ReplacePattern("^\\s+|\\s+$", "");
+		Processor<String> removeBoundaryWhitespaces = new ReplacePattern(Pattern.MATCH_TERMINAL_WHITESPACES, "");
+		
 		Collection<Processor<String>> processors = new ArrayList<Processor<String>>();
 		processors.add(removeControlSequences);
 		processors.add(removeBoundaryWhitespaces);
+		processors.add(replaceAe);
+		processors.add(replaceOe);
+		processors.add(replaceUe);
+		processors.add(replaceSz);
+		processors.add(replaceParagraph);
+		processors.add(replaceEuro);
 		
 		return processors;
 	}

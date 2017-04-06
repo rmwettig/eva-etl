@@ -25,23 +25,23 @@ public class RemovePatternTest {
 	@Test
 	public void testDiacriticsMapper() {
 		final String raw = "\u00e4\u00f6\u00fc\u00df\u00a7\u20ac";
-		String result = new ReplacePattern("\u00e4", "ä").process(raw);
-		result = new ReplacePattern("\u00e4", "ä").process(raw);
-		result = new ReplacePattern("\u00f6", "ö").process(result);
-		result = new ReplacePattern("\u00fc", "ü").process(result);
-		result = new ReplacePattern("\u00df", "ß").process(result);
-		result = new ReplacePattern("\u00a7", "§").process(result);
-		result = new ReplacePattern("\u20ac", "€").process(result);
+		
+		String result = new ReplacePattern(Pattern.MATCH_AE, "ä").process(raw);
+		result = new ReplacePattern(Pattern.MATCH_OE, "ö").process(result);
+		result = new ReplacePattern(Pattern.MATCH_UE, "ü").process(result);
+		result = new ReplacePattern(Pattern.MATCH_SZ, "ß").process(result);
+		result = new ReplacePattern(Pattern.MATCH_PARAGRAPH, "§").process(result);
+		result = new ReplacePattern(Pattern.MATCH_EURO, "€").process(result);
 		assertEquals("äöüß§€", result);
 	}
 	
 	@Test
 	public void testCleaningSpKEntry() {
-		final String raw = "\t Mitglieder, weiblich;00000;-0000000000000000000;00000;00;normale Erkrankung;00;Besch\u00e4ftigte, mit mind. 6 W. EFZ\t \t";
-		final String expected = "Mitglieder, weiblich;00000;-0000000000000000000;00000;00;normale Erkrankung;00;Besch\u00e4ftigte, mit mind. 6 W. EFZ";
+		final String raw = "\t Mitglieder, weiblich;00000;-0000000000000000000;00000;00;normale Erkrankung;00;Besch\u00e4ftigte, mit mind. 6 W. EFZ (Info)\t \t";
+		final String expected = "Mitglieder, weiblich;00000;-0000000000000000000;00000;00;normale Erkrankung;00;Besch\u00e4ftigte, mit mind. 6 W. EFZ (Info)";
 		
-		String result = new ReplacePattern("[^\\p{Alnum}\\s;\\-,.\u00e4]", "").process(raw);
-		result = new ReplacePattern("^\\s+|\\s+$","").process(result);
+		String result = new ReplacePattern(Pattern.MATCH_CONTROLSYMBOLS, "").process(raw);
+		result = new ReplacePattern(Pattern.MATCH_TERMINAL_WHITESPACES,"").process(result);
 		assertEquals(expected, result);
 	}
 }

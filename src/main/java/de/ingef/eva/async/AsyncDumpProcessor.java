@@ -59,7 +59,6 @@ public class AsyncDumpProcessor implements Runnable {
 						writer.write(processedLine);
 						writer.newLine();
 					}
-
 				}
 				reader.close();
 			}

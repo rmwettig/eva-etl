@@ -272,7 +272,7 @@ public class Main {
 			final String sourceKeyName = m.getSourceColumn();
 			final String targetKeyName = m.getTargetColumn();
 			for(Target t : m.getTargets()) {
-				int columnIndex = Helper.findColumnIndexfromHeaderFile(t.getHeaderFile(), ",", sourceKeyName);
+				int columnIndex = Helper.findColumnIndexfromHeaderFile(t.getHeaderFile(), ";", sourceKeyName);
 				threadPool.execute(new AsyncMapper(egk2pid, t.getDataFile(), columnIndex, targetKeyName));
 			}
 		}

@@ -73,7 +73,7 @@ public class Main {
 			} else if (args[1].equalsIgnoreCase("map")) {
 				mapFiles(logger, configuration);
 			} else {
-				logger.warn("Unknown command: {}.\nValid commands are:\n\t makejob\n\fetchschema\n\tmap\n\tadd", args[1]);
+				logger.warn("Unknown command: {}.\nValid commands are:\n\t makejob\n\fetchschema\n\tmap", args[1]);
 			}
 		} else {
 			cleanData(logger, configuration);

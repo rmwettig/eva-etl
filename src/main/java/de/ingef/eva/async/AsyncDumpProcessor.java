@@ -41,7 +41,7 @@ public class AsyncDumpProcessor implements Runnable {
 	@Override
 	public void run() {
 		File outputFile = new File(_outDirectory + "/" + _outFilename);
-		try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile, outputFile.exists()));) {
+		try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));) {
 			//if output file is empty add a header
 			if (outputFile.length() == 0)
 				writeHeader(writer, _data.getHeaderFile());

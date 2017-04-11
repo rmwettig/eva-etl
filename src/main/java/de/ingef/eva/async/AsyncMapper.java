@@ -23,9 +23,10 @@ public class AsyncMapper implements Runnable {
 	
 	@Override
 	public void run() {
+		String outFile = _fileName.substring(0, _fileName.lastIndexOf(".")) + ".mapped.csv";
 		try (
 				BufferedReader reader = new BufferedReader(new FileReader(_fileName));
-				BufferedWriter writer = new BufferedWriter(new FileWriter(_fileName.replace(".", ".mapped.")));
+				BufferedWriter writer = new BufferedWriter(new FileWriter(outFile));
 			) {
 			//remove header
 			writer.write(reader.readLine() + ";" + _newColumnName);

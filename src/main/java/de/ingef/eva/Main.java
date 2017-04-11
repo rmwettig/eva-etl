@@ -201,7 +201,7 @@ public class Main {
 	private static void createHeaderWriterTask(String directory, Logger logger, Query q, ExecutorService threadPool) {
 		List<String> headerList = new ArrayList<String>(1);
 		headerList.add(combineColumnHeaders(q.getSelectedColumns()));
-		String prefix = q.getName().substring(0, q.getName().indexOf("."));
+		String prefix = q.getName().contains(".") ? q.getName().substring(0, q.getName().indexOf(".")) : q.getName();
 		String path = directory + "/" + prefix + ".header.csv";
 		File f = new File(path);
 		if(!f.exists())

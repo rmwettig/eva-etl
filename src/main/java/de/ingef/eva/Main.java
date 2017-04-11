@@ -55,28 +55,28 @@ public class Main {
 
 		// first argument given to jar is the configuration json file
 		final String configFilePath = args[0];
-		if (!configFilePath.isEmpty()) {
-			final ConfigurationReader configReader = new JsonConfigurationReader();
-			final Configuration configuration = configReader.ReadConfiguration(configFilePath);
+		if (configFilePath.isEmpty()) {
+			logger.error("No config.json file given.");
+			return;
+		}
+		final ConfigurationReader configReader = new JsonConfigurationReader();
+		final Configuration configuration = configReader.ReadConfiguration(configFilePath);
 
-			if (args.length > 1) {
-				if (args[1].equalsIgnoreCase("makejob")) {
-					createFastExportJobs(configuration, logger);
-					logger.info("Teradata FastExport job file created.");
-				} else if (args[1].equalsIgnoreCase("fetchschema")) {
-					DatabaseHost schema = new ConfigurationDatabaseHostLoader(logger).loadFromFile(configFilePath);
-					createHeaderLookup(configuration, schema, logger);
-					logger.info("Teradata column lookup created.");
-				} else if (args[1].equalsIgnoreCase("map")) {
-					mapFiles(logger, configuration);
-				} else {
-					logger.warn("Unknown command: {}.\nValid commands are:\n\t makejob\n\fetchschema\n\tmap", args[1]);
-				}
+		if (args.length > 1) {
+			if (args[1].equalsIgnoreCase("makejob")) {
+				createFastExportJobs(configuration, logger);
+				logger.info("Teradata FastExport job file created.");
+			} else if (args[1].equalsIgnoreCase("fetchschema")) {
+				DatabaseHost schema = new ConfigurationDatabaseHostLoader(logger).loadFromFile(configFilePath);
+				createHeaderLookup(configuration, schema, logger);
+				logger.info("Teradata column lookup created.");
+			} else if (args[1].equalsIgnoreCase("map")) {
+				mapFiles(logger, configuration);
 			} else {
-				cleanData(logger, configuration);
+				logger.warn("Unknown command: {}.\nValid commands are:\n\t makejob\n\fetchschema\n\tmap\n\tadd", args[1]);
 			}
 		} else {
-			logger.error("No config.json file given.");
+			cleanData(logger, configuration);
 		}
 	}
 
@@ -220,7 +220,7 @@ public class Main {
 
 		return header.toString();
 	}
-
+	
 	private static void cleanData(Logger logger, Configuration configuration) {
 		final ExecutorService threadPool = Executors.newFixedThreadPool(configuration.getThreadCount());
 

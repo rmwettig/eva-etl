@@ -154,7 +154,7 @@ public class Helper {
 	}
 	
 	/**
-	 * Finds the index a named column by examining the header file
+	 * Finds the index of a named column by examining the header file
 	 * @param fileName header
 	 * @param delimiter column separator
 	 * @param columnName searched column

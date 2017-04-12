@@ -48,6 +48,7 @@ import de.ingef.eva.query.SimpleQueryCreator;
 import de.ingef.eva.utility.Alias;
 import de.ingef.eva.utility.Dataset;
 import de.ingef.eva.utility.Helper;
+import de.ingef.measures.CalculateCharlsonScores;
 
 public class Main {
 	public static void main(String[] args) {
@@ -72,7 +73,9 @@ public class Main {
 				logger.info("Teradata column lookup created.");
 			} else if (args[1].equalsIgnoreCase("map")) {
 				mapFiles(logger, configuration);
-			} else {
+			} else if (args[1].equalsIgnoreCase("charlsonscores")) {
+				CalculateCharlsonScores.calculate(configuration, null);
+			}else {
 				logger.warn("Unknown command: {}.\nValid commands are:\n\t makejob\n\fetchschema\n\tmap", args[1]);
 			}
 		} else {

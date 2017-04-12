@@ -2,7 +2,6 @@ adbConfig=""
 fdbConfig=""
 spkConfig=""
 
-
 java -jar eva-data.jar $adbConfig makejob &&
 	fexp < -e /logs/dump-adb.err < eva-dump-adb.fx &&
 	java -jar eva-data.jar $adbConfig &

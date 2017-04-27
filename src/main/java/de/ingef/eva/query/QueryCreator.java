@@ -13,6 +13,8 @@ public interface QueryCreator {
 
 	public void addWhere(String table, String column, String value, String operator, String type);
 
+	public void addWhere(String leftTable, String leftColumn, String rightTable, String rightColumn, String operator, String type);
+	
 	public void startOrGroup();
 
 	public void endOrGroup(String table);

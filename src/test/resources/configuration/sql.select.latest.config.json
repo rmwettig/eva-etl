@@ -1,0 +1,14 @@
+{
+	"databases": {
+		"startYear":"2010",
+		"endYear":"2016",
+		"sources":[
+				{
+					"name":"database1",
+					"views": [
+						{ "tablename": { "latest": { "on": "columnname1", "timestamp": "columnname2"} } }
+					]
+				}
+			]
+		}
+}

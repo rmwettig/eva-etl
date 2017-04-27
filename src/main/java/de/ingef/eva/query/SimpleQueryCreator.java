@@ -10,6 +10,8 @@ import java.util.Set;
 
 import de.ingef.eva.constant.Templates;
 import de.ingef.eva.utility.Alias;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 public class SimpleQueryCreator implements QueryCreator {
 
@@ -66,33 +68,24 @@ public class SimpleQueryCreator implements QueryCreator {
 		}
 	}
 
+	@Getter
 	private class Join {
-		private String _leftTable;
-		private String _rightTable;
-		private String _type;
-		private String _primaryColumn;
-
-		public Join(String left, String right, String type, String primary) {
-			_leftTable = left;
-			_rightTable = right;
-			_type = type;
-			_primaryColumn = primary;
+		private String leftTable;
+		private String rightTable;
+		private String type;
+		private String primaryColumn;
+		private String subQuery;
+		
+		public Join(String leftTable, String rightTable, String type, String primaryColumn) {
+			this.leftTable = leftTable;
+			this.rightTable = rightTable;
+			this.type = type;
+			this.primaryColumn = primaryColumn;
 		}
-
-		public String getLeftTable() {
-			return _leftTable;
-		}
-
-		public String getRightTable() {
-			return _rightTable;
-		}
-
-		public String getType() {
-			return _type;
-		}
-
-		public String getPrimaryColumn() {
-			return _primaryColumn;
+		
+		public Join(String query, String primaryColumn) {
+			this("","","inner", primaryColumn);
+			subQuery = query;
 		}
 	}
 
@@ -141,27 +134,59 @@ public class SimpleQueryCreator implements QueryCreator {
 		createAlias(leftTable);
 		createAlias(rightTable);
 	}
-
+	
+	public void addJoin(String subQuery, String onColumn) {
+		
+	}
+	
+	/**
+	 * Creates a where constraint
+	 * @param table column owning table
+	 * @param column name of the constraint column
+	 * @param value constraint value
+	 * @param type type of the value
+	 */
 	@Override
 	public void addWhere(String table, String column, String value, String operator, String type) {
 		String modifiedValue = value;
 		if (type.equalsIgnoreCase("STRING"))
 			modifiedValue = "'" + value + "'";
 		if (type.equalsIgnoreCase("COLUMN")) {
-			// dot must be escaped since it means 'any character' in a regular
-			// expression
-			String[] content = value.split("\\.");
-			String tableValue = content[0];
-			String columnValue = content[1];
-			modifiedValue = (_tableAlias.containsKey(tableValue))
-					? String.format("%s.%s", _tableAlias.get(tableValue), columnValue)
-					: String.format("%s.%s.%s", _database, tableValue, columnValue);
+			//if column was specified using table.column
+			if(!value.isEmpty() && value.contains("\\.")) {
+				// dot must be escaped since it means 'any character' in a regular expression
+				String[] content = value.split("\\.");
+				String tableValue = content[0];
+				String columnValue = content[1];
+				modifiedValue = (_tableAlias.containsKey(tableValue))
+						? String.format("%s.%s", _tableAlias.get(tableValue), columnValue)
+						: String.format("%s.%s.%s", _database, tableValue, columnValue);
+			} else {
+				modifiedValue = _tableAlias.get(table) + "." + column;
+			}
+			
 		}
 		Where whereClause = new Where(column, modifiedValue, operator);
 		if (_currentGroup != null)
 			_currentGroup.addTerm(whereClause);
 	}
-
+	
+	/**
+	 * Creates a where clause term that compares two columns
+	 * @param leftTable main table specified in 'from' clause
+	 * @param leftColumn main table column to be compared
+	 * @param rightTable subquery table
+	 * @param rightColumn subquery table column
+	 * @param operator comparison operator
+	 */
+	@Override
+	public void addWhere(String leftTable, String leftColumn, String rightTable, String rightColumn, String operator, String type) {
+		String withAlias = "%s.%s";
+		String noAlias = "%s" + withAlias;
+ 
+		
+	}
+	
 	@Override
 	public void startOrGroup() {
 		_currentGroup = new OrGroup();
@@ -249,22 +274,33 @@ public class SimpleQueryCreator implements QueryCreator {
 
 	private StringBuilder buildJoin() {
 		String join = "%s join %s\non %s=%s";
-
 		StringBuilder joinClause = new StringBuilder();
 
 		for (Join j : _joins) {
-			String left = (_tableAlias.containsKey(j.getLeftTable()))
-					? String.format("%s.%s", _tableAlias.get(j._leftTable), j.getPrimaryColumn())
+			String leftOnConditionPart = (_tableAlias.containsKey(j.getLeftTable()))
+					? String.format("%s.%s", _tableAlias.get(j.leftTable), j.getPrimaryColumn())
 					: String.format("%s.%s.%s", _database, j.getLeftTable(), j.getPrimaryColumn());
 			boolean hasRightTableAlias = _tableAlias.containsKey(j.getRightTable());
-			String right = (hasRightTableAlias)
-					? String.format("%s.%s", _tableAlias.get(j.getRightTable()), j.getPrimaryColumn())
-					: String.format("%s.%s.%s", _database, j.getRightTable(), j.getPrimaryColumn());
-			String joinTable = (hasRightTableAlias)
-					? String.format("%s.%s %s", _database, j.getRightTable(), _tableAlias.get(j.getRightTable()))
-					: String.format("%s.%s", _database, j.getRightTable());
+			//if there is an alias use the access schema alias.column
+			//otherwise use schema db.table.column
+			String rightOnConditionPart;
+			String rightTable = j.getRightTable();
+			String joinTable;
+			//if rightTable has a bracket it is a subquery
+			if(rightTable.startsWith("(")) {
+				String alias = _tableAlias.get(rightTable);
+				rightOnConditionPart = alias + "." + j.getPrimaryColumn();
+				joinTable = rightTable + " " + alias;
+			} else {
+				rightOnConditionPart = (hasRightTableAlias)
+						? String.format("%s.%s", _tableAlias.get(j.getRightTable()), j.getPrimaryColumn())
+						: String.format("%s.%s.%s", _database, j.getRightTable(), j.getPrimaryColumn());
+				joinTable = (hasRightTableAlias)
+						? String.format("%s.%s %s", _database, j.getRightTable(), _tableAlias.get(j.getRightTable()))
+						: String.format("%s.%s", _database, j.getRightTable());
+			}			
 
-			String clause = String.format(join, j.getType(), joinTable, left, right);
+			String clause = String.format(join, j.getType(), joinTable, leftOnConditionPart, rightOnConditionPart);
 			joinClause.append(clause);
 			joinClause.append('\n');
 		}

@@ -196,8 +196,14 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 			String partLabel) {
 		_queryCreator.addTable(tableName);
 		JsonNode selectParameters = view.path(tableName);
-		if (!evaluateColumnEntry(selectParameters, tableName,
-				schemaDatabase.findTableByName(tableName).getAllColumns())) {
+		JsonNode latestNode = selectParameters.path("latest");
+		if(!latestNode.isMissingNode()) {
+			Query q = evaluateLatestField(tableName, schemaDatabase.getName(), latestNode, schemaDatabase.findTableByName(tableName).getAllColumns());
+			if(q != null) _jobs.add(q);
+			
+			return true;
+		}
+		if (!evaluateColumnEntry(selectParameters, tableName, schemaDatabase.findTableByName(tableName).getAllColumns())) {
 			if (_logger != null)
 				_logger.error(
 						"Did not found any columns.\nCheck 'column' field or database schema file for table '{}'.",
@@ -345,5 +351,28 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 			evaluateWhereEntry(joinEntry, table);
 		}
 
+	}
+	
+	private Query evaluateLatestField(String currentTable, String database, JsonNode latestNode, Collection<Column> schemaColumns) {
+		JsonNode idNode = latestNode.path("on");
+		JsonNode timestampNode = latestNode.path("timestamp");
+		
+		if(idNode.isMissingNode() || timestampNode.isMissingNode()) return null;
+		String rightTable = "(select %s, max(%s) as %s from %s.%s group by %s)";
+		String id = idNode.asText();
+		String timestamp = timestampNode.asText();
+		rightTable = String.format(rightTable, id, timestamp, timestamp, database, currentTable, id);
+		
+		for(Column c : schemaColumns)
+			_queryCreator.addColumn(currentTable, c.getName());
+		_queryCreator.addJoin(currentTable, rightTable, id, "inner");
+		_queryCreator.startOrGroup();
+		_queryCreator.addWhere(rightTable, timestamp, "", "=", "COLUMN");
+		_queryCreator.endOrGroup(currentTable);
+		
+		Query q = _queryCreator.buildQuery();
+		q.setName(database+"_"+currentTable);
+		
+		return q;
 	}
 }

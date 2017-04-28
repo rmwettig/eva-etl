@@ -34,7 +34,7 @@ public class AsyncMapper implements Runnable {
 			
 			String line;
 			while((line = reader.readLine()) != null) {
-				String[] columns = line.split(";");
+				String[] columns = line.split(";", -1);
 				for(int i = 0; i < columns.length; i++) {
 					writer.write(columns[i]);
 					writer.write(";");
@@ -42,7 +42,6 @@ public class AsyncMapper implements Runnable {
 				String key = columns[_mappedColumnIndex];
 				if (_mapping.containsKey(key))
 					writer.write(_mapping.get(key));
-				writer.write(";");
 				writer.newLine();
 			}
 			

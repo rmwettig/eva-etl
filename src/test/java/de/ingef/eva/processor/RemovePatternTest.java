@@ -8,7 +8,7 @@ public class RemovePatternTest {
 
 	@Test
 	public void testRemoveNonAlphanumericCharactersButKeepWhitespaces() {
-		final Processor<String> p = new ReplacePattern("[^\\p{Alnum}\\s;.-]", "");
+		final Processor<String> p = new ReplacePattern(Pattern.MATCH_CONTROLSYMBOLS, "");
 		final String text = "\t \u0000\u00029999;column 1\u0004\u0006\t ";
 		final String result = p.process(text);
 		assertEquals("\t 9999;column 1\t ", result);
@@ -16,7 +16,7 @@ public class RemovePatternTest {
 	
 	@Test
 	public void testRemoveBoundaryWhitespaces() {
-		final Processor<String> p = new ReplacePattern("^\\s+|\\s+$", "");
+		final Processor<String> p = new ReplacePattern(Pattern.MATCH_TERMINAL_WHITESPACES, "");
 		final String text = "\t 9999;column 1\t ";
 		final String result = p.process(text);
 		assertEquals("9999;column 1", result);
@@ -43,5 +43,21 @@ public class RemovePatternTest {
 		String result = new ReplacePattern(Pattern.MATCH_CONTROLSYMBOLS, "").process(raw);
 		result = new ReplacePattern(Pattern.MATCH_TERMINAL_WHITESPACES,"").process(result);
 		assertEquals(expected, result);
+	}
+	
+	@Test
+	public void testKeepSlashDateSeparators() {
+		final String raw = "2010;YY/MM/DD;f";
+		final String result = new ReplacePattern(Pattern.MATCH_CONTROLSYMBOLS, "").process(raw);
+		
+		assertEquals("2010;YY/MM/DD;f", result);
+	}
+	
+	@Test
+	public void testKeepBackslashDateSeparators() {
+		final String raw = "2010;YY\\MM\\DD;f";
+		final String result = new ReplacePattern(Pattern.MATCH_CONTROLSYMBOLS, "").process(raw);
+		
+		assertEquals("2010;YY\\MM\\DD;f", result);
 	}
 }

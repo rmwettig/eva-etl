@@ -34,14 +34,7 @@ public final class CalculateCharlsonScores {
 				for(String hi : INSURANCES) {
 					ResultSet result = query.executeQuery(String.format(QUERY_TEMPLATE, hi));
 					Collection<String> scores = calculateMorbiscores(result);
-					/*
-					 * TODO: 
-					 * 4 quarters absolute, i.e. if someone has data for Q1-3 but not Q4 -> take only Q1-3
-					 * OR take any consecutive quarters, i.e. Q1-3 are present but not Q4 -> take next quarter with data
-					 */
-					BufferedWriter writer = new BufferedWriter(
-							new FileWriter(config.getOutDirectory()+String.format("/morbiscores.%s.csv",hi))
-					);
+					BufferedWriter writer = new BufferedWriter(new FileWriter(config.getOutDirectory()+String.format("/charlsonscores.%s.csv", hi)));
 					writer.write("pid;Q_Start;Q_End;Score\n");
 					for(String line : scores) {
 						writer.write(line);
@@ -54,7 +47,7 @@ public final class CalculateCharlsonScores {
 			} catch (SQLException e) {
 				log.error("Could not open connection or creating query.\n\tReason: {}", e.getMessage());
 			} catch (IOException e1) {
-				log.error("Could not write morbiscores.csv.\n\tReason: {}", e1.getMessage());
+				log.error("Could not write charlsonscores.csv.\n\tReason: {}", e1.getMessage());
 			}
 			
 		} catch (ClassNotFoundException e) {

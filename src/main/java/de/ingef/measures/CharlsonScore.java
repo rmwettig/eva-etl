@@ -35,6 +35,20 @@ public class CharlsonScore {
 	}
 	
 	private final List<Entry> scoreData = new ArrayList<Entry>();
+	private final Map<Integer,String> quarter2BeginDate = new HashMap<>();
+	private final Map<Integer,String> quarter2EndDate = new HashMap<>();
+	
+	public CharlsonScore() {
+		quarter2BeginDate.put(1, "0101");
+		quarter2BeginDate.put(2, "0401");
+		quarter2BeginDate.put(3, "0701");
+		quarter2BeginDate.put(4, "1001");
+		
+		quarter2EndDate.put(1, "0331");
+		quarter2EndDate.put(2, "0630");
+		quarter2EndDate.put(3, "0930");
+		quarter2EndDate.put(4, "1231");
+	}
 	
 	/**
 	 * Updates an old weight or adds a new entry
@@ -83,23 +97,7 @@ public class CharlsonScore {
 	private int updateUpperIndex(int upperIndex, Entry left) {
 		//return the size of the data collection as everything remaining should be present in the sublist
 		if (upperIndex == scoreData.size()) return upperIndex;
-		
-		//condition to include at most four quarters only:
-		//(y0 == y1 && q0 <= q1) //this is valid for all entries when starting at yearQ1 up to yearQ4
-		//|| (y0 != y1 && q0 > q1) //this is valid for all entries starting at yearQ2 up to year+1Q1
-		
-		//expected end year and quarter for index search
-		//look three quarters ahead
-		int q1 = left.getQuarter() + 3;
-		int y1 = left.getYear();
-		//if end quarter exceeds fourth quarter of a year
-		if(q1 > 4) {
-			//calculate quarters in the next year
-			q1 = q1 - 4;
-			//take year change into account
-			y1 += 1;
-		}
-		
+				
 		//stop upperIndex search if right quarter is four quarters away
 		//and if upperIndex reached the last position
 		int i = upperIndex;
@@ -115,7 +113,7 @@ public class CharlsonScore {
 		Entry qEnd = quarters.get(quarters.size() - 1);
 		Map<String,Integer> class2weight = new HashMap<String,Integer>();
 
-		//set or update the morbiscores
+		//set or update the charlson scores
 		for(Entry e : quarters) {
 			if(class2weight.containsKey(e.getDiseaseClass())) {
 				int oldWeight = class2weight.get(e.getDiseaseClass());
@@ -129,7 +127,10 @@ public class CharlsonScore {
 		for(int value : class2weight.values())
 			score += value;
 		
-		return String.format("%dQ%d;%dQ%d;%d", qStart.getYear(), qStart.getQuarter(), qEnd.getYear(), qEnd.getQuarter(), score);
+		String startDate = qStart.getYear() + quarter2BeginDate.get(qStart.getQuarter());
+		String endDate = (qStart.getQuarter() == 1) ? qStart.getYear() + quarter2EndDate.get(4) : qEnd.getYear() + quarter2EndDate.get(qStart.getQuarter() - 1);
+		
+		return String.format("%s;%s;%d", startDate, endDate, score);
 	}
 	
 	/**
@@ -158,8 +159,7 @@ public class CharlsonScore {
 		
 		Entry current = scoreData.get(i);
 		
-		while(i < scoreData.size() &&
-				current.getYear() == yearQuarter.getYear() && current.getQuarter() == yearQuarter.getQuarter()) {
+		while(i < scoreData.size() && current.getYear() == yearQuarter.getYear() && current.getQuarter() == yearQuarter.getQuarter()) {
 			if(i + 1 == scoreData.size()) break;
 			current = scoreData.get(++i);
 		}

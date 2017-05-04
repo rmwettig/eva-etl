@@ -33,13 +33,13 @@ public class CharlsonScoreTest {
 		Iterator<String> iter = results.iterator(); 
 		
 		String result = iter.next();
-		assertEquals("2010Q1;2010Q2;4", result);
+		assertEquals("20100101;20101231;4", result);
 		
 		result = iter.next();
-		assertEquals("2010Q2;2011Q1;5", result);
+		assertEquals("20100401;20110331;5", result);
 		
 		result = iter.next();
-		assertEquals("2011Q1;2011Q1;3", result);
+		assertEquals("20110101;20111231;3", result);
 	}
 	
 	@Test
@@ -65,19 +65,24 @@ public class CharlsonScoreTest {
 		
 		Iterator<String> iter = results.iterator(); 
 		String result = iter.next();
-		assertEquals("2010Q1;2010Q4;4", result);
+		//start Q1, end Q4
+		assertEquals("20100101;20101231;4", result);
 		
 		result = iter.next();
-		assertEquals("2010Q2;2011Q1;5", result);
+		//start Q2 y, end Q1 y+1
+		assertEquals("20100401;20110331;5", result);
 		
 		result = iter.next();
-		assertEquals("2010Q3;2011Q1;5", result);
+		//start Q3 y, end Q2 y+1
+		assertEquals("20100701;20110630;5", result);
 		
 		result = iter.next();
-		assertEquals("2010Q4;2011Q1;5", result);
+		//start Q4 y, end Q3 y+1
+		assertEquals("20101001;20110930;5", result);
 		
 		result = iter.next();
-		assertEquals("2011Q1;2011Q1;3", result);
+		//start Q1, end Q4
+		assertEquals("20110101;20111231;3", result);
 	}
 	
 	@Test
@@ -97,13 +102,13 @@ public class CharlsonScoreTest {
 		
 		Iterator<String> iter = results.iterator(); 
 		String result = iter.next();
-		assertEquals("2010Q1;2010Q2;4", result);
+		assertEquals("20100101;20101231;4", result);
 
 		result = iter.next();
-		assertEquals("2010Q2;2011Q1;4", result);
+		assertEquals("20100401;20110331;4", result);
 		
 		result = iter.next();
-		assertEquals("2011Q1;2011Q1;2", result);
+		assertEquals("20110101;20111231;2", result);
 	}
 
 }

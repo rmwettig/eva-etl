@@ -346,8 +346,8 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 					_logger.error("Did not found 'on' entry for join entry on table '{}'", table);
 				continue;
 			}
-
-			_queryCreator.addJoin(leftTable, table, onColumnNode.asText(), joinTypeNode.asText());
+			for(JsonNode onColumn : onColumnNode)
+				_queryCreator.addJoin(leftTable, table, onColumn.asText(), joinTypeNode.asText());
 			evaluateWhereEntry(joinEntry, table);
 		}
 

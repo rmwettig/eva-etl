@@ -73,19 +73,24 @@ public class SimpleQueryCreator implements QueryCreator {
 		private String leftTable;
 		private String rightTable;
 		private String type;
-		private String primaryColumn;
+		private Collection<String> primaryColumns;
 		private String subQuery;
 		
 		public Join(String leftTable, String rightTable, String type, String primaryColumn) {
 			this.leftTable = leftTable;
 			this.rightTable = rightTable;
 			this.type = type;
-			this.primaryColumn = primaryColumn;
+			this.primaryColumns = new ArrayList<String>();
+			this.primaryColumns.add(primaryColumn);
 		}
 		
 		public Join(String query, String primaryColumn) {
 			this("","","inner", primaryColumn);
 			subQuery = query;
+		}
+
+		public void addPrimaryColumn(String onColumn) {
+			primaryColumns.add(onColumn);
 		}
 	}
 
@@ -128,6 +133,12 @@ public class SimpleQueryCreator implements QueryCreator {
 
 	@Override
 	public void addJoin(String leftTable, String rightTable, String onColumn, String type) {
+		for(Join j : _joins) {
+			if(j.getLeftTable().equalsIgnoreCase(leftTable) && j.getRightTable().equalsIgnoreCase(rightTable)){
+				j.addPrimaryColumn(onColumn);
+				return;
+			}
+		}
 		Join joinTerm = new Join(leftTable, rightTable, type, onColumn);
 		_joins.add(joinTerm);
 		_joinRightTables.add(rightTable);
@@ -273,13 +284,13 @@ public class SimpleQueryCreator implements QueryCreator {
 	}
 
 	private StringBuilder buildJoin() {
-		String join = "%s join %s\non %s=%s";
+		
 		StringBuilder joinClause = new StringBuilder();
 
 		for (Join j : _joins) {
 			String leftOnConditionPart = (_tableAlias.containsKey(j.getLeftTable()))
-					? String.format("%s.%s", _tableAlias.get(j.leftTable), j.getPrimaryColumn())
-					: String.format("%s.%s.%s", _database, j.getLeftTable(), j.getPrimaryColumn());
+					? _tableAlias.get(j.leftTable)
+					: String.format("%s.%s", _database, j.getLeftTable());
 			boolean hasRightTableAlias = _tableAlias.containsKey(j.getRightTable());
 			//if there is an alias use the access schema alias.column
 			//otherwise use schema db.table.column
@@ -289,18 +300,27 @@ public class SimpleQueryCreator implements QueryCreator {
 			//if rightTable has a bracket it is a subquery
 			if(rightTable.startsWith("(")) {
 				String alias = _tableAlias.get(rightTable);
-				rightOnConditionPart = alias + "." + j.getPrimaryColumn();
+				rightOnConditionPart = alias;
 				joinTable = rightTable + " " + alias;
 			} else {
 				rightOnConditionPart = (hasRightTableAlias)
-						? String.format("%s.%s", _tableAlias.get(j.getRightTable()), j.getPrimaryColumn())
-						: String.format("%s.%s.%s", _database, j.getRightTable(), j.getPrimaryColumn());
+						? _tableAlias.get(j.getRightTable())
+						: String.format("%s.%s", _database, j.getRightTable());
 				joinTable = (hasRightTableAlias)
 						? String.format("%s.%s %s", _database, j.getRightTable(), _tableAlias.get(j.getRightTable()))
 						: String.format("%s.%s", _database, j.getRightTable());
 			}			
-
-			String clause = String.format(join, j.getType(), joinTable, leftOnConditionPart, rightOnConditionPart);
+			
+			StringBuilder ons = new StringBuilder();
+			
+			for(String c : j.getPrimaryColumns()) {
+				ons.append("(");
+				ons.append(leftOnConditionPart + "." + c + "=" + rightOnConditionPart + "." + c);
+				ons.append(") and");
+			}
+			ons.delete(ons.lastIndexOf(")")+1, ons.length());
+			String join = "%s join %s\non %s";
+			String clause = String.format(join, j.getType(), joinTable, ons.toString());
 			joinClause.append(clause);
 			joinClause.append('\n');
 		}

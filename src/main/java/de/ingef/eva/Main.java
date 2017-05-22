@@ -17,6 +17,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -28,7 +34,6 @@ import de.ingef.eva.async.AsyncMapper;
 import de.ingef.eva.async.AsyncWriter;
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.configuration.ConfigurationDatabaseHostLoader;
-import de.ingef.eva.configuration.ConfigurationReader;
 import de.ingef.eva.configuration.JsonConfigurationReader;
 import de.ingef.eva.configuration.JsonInterpreter;
 import de.ingef.eva.configuration.Mapping;
@@ -39,6 +44,10 @@ import de.ingef.eva.constant.Templates;
 import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
 import de.ingef.eva.database.Table;
+import de.ingef.eva.datasource.DataProcessor;
+import de.ingef.eva.datasource.DataSource;
+import de.ingef.eva.datasource.sql.SqlDataSource;
+import de.ingef.eva.mapping.ProcessPidDecode;
 import de.ingef.eva.processor.Pattern;
 import de.ingef.eva.processor.Processor;
 import de.ingef.eva.processor.ReplacePattern;
@@ -60,26 +69,38 @@ public class Main {
 			logger.error("No config.json file given.");
 			return;
 		}
-		final ConfigurationReader configReader = new JsonConfigurationReader();
-		final Configuration configuration = configReader.ReadConfiguration(configFilePath);
-
-		if (args.length > 1) {
-			if (args[1].equalsIgnoreCase("makejob")) {
+		
+		Options options = createCliOptions();
+		CommandLineParser parser = new DefaultParser();
+		try {
+			CommandLine cmd = parser.parse(options, args);
+			if(cmd.hasOption("makejob")) {
+				Configuration configuration = new JsonConfigurationReader().ReadConfiguration(cmd.getOptionValue("makejob"));
 				createFastExportJobs(configuration, logger);
 				logger.info("Teradata FastExport job file created.");
-			} else if (args[1].equalsIgnoreCase("fetchschema")) {
-				DatabaseHost schema = new ConfigurationDatabaseHostLoader(logger).loadFromFile(configFilePath);
+			} else if(cmd.hasOption("fetchschema")) {
+				String path = cmd.getOptionValue("fetchschema");
+				DatabaseHost schema = new ConfigurationDatabaseHostLoader(logger).loadFromFile(path);
+				Configuration configuration = new JsonConfigurationReader().ReadConfiguration(path);
 				createHeaderLookup(configuration, schema, logger);
 				logger.info("Teradata column lookup created.");
-			} else if (args[1].equalsIgnoreCase("map")) {
+			} else if(cmd.hasOption("map")) {
+				Configuration configuration = new JsonConfigurationReader().ReadConfiguration(cmd.getOptionValue("map"));
 				mapFiles(logger, configuration);
-			} else if (args[1].equalsIgnoreCase("charlsonscores")) {
+			} else if(cmd.hasOption("charlsonscores")) {
+				Configuration configuration = new JsonConfigurationReader().ReadConfiguration(cmd.getOptionValue("charlsonscores"));
 				CalculateCharlsonScores.calculate(configuration, null);
-			}else {
-				logger.warn("Unknown command: {}.\nValid commands are:\n\t makejob\n\fetchschema\n\tmap", args[1]);
+			} else if(cmd.hasOption("clean")) {
+				Configuration configuration = new JsonConfigurationReader().ReadConfiguration(cmd.getOptionValue("makejob"));
+				cleanData(logger, configuration);
+			} else if (cmd.hasOption("makedecode")){
+				Configuration configuration = new JsonConfigurationReader().ReadConfiguration(cmd.getOptionValue("makedecode"));
+				createPidMappings(configuration);
 			}
-		} else {
-			cleanData(logger, configuration);
+			else
+				new HelpFormatter().printHelp("java -jar eva-data.jar", options);
+		} catch (ParseException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -286,5 +307,28 @@ public class Main {
 			e.printStackTrace();
 		}
 	}
-
+	
+	private static Options createCliOptions() {
+		Options options = new Options();
+		options.addOption("makejob", true, "create FastExport scripts");
+		options.addOption("fetchschema", true, "create the database schema as a file");
+		options.addOption("map", true, "map files to different ids");
+		options.addOption("charlsonscores", true, "calculate Charlson scores");
+		options.addOption("clean", true, "post-processes dumped data");
+		options.addOption("makedecode", true, "creates PID mappings");
+		
+		return options;
+	}
+	
+	private static void createPidMappings(Configuration configuration) {
+		Map<String,String> name2h2ik = configuration.getDecodings();
+		for(String name : name2h2ik.keySet()) {
+			String h2ik = name2h2ik.get(name);
+			DataSource unfilteredPids = new SqlDataSource(String.format(Templates.Decoding.PID_DECODE_QUERY, h2ik), name, configuration);
+			DataSource excludedPids = new SqlDataSource(String.format(Templates.Decoding.INVALID_PIDS_QUERY, h2ik, h2ik), name, configuration);
+			DataProcessor cleanPidProcessor = new ProcessPidDecode(configuration);
+			cleanPidProcessor.process(unfilteredPids.fetchData(), excludedPids.fetchData());
+		}
+		
+	}
 }

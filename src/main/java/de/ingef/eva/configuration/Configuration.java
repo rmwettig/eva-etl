@@ -2,6 +2,9 @@ package de.ingef.eva.configuration;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.fasterxml.jackson.databind.JsonNode;
 
 public class Configuration {
@@ -18,10 +21,13 @@ public class Configuration {
 	private FastExportConfiguration _fastExportConfiguration;
 	private JsonNode _databasesNode;
 	private Collection<Mapping> _mappings; 
+	private Map<String,String> _nameToH2ik;
 	
 	public Configuration(JsonNode root) {
 		prepareConnectionConfiguration(root);
 		prepareMappingConfiguration(root);
+		prepareFilteringConfiguration(root);
+		
 		_fastExportConfiguration = new FastExportConfiguration(root);
 		
 		JsonNode databaseNode = root.path("databases");
@@ -117,6 +123,15 @@ public class Configuration {
 		}
 	}
 	
+	private void prepareFilteringConfiguration(JsonNode root) {
+		_nameToH2ik = new HashMap<String,String>();
+		JsonNode filteringNode = root.path("decoding");
+		if(filteringNode.isMissingNode() || !filteringNode.isArray()) return;
+		for(JsonNode decoder : filteringNode) {
+			_nameToH2ik.put(decoder.path("name").asText(), decoder.path("h2ik").asText());
+		}
+	}
+	
 	public String getServer() {
 		return _server;
 	}
@@ -175,5 +190,9 @@ public class Configuration {
 	
 	public Collection<Mapping> getMappings() {
 		return _mappings;
+	}
+	
+	public Map<String,String> getDecodings() {
+		return _nameToH2ik;
 	}
 }

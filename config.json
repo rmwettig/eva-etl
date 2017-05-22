@@ -356,5 +356,9 @@
 			"sourceKeyColumn": "egk_nr",
 			"targetKeyColumn": "pid"
 		}
+	],
+	"decoding": [
+		{ "name": "Bosch", "h2ik": "108036123" },
+		{ "name": "Salzgitter", "h2ik": "101922757" }
 	]
 }

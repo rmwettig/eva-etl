@@ -21,6 +21,8 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.logging.log4j.LogManager;
@@ -62,13 +64,6 @@ import de.ingef.measures.CalculateCharlsonScores;
 public class Main {
 	public static void main(String[] args) {
 		final Logger logger = LogManager.getRootLogger();
-
-		// first argument given to jar is the configuration json file
-		final String configFilePath = args[0];
-		if (configFilePath.isEmpty()) {
-			logger.error("No config.json file given.");
-			return;
-		}
 		
 		Options options = createCliOptions();
 		CommandLineParser parser = new DefaultParser();
@@ -310,12 +305,12 @@ public class Main {
 	
 	private static Options createCliOptions() {
 		Options options = new Options();
-		options.addOption("makejob", true, "create FastExport scripts");
-		options.addOption("fetchschema", true, "create the database schema as a file");
-		options.addOption("map", true, "map files to different ids");
-		options.addOption("charlsonscores", true, "calculate Charlson scores");
-		options.addOption("clean", true, "post-processes dumped data");
-		options.addOption("makedecode", true, "creates PID mappings");
+		options.addOption(Option.builder("makejob").hasArg().argName("config.json").desc("create FastExport scripts").build());
+		options.addOption(Option.builder("fetchschema").hasArg().argName("config.json").desc("create the database schema as a file").build());
+		options.addOption(Option.builder("map").hasArg().argName("config.json").desc("map files to different ids").build());
+		options.addOption(Option.builder("charlsonscores").hasArg().argName("config.json").desc("calculate Charlson scores").build());
+		options.addOption(Option.builder("clean").hasArg().argName("config.json").desc("post-processes dumped data").build());
+		options.addOption(Option.builder("makedecode").hasArg().argName("config.json").desc("creates PID mappings").build());
 		
 		return options;
 	}

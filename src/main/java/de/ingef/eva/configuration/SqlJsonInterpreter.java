@@ -3,9 +3,11 @@ package de.ingef.eva.configuration;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.ingef.eva.configuration.export.ExportConfig;
 import de.ingef.eva.configuration.export.JoinConfig;
@@ -216,8 +218,7 @@ public class SqlJsonInterpreter {
 		if (wheres == null || wheres.isEmpty())
 			return;
 		
-		Map<String, List<WhereConfig>> restrictedColumns = createWhereMap(wheres);
-		restrictedColumns
+		createWhereMap(wheres)
 			.forEach((column, constraints) -> {
 				_queryCreator.startOrGroup();
 				constraints
@@ -229,19 +230,26 @@ public class SqlJsonInterpreter {
 	}
 
 	private Map<String, List<WhereConfig>> createWhereMap(List<WhereConfig> wheres) {
-		Map<String, List<WhereConfig>> map = new HashMap<>(wheres.size());
-		wheres
-			.stream()
-			.forEach(w -> {
-				if(map.containsKey(w.getColumn())) {
-					map.get(w.getColumn()).add(w);
-				} else {
-					List<WhereConfig> constraints = new ArrayList<>(10);
-					constraints.add(w);
-					map.put(w.getColumn(), constraints);
-				}
-			});
-		return map;
+		return wheres
+				.stream()
+				.flatMap(this::evaluateWhereConfig)
+				.collect(Collectors.groupingBy(WhereConfig::getColumn));
+	}
+	
+	private Stream<WhereConfig> evaluateWhereConfig(WhereConfig config) {
+		if(config.getSource() == WhereSource.FILE)
+			return processFileCondition(config);
+		//if it is not a file condition take the current object
+		return Stream.<WhereConfig>builder().add(config).build();
+	}
+	
+	private Stream<WhereConfig> processFileCondition(WhereConfig config) {
+		Set<String> ids = Helper.createUniqueLookupFromFile(config.getValue());
+		return ids
+				.stream()
+				.map(value -> new WhereConfig(config.getColumn(), value, config.getOperator(), config.getType(), WhereSource.PLAIN))
+				.collect(Collectors.toList())
+				.stream();
 	}
 
 	private void evaluateJoinEntry(ViewConfig selectParameters, String leftTable, Database schemaDatabase) {

@@ -1,12 +1,16 @@
 package de.ingef.eva.utility;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -81,10 +85,23 @@ public final class Helper {
 						t.setDaemon(spawnDaemonThreads);
 						return t;
 					}
-				}
-			);
+				});
 	}
 	
+	public static Set<String> createUniqueLookupFromFile(String path) {
+		Set<String> lookup = new HashSet<String>();
+		try(BufferedReader reader = new BufferedReader(new FileReader(path))) {
+			String line;
+			while((line = reader.readLine()) != null) {
+				lookup.add(line.trim());
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return lookup;
+	}
+		
 	public static String joinIks(List<String> iks) {
 		return iks.stream().map(ik -> "'" + ik + "'").collect(Collectors.joining(","));
 	}

@@ -12,7 +12,9 @@ import java.util.Iterator;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.ingef.eva.configuration.export.ExportConfig;
@@ -177,5 +179,117 @@ public class SqlJsonInterpreterTest {
 		assertEquals("(a.columnname2 = b.columnname2)", part.trim());
 		
 		assertTrue(sql.endsWith(";"));
+	}
+	
+	@Test
+	public void addConditionsFromFile() throws JsonParseException, JsonMappingException, IOException {
+		SqlJsonInterpreter sqlInterpreter = new SqlJsonInterpreter(new SimpleQueryCreator(host), host);
+		
+		ExportConfig root = new ObjectMapper().readValue(new File("src/test/resources/configuration/local_where_from_file.json"), ExportConfig.class);
+		Collection<Query> jobs = sqlInterpreter.interpret(root);
+		
+		assertEquals(1, jobs.size());
+		/**
+		 * Expected job 1:
+		 * 
+		 * select database1.tablename.columnname1, database1.tablename.columnname2
+		 * from database1.tablename
+		 * where 
+		 * 		(database1.tablename.columnname1 = '1337' or database1.tablename.columnname1 = '1234' or database1.tablename.columnname1 = '7777')
+		 * 	and (database1.tablename.commonColumn = 1337)
+		 * ;
+		 */
+		Iterator<Query> jobIter = jobs.iterator();
+		String job = jobIter.next().getQuery();
+		
+		//select clause
+		String part = job.substring(0, job.indexOf("from"));
+		assertTrue("No select", part.startsWith("select"));
+		String[] arr = part.substring("select".length()).split(",");
+		assertEquals(2, arr.length);
+		assertEquals("database1.tablename.columnname1", arr[0].trim());
+		assertEquals("database1.tablename.columnname2", arr[1].trim());
+				
+		//from clause
+		part = job.substring(job.indexOf("from"), job.indexOf("where"));
+		assertTrue("No from", part.contains("from"));
+		arr = part.split(",");
+		assertEquals(1, arr.length);
+		assertEquals("database1.tablename", arr[0].replace("from", "").trim());
+		
+		//where clause
+		part = job.substring(job.indexOf("where"), job.lastIndexOf(";"));
+		assertTrue("No where", part.contains("where"));
+		arr = part.replace("where", "").split("and");
+		assertEquals(2, arr.length);
+		assertEquals("(database1.tablename.columnname1 = '1337' or database1.tablename.columnname1 = '1234' or database1.tablename.columnname1 = '7777')", arr[0].trim());
+		assertEquals("(database1.tablename.commonColumn = 1337)", arr[1].trim());
+				
+		//count number of ands
+		int andCount = 0;
+		int start = 0;
+		do{
+			start = part.indexOf("and", start);
+			if(start != -1)andCount++;
+		}while(start++ != -1);
+		assertEquals(1, andCount);
+		
+		assertTrue("No terminal semicolon", job.contains(";"));
+	}
+	
+	@Test
+	public void addGlobalConditionsFromFile() throws JsonParseException, JsonMappingException, IOException {
+		SqlJsonInterpreter sqlInterpreter = new SqlJsonInterpreter(new SimpleQueryCreator(host), host);
+		
+		ExportConfig root = new ObjectMapper().readValue(new File("src/test/resources/configuration/global_where_from_file.json"), ExportConfig.class);
+		Collection<Query> jobs = sqlInterpreter.interpret(root);
+		
+		assertEquals(1, jobs.size());
+		/**
+		 * Expected job 1:
+		 * 
+		 * select database1.tablename.columnname1, database1.tablename.columnname2
+		 * from database1.tablename
+		 * where 
+		 * 		(database1.tablename.columnname1 = '1337' or database1.tablename.columnname1 = '1234' or database1.tablename.columnname1 = '7777')
+		 * 	and (database1.tablename.commonColumn = 1337 or database1.tablename.commonColumn = 1234 or database1.tablename.commonColumn = 7777)
+		 * ;
+		 */
+		Iterator<Query> jobIter = jobs.iterator();
+		String job = jobIter.next().getQuery();
+		
+		//select clause
+		String part = job.substring(0, job.indexOf("from"));
+		assertTrue("No select", part.startsWith("select"));
+		String[] arr = part.substring("select".length()).split(",");
+		assertEquals(2, arr.length);
+		assertEquals("database1.tablename.columnname1", arr[0].trim());
+		assertEquals("database1.tablename.columnname2", arr[1].trim());
+				
+		//from clause
+		part = job.substring(job.indexOf("from"), job.indexOf("where"));
+		assertTrue("No from", part.contains("from"));
+		arr = part.split(",");
+		assertEquals(1, arr.length);
+		assertEquals("database1.tablename", arr[0].replace("from", "").trim());
+		
+		//where clause
+		part = job.substring(job.indexOf("where"), job.lastIndexOf(";"));
+		assertTrue("No where", part.contains("where"));
+		arr = part.replace("where", "").split("and");
+		assertEquals(2, arr.length);
+		assertEquals("(database1.tablename.columnname1 = '1337' or database1.tablename.columnname1 = '1234' or database1.tablename.columnname1 = '7777')", arr[0].trim());
+		assertEquals("(database1.tablename.commonColumn = 1337 or database1.tablename.commonColumn = 1234 or database1.tablename.commonColumn = 7777)", arr[1].trim());
+				
+		//count number of ands
+		int andCount = 0;
+		int start = 0;
+		do{
+			start = part.indexOf("and", start);
+			if(start != -1)andCount++;
+		}while(start++ != -1);
+		assertEquals(1, andCount);
+		
+		assertTrue("No terminal semicolon", job.contains(";"));
 	}
 }

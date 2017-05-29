@@ -79,10 +79,11 @@ public class ProcessPidDecode implements DataProcessor {
 	 * @return
 	 */
 	private String addPaddingZeros(String pid) {
-		if(pid.startsWith("0"))
+		int length = pid.length();
+		if(length == 10)
 			return pid;
 		StringBuilder sb = new StringBuilder(10);
-		int paddingLength = 10 - pid.length();
+		int paddingLength = 10 - length;
 		for(int i = 0; i < paddingLength; i++)
 			sb.insert(i, '0');
 		sb.insert(paddingLength, pid);

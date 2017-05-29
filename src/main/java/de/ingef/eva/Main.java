@@ -319,7 +319,7 @@ public class Main {
 		Map<String,String> name2h2ik = configuration.getDecodings();
 		for(String name : name2h2ik.keySet()) {
 			String h2ik = name2h2ik.get(name);
-			DataSource unfilteredPids = new SqlDataSource(String.format(Templates.Decoding.PID_DECODE_QUERY, h2ik), name, configuration);
+			DataSource unfilteredPids = new SqlDataSource(String.format(Templates.Decoding.PID_DECODE_QUERY, h2ik, h2ik), name, configuration);
 			DataSource excludedPids = new SqlDataSource(String.format(Templates.Decoding.INVALID_PIDS_QUERY, h2ik, h2ik), name, configuration);
 			DataProcessor cleanPidProcessor = new ProcessPidDecode(configuration);
 			cleanPidProcessor.process(unfilteredPids.fetchData(), excludedPids.fetchData());

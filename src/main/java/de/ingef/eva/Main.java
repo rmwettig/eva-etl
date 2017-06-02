@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -22,7 +23,6 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.logging.log4j.LogManager;
@@ -47,8 +47,12 @@ import de.ingef.eva.constant.TeradataColumnType;
 import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
 import de.ingef.eva.database.Table;
+import de.ingef.eva.dataprocessor.DetailStatisticsDataProcessor;
+import de.ingef.eva.dataprocessor.HTMLTableWriter;
+import de.ingef.eva.dataprocessor.StatisticsDataProcessor;
 import de.ingef.eva.datasource.DataProcessor;
 import de.ingef.eva.datasource.DataSource;
+import de.ingef.eva.datasource.DataTable;
 import de.ingef.eva.datasource.sql.SqlDataSource;
 import de.ingef.eva.mapping.ProcessPidDecode;
 import de.ingef.eva.processor.Pattern;
@@ -89,9 +93,11 @@ public class Main {
 			} else if(cmd.hasOption("clean")) {
 				Configuration configuration = new JsonConfigurationReader().ReadConfiguration(cmd.getOptionValue("clean"));
 				cleanData(logger, configuration);
-			} else if (cmd.hasOption("makedecode")){
+			} else if (cmd.hasOption("makedecode")) {
 				Configuration configuration = new JsonConfigurationReader().ReadConfiguration(cmd.getOptionValue("makedecode"));
 				createPidMappings(configuration);
+			} else if(cmd.hasOption("stats")) {
+				createDatabaseStatistics(new JsonConfigurationReader().ReadConfiguration(cmd.getOptionValue("stats")));
 			}
 			else
 				new HelpFormatter().printHelp("java -jar eva-data.jar", options);
@@ -298,6 +304,7 @@ public class Main {
 		options.addOption(Option.builder("charlsonscores").hasArg().argName("config.json").desc("calculate Charlson scores").build());
 		options.addOption(Option.builder("clean").hasArg().argName("config.json").desc("post-processes dumped data").build());
 		options.addOption(Option.builder("makedecode").hasArg().argName("config.json").desc("creates PID mappings").build());
+		options.addOption(Option.builder("stats").hasArg().argName("config.json").desc("creates database content statistics").build());
 		
 		return options;
 	}
@@ -312,5 +319,48 @@ public class Main {
 			cleanPidProcessor.process(unfilteredPids.fetchData(), excludedPids.fetchData());
 		}
 		
+	}
+	
+	private static void createDatabaseStatistics(Configuration configuration) {
+		String[] tables = new String[]{"AU_Fall", "KH_Fall", "HeMi_EVO", "HiMi_EVO", "Arzt_Fall", "AM_EVO"};
+		Map<String,String> healthInsurances = new HashMap<>(2);
+		healthInsurances.put("Bosch", "108036123");
+		healthInsurances.put("Salzgitter", "101922757");
+		for(String hi : healthInsurances.keySet()) {
+			int i = 0;
+			DataTable overview;
+			//+1 because of detail stats
+			DataTable[] stats = new DataTable[tables.length + 1];
+			for(String table : tables) {
+				String query;
+				switch(table) {
+				case "AU_Fall":
+					query = Templates.Statistics.ADB_STATISTICS_FOR_AU_FALL.replace("${tableSuffix}", table).replace("${h2ik}", healthInsurances.get(hi));
+					break;
+				case "KH_Fall":
+					query = Templates.Statistics.ADB_STATISTICS_FOR_KH_FALL.replace("${tableSuffix}", table).replace("${h2ik}", healthInsurances.get(hi));
+					break;
+				case "HeMi_EVO":
+				case "HiMi_EVO":
+					query = Templates.Statistics.ADB_STATISTICS_FOR_HEMI_HIMI.replace("${tableSuffix}", table).replace("${h2ik}", healthInsurances.get(hi));
+					break;
+				case "Arzt_Fall":
+					query = Templates.Statistics.ADB_STATISTICS_FOR_ARZT_FALL.replace("${tableSuffix}", table).replace("${h2ik}", healthInsurances.get(hi));
+					break;
+				case "AM_EVO":
+					query = Templates.Statistics.ADB_STATISTICS_FOR_AM_EVO.replace("${tableSuffix}", table).replace("${h2ik}", healthInsurances.get(hi));
+					break;
+				default:
+					continue;
+				}
+				//TODO consolidate api. statsDataProcessor can take multiple data sources but htmlWriter processes only oneq
+				DataTable dataTable = new SqlDataSource(query, table, configuration).fetchData();
+				stats[i++] = new StatisticsDataProcessor().process(dataTable);
+			}
+			stats[i] = new DetailStatisticsDataProcessor().process(
+					new SqlDataSource(Templates.Statistics.ADB_AMBULANT_DATA_BY_KV_QUERY.replaceAll("\\$\\{h2ik\\}", healthInsurances.get(hi)), "ArztFall_details", configuration).fetchData()
+			);
+			new HTMLTableWriter(configuration.getOutDirectory(), hi + "_stats.html", "Datenstand der Datenbereiche zum elektronischen Datenaustausch der GKV").process(stats);			
+		}
 	}
 }

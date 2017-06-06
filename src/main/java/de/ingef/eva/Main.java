@@ -86,7 +86,7 @@ public class Main {
 				Configuration configuration = new JsonConfigurationReader().ReadConfiguration(cmd.getOptionValue("charlsonscores"));
 				CalculateCharlsonScores.calculate(configuration, null);
 			} else if(cmd.hasOption("clean")) {
-				Configuration configuration = new JsonConfigurationReader().ReadConfiguration(cmd.getOptionValue("makejob"));
+				Configuration configuration = new JsonConfigurationReader().ReadConfiguration(cmd.getOptionValue("clean"));
 				cleanData(logger, configuration);
 			} else if (cmd.hasOption("makedecode")){
 				Configuration configuration = new JsonConfigurationReader().ReadConfiguration(cmd.getOptionValue("makedecode"));

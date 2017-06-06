@@ -89,15 +89,7 @@
 									],
 									"type": "inner",
 									"on": ["pid", "kh_fall_id"],
-									"where": {
-										"kh_fall_id": [
-											{
-												"value": "AVK_ADB_T_KH_DIAGNOSE.KH_FALL_ID",
-												"type": "COLUMN",
-												"operator": "="
-											}
-										]
-									}
+									"where": {}
 								}
 							]
 						}
@@ -119,16 +111,8 @@
 										"behandlungstyp"
 									],
 									"type": "inner",
-									"on": "pid",
-									"where": {
-										"kh_fall_id": [
-											{
-												"value": "AVK_ADB_T_KH_DIAGNOSE.KH_FALL_ID",
-												"type": "COLUMN",
-												"operator": "="
-											}
-										]
-									}
+									"on": ["pid", "kh_fall_id"],
+									"where": {}
 								}
 							]
 						}

@@ -43,6 +43,7 @@ import de.ingef.eva.configuration.SchemaDatabaseHostLoader;
 import de.ingef.eva.configuration.SqlJsonInterpreter;
 import de.ingef.eva.configuration.Target;
 import de.ingef.eva.constant.Templates;
+import de.ingef.eva.constant.TeradataColumnTypes;
 import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
 import de.ingef.eva.database.Table;
@@ -149,8 +150,14 @@ public class Main {
 					ResultSet rs = stm.executeQuery(String.format(Templates.QUERY_COLUMNS, db, table.getName()));
 
 					while (rs.next()) {
-						String column = rs.getString(1).trim();
-						jsonWriter.writeString(column);
+						jsonWriter.writeStartObject();
+						jsonWriter.writeFieldName("column");
+						jsonWriter.writeString(rs.getString(1).trim());
+						jsonWriter.writeFieldName("type");
+						String code = rs.getString(2).trim();
+						TeradataColumnTypes type = TeradataColumnTypes.mapCodeToName(code); 
+						jsonWriter.writeString(type != TeradataColumnTypes.UNKNOWN ? type.getLabel() : type.getLabel()+"("+code+")");
+						jsonWriter.writeEndObject();
 					}
 					rs.close();
 					jsonWriter.writeEndArray();// table

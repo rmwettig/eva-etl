@@ -7,6 +7,10 @@ public final class Pattern {
 	public static final String MATCH_OE = "\u00f6";
 	public static final String MATCH_UE = "\u00fc";
 	public static final String MATCH_SZ = "\u00df";
+	public static final String MATCH_CAPITAL_AE = "\u00c4";
+	public static final String MATCH_CAPITAL_OE = "\u00d6";
+	public static final String MATCH_CAPITAL_UE = "\u00fc";
 	public static final String MATCH_PARAGRAPH = "\u00a7";
 	public static final String MATCH_EURO = "\u20ac";
+	public static final String MATCH_INVALID_SCIENTIFIC_FLOAT_CHARS = "[^\\dEe\\.+-]";
 }

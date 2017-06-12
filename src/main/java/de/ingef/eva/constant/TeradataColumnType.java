@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
  */
 @RequiredArgsConstructor
 @Getter
-public enum TeradataColumnTypes {
+public enum TeradataColumnType {
 	BYTE("BYTE"),
 	BLOB("BLOB"),
 	VARBYTE("VARBYTE"),
@@ -26,11 +26,12 @@ public enum TeradataColumnTypes {
 	SMALLINT("SMALLINT"),
 	BIGINT("BIGINT"),
 	NUMBER("NUMBER"),
+	ANY("ANY"),
 	UNKNOWN("UNKNOWN");
 	
 	private final String label;
 	
-	public static TeradataColumnTypes mapCodeToName(String code) {
+	public static TeradataColumnType mapCodeToName(String code) {
 		switch(code) {
 		case "BF":
 			return BYTE;
@@ -62,6 +63,41 @@ public enum TeradataColumnTypes {
 			return NUMBER;
 		default:
 			return UNKNOWN;	
+		}
+	}
+	
+	public static TeradataColumnType fromTypeName(String name) {
+		switch(name) {
+		case "BYTE":
+			return BYTE;
+		case "BLOB":
+			return BLOB;
+		case "VARBYTE":
+			return VARBYTE;
+		case "CHARACTER":
+			return CHARACTER;
+		case "CLOB":
+			return CLOB;
+		case "VARCHAR":
+			return VARCHAR;
+		case "DECIMAL":
+			return DECIMAL;
+		case "DATE":
+			return DATE;
+		case "FLOAT":
+			return FLOAT;
+		case "INTEGER":
+			return INTEGER;
+		case "BYTEINT":
+			return BYTEINT;
+		case "SMALLINT":
+			return SMALLINT;
+		case "BIGINT":
+			return BIGINT;
+		case "NUMBER":
+			return NUMBER;
+		default:
+			return ANY;	
 		}
 	}
 	/*

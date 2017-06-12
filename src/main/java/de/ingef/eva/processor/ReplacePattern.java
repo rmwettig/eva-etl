@@ -1,18 +1,20 @@
 package de.ingef.eva.processor;
 
+import de.ingef.eva.constant.TeradataColumnType;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
+@Getter
 public class ReplacePattern implements Processor<String> {
 
-	private String _regex;
-	private String _pattern;
+	private final TeradataColumnType columnType;
+	private final String regex;
+	private final String pattern;
 	
-	public ReplacePattern(String regex, String pattern) {
-		_regex = regex;
-		_pattern = pattern;
-	}
-
 	@Override
 	public String process(String value) {
-		return value.replaceAll(_regex, _pattern);
+		return value.replaceAll(regex, pattern);
 	}
 
 }

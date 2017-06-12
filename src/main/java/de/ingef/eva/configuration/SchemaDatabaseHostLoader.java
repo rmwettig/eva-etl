@@ -44,7 +44,7 @@ public class SchemaDatabaseHostLoader implements DatabaseHostLoader {
 					Table t = new TextTable(tableName);
 					JsonNode columns = tables.path(tableName);
 					for (JsonNode column : columns) {
-						Column c = new TextColumn(column.asText());
+						Column c = new TextColumn(column.path("column").asText(), column.path("type").asText());
 						t.addColumn(c);
 					}
 					db.addTable(t);

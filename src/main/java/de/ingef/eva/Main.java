@@ -43,7 +43,7 @@ import de.ingef.eva.configuration.SchemaDatabaseHostLoader;
 import de.ingef.eva.configuration.SqlJsonInterpreter;
 import de.ingef.eva.configuration.Target;
 import de.ingef.eva.constant.Templates;
-import de.ingef.eva.constant.TeradataColumnTypes;
+import de.ingef.eva.constant.TeradataColumnType;
 import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
 import de.ingef.eva.database.Table;
@@ -100,32 +100,6 @@ public class Main {
 		}
 	}
 
-	private static Collection<Processor<String>> createProcessors() {
-		//remove special characters like null or ack first
-		//but keep diacritics (ä, ö, ü, ß), § and € 
-		Processor<String> removeControlSequences = new ReplacePattern(Pattern.MATCH_CONTROLSYMBOLS, "");
-		Processor<String> replaceAe = new ReplacePattern(Pattern.MATCH_AE, "ä");
-		Processor<String> replaceOe = new ReplacePattern(Pattern.MATCH_OE, "ö");
-		Processor<String> replaceUe = new ReplacePattern(Pattern.MATCH_UE, "ü");
-		Processor<String> replaceSz = new ReplacePattern(Pattern.MATCH_SZ, "ß");
-		Processor<String> replaceParagraph = new ReplacePattern(Pattern.MATCH_PARAGRAPH, "§");
-		Processor<String> replaceEuro = new ReplacePattern(Pattern.MATCH_EURO, "€");
-		//then remove leading and trailing whitespaces
-		Processor<String> removeBoundaryWhitespaces = new ReplacePattern(Pattern.MATCH_TERMINAL_WHITESPACES, "");
-		
-		Collection<Processor<String>> processors = new ArrayList<Processor<String>>();
-		processors.add(removeControlSequences);
-		processors.add(removeBoundaryWhitespaces);
-		processors.add(replaceAe);
-		processors.add(replaceOe);
-		processors.add(replaceUe);
-		processors.add(replaceSz);
-		processors.add(replaceParagraph);
-		processors.add(replaceEuro);
-		
-		return processors;
-	}
-
 	/**
 	 * Creates a JSON with column names for defined tables
 	 * 
@@ -155,8 +129,8 @@ public class Main {
 						jsonWriter.writeString(rs.getString(1).trim());
 						jsonWriter.writeFieldName("type");
 						String code = rs.getString(2).trim();
-						TeradataColumnTypes type = TeradataColumnTypes.mapCodeToName(code); 
-						jsonWriter.writeString(type != TeradataColumnTypes.UNKNOWN ? type.getLabel() : type.getLabel()+"("+code+")");
+						TeradataColumnType type = TeradataColumnType.mapCodeToName(code); 
+						jsonWriter.writeString(type != TeradataColumnType.UNKNOWN ? type.getLabel() : type.getLabel()+"("+code+")");
 						jsonWriter.writeEndObject();
 					}
 					rs.close();
@@ -252,18 +226,24 @@ public class Main {
 
 		try {
 			final long start = System.nanoTime();
-			Collection<Processor<String>> processors = createProcessors();
-			File[] filenames = new File(String.format("%s/.", configuration.getTempDirectory())).listFiles();
+			File[] filenames = new File(String.format("%s/", configuration.getTempDirectory())).listFiles();
 			List<Dataset> dumpFiles = Helper.findDatasets(filenames);
-
+			DatabaseHost schema = new SchemaDatabaseHostLoader().loadFromFile(configuration.getSchemaFilePath());
 			Helper.createFolders(configuration.getOutDirectory());
 			for (Dataset ds : dumpFiles) {
-				AsyncDumpProcessor dumpCleaner = new AsyncDumpProcessor(processors, ds, configuration.getOutDirectory(),
+				int dbEnd = ds.getName().indexOf("_", 4);
+				String db = ds.getName().substring(0, dbEnd);
+				String table = ds.getName().substring(dbEnd + 1);
+				AsyncDumpProcessor dumpCleaner = new AsyncDumpProcessor(
+						configuration.getValidationRules(),
+						ds,
+						configuration.getOutDirectory(),
 						String.format("%s.csv", ds.getName()),
-						configuration.getFastExportConfiguration().getRowPrefix(), logger);
+						configuration.getFastExportConfiguration().getRowPrefix(),
+						schema.findDatabaseByName(db).findTableByName(table),
+						logger);
 				threadPool.execute(dumpCleaner);
 			}
-
 			threadPool.shutdown();
 			threadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 			logger.info("Time taken: {} min.", Helper.NanoSecondsToMinutes(System.nanoTime() - start));

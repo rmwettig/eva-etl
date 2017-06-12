@@ -7,6 +7,10 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import de.ingef.eva.constant.TeradataColumnType;
+import de.ingef.eva.processor.Pattern;
+import de.ingef.eva.processor.ReplacePattern;
+
 public class Configuration {
 
 	private String _server;
@@ -22,11 +26,13 @@ public class Configuration {
 	private JsonNode _databasesNode;
 	private Collection<Mapping> _mappings; 
 	private Map<String,String> _nameToH2ik;
+	private Collection<ReplacePattern> _rules = new ArrayList<ReplacePattern>(10);
 	
 	public Configuration(JsonNode root) {
 		prepareConnectionConfiguration(root);
 		prepareMappingConfiguration(root);
 		prepareFilteringConfiguration(root);
+		prepareValidationRules(root);
 		
 		_fastExportConfiguration = new FastExportConfiguration(root);
 		
@@ -132,6 +138,18 @@ public class Configuration {
 		}
 	}
 	
+	private void prepareValidationRules(JsonNode root) {
+		JsonNode validationNode = root.path("validation");
+		if(validationNode.isMissingNode()) return;
+		
+		for(JsonNode rule : validationNode) {
+			TeradataColumnType type = TeradataColumnType.fromTypeName(rule.path("type").asText());
+			String excludeRegEx = rule.path("exclude").asText();
+			String replaceText = rule.path("replace").asText("");
+			_rules.add(new ReplacePattern(type, excludeRegEx, replaceText));
+		}
+	}
+		
 	public String getServer() {
 		return _server;
 	}
@@ -194,5 +212,9 @@ public class Configuration {
 	
 	public Map<String,String> getDecodings() {
 		return _nameToH2ik;
+	}
+	
+	public Collection<ReplacePattern> getValidationRules() {
+		return _rules;
 	}
 }

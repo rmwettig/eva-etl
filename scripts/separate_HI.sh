@@ -51,8 +51,9 @@ do
     fi
     ofile=$subOutDirectory/$t
     
+	# convert encoding to utf-8
 	# get the row for the health incurance's h2ik
-	grep "${hi[$k]}" $inDirectory/$t > $ofile
+	iconv -f MS-ANSI -t UTF-8 $inDirectory/$t | grep "${hi[$k]}" > $ofile
     
 	# add header
 	sed -i 1i$header $ofile

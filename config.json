@@ -337,7 +337,7 @@
 	"validation": [
 		{ 
 			"type": "FLOAT",
-			"exclude": "[^\\dEe\\.+-]" 
+			"exclude": "[^\\dEe.+-]" 
 		},
 		{
 			"type": "ANY",

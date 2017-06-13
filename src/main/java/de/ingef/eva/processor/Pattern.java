@@ -12,5 +12,5 @@ public final class Pattern {
 	public static final String MATCH_CAPITAL_UE = "\u00fc";
 	public static final String MATCH_PARAGRAPH = "\u00a7";
 	public static final String MATCH_EURO = "\u20ac";
-	public static final String MATCH_INVALID_SCIENTIFIC_FLOAT_CHARS = "[^\\dEe\\.+-]";
+	public static final String MATCH_INVALID_SCIENTIFIC_FLOAT_CHARS = "[^\\dEe.+-]";
 }

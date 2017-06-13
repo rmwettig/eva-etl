@@ -6,9 +6,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.Logger;
@@ -59,7 +60,7 @@ public class AsyncDumpProcessor implements Runnable {
 		File outputFile = new File(_outDirectory + "/" + _outFilename);
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));) {
 
-			List<List<Processor<String>>> columnProcessors = null;
+			Map<Integer,List<Processor<String>>> columnProcessors = null;
 			//if output file is empty add a header
 			if (outputFile.length() == 0) {
 				String header = writeHeader(writer, _data.getHeaderFile());
@@ -78,8 +79,9 @@ public class AsyncDumpProcessor implements Runnable {
 						String[] columns = processedLine.split(";");
 						for(int i = 0; i < columns.length; i++) {
 							String cleaned = columns[i];
-							for(Processor<String> proc : columnProcessors.get(i))
-								cleaned = proc.process(cleaned);
+							if(columnProcessors.containsKey(i))
+								for(Processor<String> proc : columnProcessors.get(i))
+									cleaned = proc.process(cleaned);
 							cleanRow.append(cleaned);
 							cleanRow.append(";");
 						}
@@ -115,16 +117,16 @@ public class AsyncDumpProcessor implements Runnable {
 		return line.substring(startIndex + startSignal.length());
 	}
 	
-	private List<List<Processor<String>>> setUpColumnValidation(String header) {
+	private Map<Integer,List<Processor<String>>> setUpColumnValidation(String header) {
 		String[] columnNames = header.split(";");
-		List<List<Processor<String>>> processors = new ArrayList<List<Processor<String>>>(columnNames.length);
+		Map<Integer,List<Processor<String>>> processors = new HashMap<Integer,List<Processor<String>>>(columnNames.length);
 		for(int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
 			for(final Column c : _table.getAllColumns()) {
 				if(c.getName().equalsIgnoreCase(columnNames[columnIndex])) {
 					List<Processor<String>> columnProcessors = _processors.stream()
 							.filter(p -> p.getColumnType() == TeradataColumnType.ANY || p.getColumnType().getLabel().equalsIgnoreCase(c.getType()))
 							.collect(Collectors.toList());
-					processors.add(columnProcessors);
+					processors.put(columnIndex, columnProcessors);
 					continue;
 				}
 			}

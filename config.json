@@ -22,17 +22,6 @@
 		"endYear": "2016",
 		"sources": [
 			{
-				"name": "ACC_SPECTRUM",
-				"views": [
-					{
-						"AVK_AU_FALL": {}
-					},
-					{
-						"AVK_AU_FALL_DIA": {}
-					}
-				]
-			},
-			{
 				"name": "ACC_ADB",
 				"views": [
 					{
@@ -344,5 +333,20 @@
 	"decoding": [
 		{ "name": "Bosch", "h2ik": "108036123" },
 		{ "name": "Salzgitter", "h2ik": "101922757" }
+	],
+	"validation": [
+		{ 
+			"type": "FLOAT",
+			"exclude": "[^\\dEe\\.+-]" 
+		},
+		{
+			"type": "ANY",
+			"exclude": "[^\\p{Alnum}\\s();,./\\\\\u00e4\u00f6\u00fc\u00df\u00a7\u20ac\\[\\]_-]"
+		},
+		{
+			"type": "CHARACTER",
+			"exclude": "\u00f6",
+			"replace": "\u00f6"
+		}
 	]
 }

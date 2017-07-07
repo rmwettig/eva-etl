@@ -29,7 +29,7 @@ if [ ! -d $archiveDirectory ]; then
 fi
 
 # for each file in the input directory
-for t in $(ls $inDirectory)
+for t in $(ls $inDirectory/*.csv)
 do
   ifile=$inDirectory/$t
   # skip directories

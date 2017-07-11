@@ -1,220 +1,234 @@
 package de.ingef.eva.configuration;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.ingef.eva.constant.TeradataColumnType;
-import de.ingef.eva.processor.Pattern;
-import de.ingef.eva.processor.ReplacePattern;
+import de.ingef.eva.data.TeradataColumnType;
+import de.ingef.eva.data.validation.NameRule;
+import de.ingef.eva.data.validation.ReplacePattern;
+import de.ingef.eva.data.validation.Rule;
+import de.ingef.eva.data.validation.TypeRule;
+import de.ingef.eva.error.InvalidConfigurationException;
+import lombok.Getter;
 
+@Getter
 public class Configuration {
-
-	private String _server;
-	private String _connectionUrl;
-	private String _connectionParameters;
-	private String _username;
-	private String _password;
-	private String _outDirectory;
-	private String _tempDirectory;
-	private String _schemaFilePath;
-	private int _threadCount;
-	private FastExportConfiguration _fastExportConfiguration;
-	private JsonNode _databasesNode;
-	private Collection<Mapping> _mappings; 
-	private Map<String,String> _nameToH2ik;
-	private Collection<ReplacePattern> _rules = new ArrayList<ReplacePattern>(10);
+	private String host;
+	private String connectionUrl;
+	private String connectionParameters;
+	private String user;
+	private String password;
+	private String outputDirectory;
+	private String tempDirectory;
+	private String logDirectory = "logs";
+	private String schemaFile;
+	private int threadCount;
+	private FastExportConfiguration fastExportConfiguration;
+	private JsonNode databasesNode;
+	private Collection<Mapping> mappings; 
+	private Map<String,String> nameToH2ik;
+	private Collection<Rule> rules;
+	private String fullConnectionUrl;
 	
-	public Configuration(JsonNode root) {
-		prepareConnectionConfiguration(root);
-		prepareMappingConfiguration(root);
-		prepareFilteringConfiguration(root);
-		prepareValidationRules(root);
+	public static Configuration loadFromJson(String path) throws JsonProcessingException, IOException, InvalidConfigurationException {
+		String SERVER = "server";
+		String URL = "url";
+		String PARAMETERS = "parameters";
+		String USER ="username";
+		String PASSWORD = "userpassword";
+		String OUTPUT_DIRECTORY = "outputdirectory";
+		String TEMP_DIRECTORY = "tmpdirectory";
+		String SCHEMAFILE = "schemafile";
+		String THREADS = "threads";
+		String DATABASES = "databases";
 		
-		_fastExportConfiguration = new FastExportConfiguration(root);
+		JsonNode root = new ObjectMapper().readTree(new File(path));
+		Configuration config = new Configuration();
 		
-		JsonNode databaseNode = root.path("databases");
-		if (databaseNode.isMissingNode())
-			System.out.println("Missing 'databases' configuration entry");
-		_databasesNode = databaseNode;
-	}
+		JsonNode node = root.path(SERVER);
+		if (node.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, SERVER));
+		config.host = node.asText();
+		
+		node = root.path(URL);
+		if (node.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, URL));
+		config.connectionUrl = node.asText();
 
-	public String createFullConnectionUrl() {
-		return String.format("%s%s/%s", _connectionUrl, _server, _connectionParameters);
-	}
+		node = root.path(PARAMETERS);
+		config.connectionParameters = (!node.isMissingNode()) ? node.asText() : "";
+		
+		config.fullConnectionUrl = config.connectionUrl + config.host + "/" + config.connectionParameters;
+		
+		node = root.path(USER);
+		if (node.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, USER));
+		config.user = node.asText();
 
-	private void prepareConnectionConfiguration(JsonNode root) {
-		JsonNode node = root.path("server");
-		if (node.isMissingNode())
-			System.out.println("Missing 'server' configuration entry.");
-		_server = node.asText();
-
-		node = root.path("url");
-		if (node.isMissingNode())
-			System.out.println("Missing 'connectionUrl' configuration entry.");
-		_connectionUrl = node.asText();
-
-		node = root.path("parameters");
-		_connectionParameters = (!node.isMissingNode()) ? node.asText() : "";
-
-		node = root.path("username");
-		if (node.isMissingNode())
-			System.out.println("Missing 'username' configuration entry.");
-		_username = node.asText();
-
-		node = root.path("userpassword");
-		if (node.isMissingNode())
-			System.out.println("Missing 'userpassword' configuration entry.");
-		_password = node.asText();
-
+		node = root.path(PASSWORD);
+		if (node.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, PASSWORD));
+		config.password = node.asText();
+		
 		node = root.path("outputdirectory");
-		if (node.isMissingNode())
-			System.out.println("Missing 'outdirectory' configuration entry.");
-		_outDirectory = node.asText();
+		if (node.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, OUTPUT_DIRECTORY));
+		config.outputDirectory = node.asText();
 
 		node = root.path("tempdirectory");
-		if (node.isMissingNode())
-			System.out.println("Missing 'tempdirectory' configuration entry.");
-		_tempDirectory = node.asText();
+		if (node.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, TEMP_DIRECTORY));
+		config.tempDirectory = node.asText();
 
-		node = root.path("schemafile");
-		if (node.isMissingNode())
-			System.out.println("Missing 'schemafile' configuration entry.");
-		_schemaFilePath = node.asText();
+		node = root.path(SCHEMAFILE);
+		if (node.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, SCHEMAFILE));
+		config.schemaFile = node.asText();
 
 		node = root.path("threads");
-		if (node.isMissingNode())
-			System.out.println("Missing 'threads' configuration entry.");
-		_threadCount = node.asInt(1);
+		if (node.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, THREADS));
+		int intendedThreadCount = node.asInt();
+		if (intendedThreadCount < 1) throw new InvalidConfigurationException(String.format(ErrorMessage.INVALID_VALUE, THREADS, intendedThreadCount));
+		config.threadCount = intendedThreadCount; 
+				
+		config.fastExportConfiguration = FastExportConfiguration.loadFromJson(root);
 		
-		if(_threadCount < 0) _threadCount = 1;
+		JsonNode databaseNode = root.path("databases");
+		if (databaseNode.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, DATABASES));
+		config.databasesNode = databaseNode;
+		
+		config.mappings = prepareMappingConfiguration(root);
+		config.nameToH2ik = prepareFilteringConfiguration(root);
+		config.rules = prepareValidationRules(root);
+		
+		return config;
 	}
 	
-	private void prepareMappingConfiguration(JsonNode root) {
-		JsonNode mappings = root.path("mappings");
+	private static Collection<Mapping> prepareMappingConfiguration(JsonNode root) throws InvalidConfigurationException {
+		String MAPPINGS = "mappings";
+		String SOURCE = "source";
+		String SOURCE_KEY_COLUMN = "sourceKeyColumn";
+		String TARGET_KEY_COLUMN = "targetKeyColumn";
+		String TARGETS = "targets";
+		String DATA = "data";
+		String HEADER = "header";
 		
-		if(mappings.isMissingNode()) return;
+		JsonNode mappingsNode = root.path(MAPPINGS);		
+		if(mappingsNode.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, MAPPINGS));
 		
-		_mappings = new ArrayList<Mapping>();
+		Collection<Mapping> mappings = new ArrayList<>();
 		
-		for(JsonNode mapping : mappings) {
-			JsonNode sourceNode = mapping.path("source");
-			JsonNode sourceKeyColumnNode = mapping.path("sourceKeyColumn");
-			JsonNode targetKeyColumnNode = mapping.path("targetKeyColumn");
-			JsonNode targets = mapping.path("targets");
+		for(JsonNode mapping : mappingsNode) {
+			JsonNode sourceNode = mapping.path(SOURCE);
+			if(sourceNode.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, SOURCE));
 			
-			if(	sourceNode.isMissingNode() ||
-				sourceKeyColumnNode.isMissingNode() ||
-				targetKeyColumnNode.isMissingNode() ||
-				targets.isMissingNode()) return;
+			JsonNode sourceKeyColumnNode = mapping.path(SOURCE_KEY_COLUMN);
+			if(sourceKeyColumnNode.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, SOURCE_KEY_COLUMN));
 			
-			Collection<Target> unmappedFiles = new ArrayList<Target>();
+			JsonNode targetKeyColumnNode = mapping.path(TARGET_KEY_COLUMN);
+			if(targetKeyColumnNode.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, TARGET_KEY_COLUMN));
+			
+			JsonNode targets = mapping.path(TARGETS);
+			if(targets.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, TARGETS));
+			
+			Collection<Target> unmappedFiles = new ArrayList<>();
 			
 			for(JsonNode target : targets) {
-				JsonNode data = target.path("data");
-				JsonNode header = target.path("header");
+				JsonNode data = target.path(DATA);
+				if(data.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, DATA));
 				
-				if(data.isMissingNode() || header.isMissingNode()) continue;
-				
+				JsonNode header = target.path(HEADER);
+				if(header.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, HEADER));
+								
 				unmappedFiles.add(new Target(header.asText(), data.asText()));
 			}
 			String source = sourceNode.asText();
 			String sourceKeyColumn = sourceKeyColumnNode.asText();
 			String targetKeyColumn = targetKeyColumnNode.asText();
 			
-			_mappings.add(new Mapping(source, sourceKeyColumn, targetKeyColumn, unmappedFiles));
+			mappings.add(new Mapping(source, sourceKeyColumn, targetKeyColumn, unmappedFiles));
 		}
+		
+		return mappings;
 	}
 	
-	private void prepareFilteringConfiguration(JsonNode root) {
-		_nameToH2ik = new HashMap<String,String>();
-		JsonNode filteringNode = root.path("decoding");
-		if(filteringNode.isMissingNode() || !filteringNode.isArray()) return;
+	private static Map<String,String> prepareFilteringConfiguration(JsonNode root) throws InvalidConfigurationException {
+		Map<String,String> nameToH2ik = new HashMap<String,String>();
+		String DECODING = "decoding";
+		String NAME = "name";
+		String H2IK = "h2ik";
+		
+		JsonNode filteringNode = root.path(DECODING);
+		if(filteringNode.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, DECODING));
+		if(!filteringNode.isArray()) throw new InvalidConfigurationException(String.format(ErrorMessage.INVALID_TYPE, "Array"));
+		
 		for(JsonNode decoder : filteringNode) {
-			_nameToH2ik.put(decoder.path("name").asText(), decoder.path("h2ik").asText());
+			JsonNode nameNode = decoder.path("name");
+			if(nameNode.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, NAME));
+			JsonNode h2ikNode = decoder.path(H2IK);
+			if(h2ikNode.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, H2IK));
+			String name = nameNode.asText();
+			if(name.isEmpty()) throw new InvalidConfigurationException(String.format(ErrorMessage.INVALID_VALUE, ""));
+			String h2ik = h2ikNode.asText();
+			if(h2ik.isEmpty()) throw new InvalidConfigurationException(String.format(ErrorMessage.INVALID_VALUE, ""));
+			nameToH2ik.put(name, h2ik);
 		}
+		
+		return nameToH2ik;
 	}
 	
-	private void prepareValidationRules(JsonNode root) {
-		JsonNode validationNode = root.path("validation");
-		if(validationNode.isMissingNode()) return;
+	private static Collection<Rule> prepareValidationRules(JsonNode root) throws InvalidConfigurationException {
+		String VALIDATION = "validation";
+		String RULE = "rule";
+		String TYPE = "type";
+		String EXCLUDE = "exclude";
+		String REPLACE = "replace";
+		String COLUMN = "column";
 		
+		JsonNode validationNode = root.path(VALIDATION);
+		if(validationNode.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, VALIDATION));
+		Collection<Rule> rules = new ArrayList<>();
 		for(JsonNode rule : validationNode) {
-			TeradataColumnType type = TeradataColumnType.fromTypeName(rule.path("type").asText());
-			String excludeRegEx = rule.path("exclude").asText();
-			String replaceText = rule.path("replace").asText("");
-			_rules.add(new ReplacePattern(type, excludeRegEx, replaceText));
+			JsonNode ruleType = rule.path(RULE);
+			if(ruleType.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, RULE));
+			
+			//exclude is a regex pattern that matches characters that must be ignored
+			JsonNode excludeNode = rule.path(EXCLUDE);
+			if(excludeNode.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, EXCLUDE));
+			String excludePattern = excludeNode.asText();
+			if(excludePattern.isEmpty()) throw new InvalidConfigurationException(String.format(ErrorMessage.INVALID_VALUE, ""));
+			
+			//optional replacement symbol
+			String replaceText = rule.path(REPLACE).asText("");
+			
+			if(ruleType.asText().equalsIgnoreCase("TYPE"))
+				rules.add(parseTypeRule(rule, TYPE, excludePattern, replaceText));
+			
+			if(ruleType.asText().equalsIgnoreCase("NAME"))
+				rules.add(parseNameRule(rule, COLUMN, excludePattern, replaceText));
 		}
-	}
 		
-	public String getServer() {
-		return _server;
-	}
-
-	public void setServer(String server) {
-		this._server = server;
-	}
-
-	public String getConnectionUrl() {
-		return _connectionUrl;
-	}
-
-	public void setConnectionUrl(String connectionUrl) {
-		this._connectionUrl = connectionUrl;
-	}
-
-	public String getUsername() {
-		return _username;
-	}
-
-	public void setUsername(String username) {
-		this._username = username;
-	}
-
-	public String getPassword() {
-		return _password;
-	}
-
-	public void setPassword(String password) {
-		this._password = password;
-	}
-
-	public String getOutDirectory() {
-		return _outDirectory;
-	}
-
-	public String getTempDirectory() {
-		return _tempDirectory;
-	}
-
-	public int getThreadCount() {
-		return _threadCount;
-	}
-
-	public FastExportConfiguration getFastExportConfiguration() {
-		return _fastExportConfiguration;
-	}
-
-	public String getSchemaFilePath() {
-		return _schemaFilePath;
-	}
-
-	public JsonNode getDatabaseNode() {
-		return _databasesNode;
+		return rules;
 	}
 	
-	public Collection<Mapping> getMappings() {
-		return _mappings;
+	private static Rule parseTypeRule(JsonNode rule, String typeKey, String excludePattern, String replaceText) throws InvalidConfigurationException {
+		//type is the column data type
+		JsonNode typeNode = rule.path(typeKey);
+		if(typeNode.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, typeKey));
+		String typeName = typeNode.asText();
+		if(typeName.isEmpty()) throw new InvalidConfigurationException(String.format(ErrorMessage.INVALID_VALUE, ""));
+		TeradataColumnType type = TeradataColumnType.fromTypeName(typeName);
+		
+		return new TypeRule(type, new ReplacePattern(excludePattern, replaceText));
 	}
 	
-	public Map<String,String> getDecodings() {
-		return _nameToH2ik;
-	}
-	
-	public Collection<ReplacePattern> getValidationRules() {
-		return _rules;
+	private static Rule parseNameRule(JsonNode rule, String columnKey, String excludePattern, String replaceText) throws InvalidConfigurationException {
+		JsonNode columnNameNode = rule.path(columnKey);
+		if(columnNameNode.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, columnKey));
+		String columnName = columnNameNode.asText();
+		if(columnName == null || columnName.isEmpty()) throw new InvalidConfigurationException(String.format(ErrorMessage.INVALID_VALUE, columnName));
+		
+		return new NameRule(columnName, new ReplacePattern(excludePattern, replaceText));
 	}
 }

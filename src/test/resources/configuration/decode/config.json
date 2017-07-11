@@ -1,3 +1,98 @@
 {
-	"outputdirectory": "out"
+	"server": "192.168.146.1",
+	"url": "jdbc:teradata://",
+	"parameters": "TYPE=FASTEXPORT,CHARSET=UTF8",
+	"username": "user",
+	"userpassword": "password",
+	"outputdirectory": "out",
+	"tempdirectory": "tmp",
+	"threads": "2",
+	"schemafile": "headerlookup.json",
+	"fastexport": {
+		"logDatabase": "sb_hri",
+		"logTable": "mw_fe_log",
+		"sessions": "24",
+		"rowPrefix": "ROW_START;",
+		"postDumpAction": "java -jar ./eva-data.jar ./debugConfig.json",
+		"jobFilename": "debug.fx"
+	},
+	"headerFile": "headerlookup.json",
+	"databases": {
+		"startYear": "2016",
+		"endYear": "2016",
+		"sources": [
+			{
+				"name": "ACC_ADB",
+				"views": [
+					{
+						"AVK_ADB_T_HKP_EVO": {}
+					}
+				],
+				"where": {
+					"h2ik": [
+						{
+							"value": "101922757",
+							"type": "STRING",
+							"operator": "="
+						},
+						{
+							"value": "108036123",
+							"type": "STRING",
+							"operator": "="
+						}
+					]
+				}
+			}
+		]
+	},
+	"mappings": [
+		{
+			"source": "src/test/resources/configuration/mapping/egk2pid.csv",
+			"targets": [
+				{
+					"data" : "src/test/resources/configuration/mapping/unmapped1.csv",
+					"header" : "src/test/resources/configuration/mapping/unmapped1.header.csv"
+				},
+				{
+					"data" : "src/test/resources/configuration/mapping/unmapped2.csv",
+					"header" : "src/test/resources/configuration/mapping/unmapped2.header.csv"
+				}
+			],
+			"sourceKeyColumn" : "egk_nr",
+			"targetKeyColumn" : "pid" 
+		}
+	],
+	"decoding": [
+		{
+			"name": "Bosch",
+			"h2ik": "108036123"
+		},
+		{
+			"name": "Salzgitter",
+			"h2ik": "101922757"
+		}
+	],
+	"validation": [
+		{
+			"rule": "TYPE",
+			"type": "FLOAT",
+			"exclude": "[^\\dEe.+-]"
+		},
+		{
+			"rule": "TYPE",
+			"type": "ANY",
+			"exclude": "[^\\p{Alnum}\\s();,./\\\\\u00e4\u00f6\u00fc\u00df\u00a7\u20ac\\[\\]_-]"
+		},
+		{
+			"rule": "TYPE",
+			"type": "CHARACTER",
+			"exclude": "\u00f6",
+			"replace": "\u00f6"
+		},
+		{
+			"rule": "NAME",
+			"column": "FG",
+			"exclude": "[^\\d]"
+		}
+	]
 }

@@ -12,8 +12,7 @@ import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
 import de.ingef.eva.database.Table;
 import de.ingef.eva.query.Query;
-import de.ingef.eva.query.QueryCreator;
-import de.ingef.eva.utility.Helper;
+import de.ingef.eva.query.creation.QueryCreator;
 
 public class SqlJsonInterpreter implements JsonInterpreter {
 
@@ -73,7 +72,7 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 			//take only the recent year
 			int endYear = Calendar.getInstance().get(Calendar.YEAR);
 			int startYear = endYear - previousYears.asInt();
-			years = Helper.extractYears(startYear, endYear);
+			years = de.ingef.eva.utility.Helper.extractYears(startYear, endYear);
 		} else {
 			int startYear = extractStartYear(node);
 			
@@ -83,7 +82,7 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 				return years;
 			}
 			int endYear = extractEndYear(node);
-			years = Helper.extractYears(startYear, endYear);
+			years = de.ingef.eva.utility.Helper.extractYears(startYear, endYear);
 		}
 		return years;
 	}

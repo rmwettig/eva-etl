@@ -1,7 +1,5 @@
 package de.ingef.eva;
 
-import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
@@ -9,14 +7,19 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -25,84 +28,206 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 
-import de.ingef.eva.async.AsyncDumpProcessor;
 import de.ingef.eva.async.AsyncMapper;
-import de.ingef.eva.async.AsyncWriter;
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.configuration.ConfigurationDatabaseHostLoader;
-import de.ingef.eva.configuration.JsonConfigurationReader;
-import de.ingef.eva.configuration.JsonInterpreter;
 import de.ingef.eva.configuration.Mapping;
 import de.ingef.eva.configuration.SchemaDatabaseHostLoader;
-import de.ingef.eva.configuration.SqlJsonInterpreter;
 import de.ingef.eva.configuration.Target;
+import de.ingef.eva.constant.OutputDirectory;
 import de.ingef.eva.constant.Templates;
-import de.ingef.eva.constant.TeradataColumnType;
+import de.ingef.eva.data.DataSet;
+import de.ingef.eva.data.DataTable;
+import de.ingef.eva.data.TeradataColumnType;
+import de.ingef.eva.data.validation.RowLengthValidator;
+import de.ingef.eva.data.validation.ValidatorDataProcessor;
+import de.ingef.eva.database.Column;
 import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
 import de.ingef.eva.database.Table;
+import de.ingef.eva.dataprocessor.DataTableMergeProcessor;
 import de.ingef.eva.dataprocessor.DetailStatisticsDataProcessor;
 import de.ingef.eva.dataprocessor.HTMLTableWriter;
 import de.ingef.eva.dataprocessor.StatisticsDataProcessor;
+import de.ingef.eva.dataprocessor.ValidationReportWriter;
 import de.ingef.eva.datasource.DataProcessor;
 import de.ingef.eva.datasource.DataSource;
-import de.ingef.eva.datasource.DataTable;
 import de.ingef.eva.datasource.sql.SqlDataSource;
+import de.ingef.eva.error.InvalidConfigurationException;
+import de.ingef.eva.error.QueryExecutionException;
 import de.ingef.eva.mapping.ProcessPidDecode;
-import de.ingef.eva.processor.Pattern;
-import de.ingef.eva.processor.Processor;
-import de.ingef.eva.processor.ReplacePattern;
+import de.ingef.eva.measures.CalculateCharlsonScores;
+import de.ingef.eva.query.FastExportJobWriter;
+import de.ingef.eva.query.FastExportQueryExecutor;
+import de.ingef.eva.query.JsonQuerySource;
 import de.ingef.eva.query.Query;
-import de.ingef.eva.query.QueryCreator;
-import de.ingef.eva.query.SimpleQueryCreator;
-import de.ingef.eva.utility.Alias;
-import de.ingef.eva.utility.Dataset;
+import de.ingef.eva.query.QueryExecutor;
+import de.ingef.eva.query.QueryJob;
+import de.ingef.eva.query.QuerySource;
+import de.ingef.eva.query.fastexport.FastExportJobLoader;
 import de.ingef.eva.utility.Helper;
-import de.ingef.measures.CalculateCharlsonScores;
+import de.ingef.eva.utility.Stopwatch;
+import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 public class Main {
 	public static void main(String[] args) {
-		final Logger logger = LogManager.getRootLogger();
-		
 		Options options = createCliOptions();
 		CommandLineParser parser = new DefaultParser();
 		try {
 			CommandLine cmd = parser.parse(options, args);
 			if(cmd.hasOption("makejob")) {
-				Configuration configuration = new JsonConfigurationReader().ReadConfiguration(cmd.getOptionValue("makejob"));
-				createFastExportJobs(configuration, logger);
-				logger.info("Teradata FastExport job file created.");
+				Configuration config = Configuration.loadFromJson(cmd.getOptionValue("makejob"));
+				QuerySource qs = new JsonQuerySource(config);
+				Collection<Query> queries = qs.createQueries();
+				QueryExecutor<Query> executor = new FastExportJobWriter(config);
+				for(Query query : queries) {
+					executor.execute(query);
+				}
+				log.info("Teradata FastExport job file created.");
+			} else if(cmd.hasOption("dump")) {
+				Stopwatch sw = new Stopwatch();
+				sw.start();
+				Configuration config = Configuration.loadFromJson(cmd.getOptionValue("dump"));
+				Collection<QueryJob> jobs = new FastExportJobLoader().loadFastExportJobs(config);
+				//FastExport processes must not survive main thread
+				ExecutorService threadPool = Executors.newFixedThreadPool(
+						config.getThreadCount(),
+						new ThreadFactory() {
+							public Thread newThread(Runnable r) {
+								Thread t = Executors.defaultThreadFactory().newThread(r);
+								t.setDaemon(true);
+								return t;
+							}
+						}
+					);
+				FastExportQueryExecutor queryExecutor = new FastExportQueryExecutor(config, threadPool, jobs.size());
+				for(QueryJob job : jobs) {
+					queryExecutor.execute(job);
+				}
+				queryExecutor.shutdown();
+				sw.stop();
+				log.info("Dumping done in {}.", sw.createReadableDelta());
+				
 			} else if(cmd.hasOption("fetchschema")) {
 				String path = cmd.getOptionValue("fetchschema");
-				DatabaseHost schema = new ConfigurationDatabaseHostLoader(logger).loadFromFile(path);
-				Configuration configuration = new JsonConfigurationReader().ReadConfiguration(path);
-				createHeaderLookup(configuration, schema, logger);
-				logger.info("Teradata column lookup created.");
+				DatabaseHost schema = new ConfigurationDatabaseHostLoader().loadFromFile(path);
+				Configuration configuration = Configuration.loadFromJson(path);
+				createHeaderLookup(configuration, schema);
+				log.info("Teradata column lookup created.");
 			} else if(cmd.hasOption("map")) {
-				Configuration configuration = new JsonConfigurationReader().ReadConfiguration(cmd.getOptionValue("map"));
-				mapFiles(logger, configuration);
+				Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("map"));
+				mapFiles(configuration);
 			} else if(cmd.hasOption("charlsonscores")) {
-				Configuration configuration = new JsonConfigurationReader().ReadConfiguration(cmd.getOptionValue("charlsonscores"));
+				Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("charlsonscores"));
 				CalculateCharlsonScores.calculate(configuration, null);
 			} else if(cmd.hasOption("clean")) {
-				Configuration configuration = new JsonConfigurationReader().ReadConfiguration(cmd.getOptionValue("clean"));
-				cleanData(logger, configuration);
+				Stopwatch sw = new Stopwatch();
+				sw.start();
+				Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("clean"));
+				Map<String,List<Column>> table2header = Helper.parseTableHeaders(configuration.getOutputDirectory() + "/" + OutputDirectory.HEADERS);
+				Collection<DataTable> tables = Helper.loadDataTablesFromDirectory(
+						configuration.getOutputDirectory() + "/" + OutputDirectory.RAW,
+						".csv",
+						table2header,
+						configuration.getFastExportConfiguration().getRowPrefix(),
+						configuration.getFastExportConfiguration().getRawColumnDelimiter(), ""
+					);
+				//TODO harmonize config general rules and column/table specific-rules
+				ExecutorService threadPool = Executors.newFixedThreadPool(configuration.getThreadCount());
+				for(DataTable table : tables) {
+					threadPool.execute(new Runnable() {
+						@Override
+						public void run() {
+							new ValidatorDataProcessor(configuration, configuration.getRules()).process(table);	
+						}
+					}); 
+				}
+				threadPool.shutdown();
+				threadPool.awaitTermination(14, TimeUnit.DAYS);
+				sw.stop();
+				log.info("Cleaning done in {}.", sw.createReadableDelta());
 			} else if (cmd.hasOption("makedecode")) {
-				Configuration configuration = new JsonConfigurationReader().ReadConfiguration(cmd.getOptionValue("makedecode"));
+				Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("makedecode"));
 				createPidMappings(configuration);
 			} else if(cmd.hasOption("stats")) {
-				createDatabaseStatistics(new JsonConfigurationReader().ReadConfiguration(cmd.getOptionValue("stats")));
+				createDatabaseStatistics(Configuration.loadFromJson(cmd.getOptionValue("stats")));
+			} else if(cmd.hasOption("merge")) {
+				Stopwatch sw = new Stopwatch();
+				sw.start();
+				Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("merge"));
+				List<DataSet> datasets = Helper.findDatasets(configuration.getOutputDirectory() + "/" + OutputDirectory.CLEAN);
+				ExecutorService threadPool = Executors.newFixedThreadPool(configuration.getThreadCount());
+				String productionDirectory = configuration.getOutputDirectory() + "/" + OutputDirectory.PRODUCTION;
+				Helper.createFolders(productionDirectory);
+				for(DataSet ds : datasets) {
+					CompletableFuture
+							.supplyAsync(
+									() -> {
+										log.info("Merging '{}'", ds.getName());
+										DataTable dt = new DataTableMergeProcessor(productionDirectory).process(ds);
+										log.info("'{}' done.", dt.getName());
+										return dt;
+									},
+									threadPool
+							);
+				}
+				threadPool.shutdown();
+				threadPool.awaitTermination(14, TimeUnit.DAYS);
+				sw.stop();
+				log.info("Merging done in {}.", sw.createReadableDelta());
+			} else if(cmd.hasOption("validate")) {
+				String[] validationOptions = cmd.getOptionValues("validate");
+				Configuration configuration = Configuration.loadFromJson(validationOptions[0]);
+				DatabaseHost schema = new SchemaDatabaseHostLoader().loadFromFile(configuration.getSchemaFile());
+				//get data tables from different directories
+				String rawDelimiter = configuration.getFastExportConfiguration().getRawColumnDelimiter();
+				String[] dataDirectory = new String[] {
+						OutputDirectory.RAW,
+						OutputDirectory.CLEAN,
+						OutputDirectory.PRODUCTION
+				};
+				Map<String,String> directory2delimiter = Collections.unmodifiableMap(
+						Stream.of(
+								new SimpleEntry<>(OutputDirectory.RAW, rawDelimiter),
+								new SimpleEntry<>(OutputDirectory.CLEAN, ";"),
+								new SimpleEntry<>(OutputDirectory.PRODUCTION, ";")
+						).collect(Collectors.toMap(e ->  e.getKey(), e -> e.getValue()))
+				);
+				DataTable[] reportData = new DataTable[dataDirectory.length];
+				for (int optionIndex = 1; optionIndex < validationOptions.length; optionIndex++) {
+					String dbName = validationOptions[optionIndex];
+					Map<String,Integer> table2ColumnCount = Helper.countColumnsInHeaderFiles("./" + dbName.toLowerCase() + "-column-count.csv");
+					for(int i = 0; i < dataDirectory.length; i++) {
+						String dataSource = dataDirectory[i];
+						Collection<DataTable> dataTables = Helper.loadDataTablesFromDirectory(
+								configuration.getOutputDirectory() + "/" + dataDirectory[i],
+								"csv",
+								Helper.parseTableHeaders(configuration.getOutputDirectory() + "/" + OutputDirectory.HEADERS),
+								configuration.getFastExportConfiguration().getRowPrefix(),
+								directory2delimiter.get(dataSource), dbName
+						);
+						Collection<Table> tables = schema.findDatabaseByName("ACC_" + dbName).getAllTables();
+						//pass on to row length validator
+						DataTable[] data = new DataTable[table2ColumnCount.size()];
+						reportData[i] = new RowLengthValidator(dataSource.toUpperCase(), table2ColumnCount).process(dataTables.toArray(data));
+					}
+					//pass on to validation report writer
+					new ValidationReportWriter(dbName + "-report.txt", configuration.getOutputDirectory()).process(reportData);
+				}
 			}
 			else
 				new HelpFormatter().printHelp("java -jar eva-data.jar", options);
-		} catch (ParseException e) {
+		} catch (ParseException | IOException | InvalidConfigurationException e) {
 			e.printStackTrace();
+		} catch (QueryExecutionException e) {
+			log.error("Query execution failed: {}. StackTrace: ", e.getMessage(), e);
+		} catch (InterruptedException e) {
+			log.error("Cleaning was interrupted.\n\tReason: {}. StackTrace:", e.getMessage(), e);
 		}
 	}
 
@@ -112,12 +237,16 @@ public class Main {
 	 * @param configuration
 	 * @param logger
 	 */
-	private static void createHeaderLookup(Configuration configuration, DatabaseHost schema, Logger logger) {
-		try (Connection connection = DriverManager.getConnection(configuration.createFullConnectionUrl(),
-				configuration.getUsername(), configuration.getPassword());
+	private static void createHeaderLookup(Configuration configuration, DatabaseHost schema) {
+		try (Connection connection = DriverManager.getConnection(
+				configuration.getConnectionUrl()+ "/" +configuration.getConnectionParameters(),
+				configuration.getUser(),
+				configuration.getPassword()
+				);
 				Statement stm = connection.createStatement();
 				JsonGenerator jsonWriter = new JsonFactory()
-						.createGenerator(new FileWriter(configuration.getSchemaFilePath()));) {
+						.createGenerator(new FileWriter(configuration.getSchemaFile()));
+				) {
 
 			jsonWriter.writeStartObject(); // json start
 			for (Database dbEntry : schema.getAllDatabases()) {
@@ -152,122 +281,12 @@ public class Main {
 		}
 	}
 
-	/**
-	 * Creates a Teradata FastExport script for dumping data
-	 * 
-	 * @param configuration
-	 * @param logger
-	 */
-	private static void createFastExportJobs(Configuration configuration, Logger logger) {
-		try (BufferedWriter writer = new BufferedWriter(
-				new FileWriter(configuration.getFastExportConfiguration().getJobFilename()))) {
-			StringBuilder tasks = new StringBuilder();
-			ExecutorService threadPool = Executors.newCachedThreadPool();
-			//schema is used to look up tables or columns in a table
-			DatabaseHost schema = new SchemaDatabaseHostLoader().loadFromFile(configuration.getSchemaFilePath());
-			QueryCreator queryCreator = new SimpleQueryCreator();
-			queryCreator.setAliasFactory(new Alias(120));
-			JsonInterpreter jsonInterpreter = new SqlJsonInterpreter(queryCreator, schema, logger);
-			Collection<Query> jobs = jsonInterpreter.interpret(configuration.getDatabaseNode());
-			
-			Helper.createFolders(configuration.getTempDirectory());
-			for (Query q : jobs) {
-				tasks.append(
-						String.format(Templates.TASK_FORMAT, configuration.getFastExportConfiguration().getSessions(),
-								configuration.getTempDirectory() + "/" + q.getName() + ".csv", q.getQuery()));
-				createHeaderWriterTask(configuration.getTempDirectory(), logger, q, threadPool );
-			}
-
-			threadPool.shutdown();
-
-			String job = String.format(Templates.JOB_FORMAT,
-					configuration.getFastExportConfiguration().getLogDatabase(),
-					configuration.getFastExportConfiguration().getLogTable(), configuration.getServer(),
-					configuration.getUsername(), configuration.getPassword(), tasks.toString(),
-					configuration.getFastExportConfiguration().getPostDumpAction());
-
-			writer.write(job);
-			threadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-
-		} catch (IOException e1) {
-			if (logger != null) {
-				logger.error("Could not create job file.\nStackTrace: {}", e1.getStackTrace());
-			} else {
-				e1.printStackTrace();
-			}
-		} catch (InterruptedException e) {
-			if (logger != null) {
-				logger.error("Could not create header files.\nStackTrace: {}", e.getStackTrace());
-			} else {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	private static void createHeaderWriterTask(String directory, Logger logger, Query q, ExecutorService threadPool) {
-		List<String> headerList = new ArrayList<String>(1);
-		headerList.add(combineColumnHeaders(q.getSelectedColumns()));
-		String prefix = q.getName().contains(".") ? q.getName().substring(0, q.getName().indexOf(".")) : q.getName();
-		String path = directory + "/" + prefix + ".header.csv";
-		File f = new File(path);
-		if(!f.exists())
-			threadPool.execute(new AsyncWriter(path, headerList, logger));
-	}
-
-	private static String combineColumnHeaders(Collection<String> columns) {
-		StringBuilder header = new StringBuilder();
-
-		for (String s : columns) {
-			header.append(s);
-			header.append(";");
-		}
-		// remove trailing semicolon
-		header.deleteCharAt(header.length() - 1);
-
-		return header.toString();
-	}
-	
-	private static void cleanData(Logger logger, Configuration configuration) {
-		final ExecutorService threadPool = Executors.newFixedThreadPool(configuration.getThreadCount());
-
-		try {
-			final long start = System.nanoTime();
-			File[] filenames = new File(String.format("%s/", configuration.getTempDirectory())).listFiles();
-			List<Dataset> dumpFiles = Helper.findDatasets(filenames);
-			DatabaseHost schema = new SchemaDatabaseHostLoader().loadFromFile(configuration.getSchemaFilePath());
-			Helper.createFolders(configuration.getOutDirectory());
-			for (Dataset ds : dumpFiles) {
-				int dbEnd = ds.getName().indexOf("_", 4);
-				String db = ds.getName().substring(0, dbEnd);
-				String table = ds.getName().substring(dbEnd + 1);
-				AsyncDumpProcessor dumpCleaner = new AsyncDumpProcessor(
-						configuration.getValidationRules(),
-						ds,
-						configuration.getOutDirectory(),
-						String.format("%s.csv", ds.getName()),
-						configuration.getFastExportConfiguration().getRowPrefix(),
-						schema.findDatabaseByName(db).findTableByName(table),
-						logger);
-				threadPool.execute(dumpCleaner);
-			}
-			threadPool.shutdown();
-			threadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-			logger.info("Time taken: {} min.", Helper.NanoSecondsToMinutes(System.nanoTime() - start));
-			logger.info("Done.");
-		} catch (InterruptedException e) {
-			logger.error("Thread interrupted: {}", e.getMessage());
-		} finally {
-			if (!threadPool.isTerminated())
-				threadPool.shutdownNow();
-		}
-	}
-
-	private static void mapFiles(Logger logger, Configuration configuration) {
+	private static void mapFiles(Configuration configuration) {
 		final ExecutorService threadPool = Executors.newFixedThreadPool(configuration.getThreadCount());
 		final Collection<Mapping> mappings = configuration.getMappings();
 		
 		if (mappings.size() == 0) {
-			logger.error("No mapping configuration found.");
+			log.error("No mapping configuration found.");
 			
 			return;
 		}
@@ -276,7 +295,7 @@ public class Main {
 			final Map<String,String> egk2pid = Helper.createMappingFromFile(mapFile);
 			
 			if(egk2pid == null) {
-				logger.error("Could not create mapping from file {}.", mapFile);
+				log.error("Could not create mapping from file {}.", mapFile);
 				
 				return;
 			}
@@ -302,15 +321,18 @@ public class Main {
 		options.addOption(Option.builder("fetchschema").hasArg().argName("config.json").desc("create the database schema as a file").build());
 		options.addOption(Option.builder("map").hasArg().argName("config.json").desc("map files to different ids").build());
 		options.addOption(Option.builder("charlsonscores").hasArg().argName("config.json").desc("calculate Charlson scores").build());
-		options.addOption(Option.builder("clean").hasArg().argName("config.json").desc("post-processes dumped data").build());
-		options.addOption(Option.builder("makedecode").hasArg().argName("config.json").desc("creates PID mappings").build());
-		options.addOption(Option.builder("stats").hasArg().argName("config.json").desc("creates database content statistics").build());
+		options.addOption(Option.builder("clean").hasArg().argName("config.json").desc("post-process dumped data").build());
+		options.addOption(Option.builder("makedecode").hasArg().argName("config.json").desc("create PID mappings").build());
+		options.addOption(Option.builder("stats").hasArg().argName("config.json").desc("create database content statistics").build());
+		options.addOption(Option.builder("dump").hasArg().argName("config.json").desc("run FastExport scripts").build());
+		options.addOption(Option.builder("merge").hasArg().argName("config.json").desc("merge clean data slices").build());
+		options.addOption(Option.builder("validate").hasArgs().argName("config.json> <ADB> <FDB").desc("performs row length validation of generated files. Datasets can be specified.").build());
 		
 		return options;
 	}
 	
 	private static void createPidMappings(Configuration configuration) {
-		Map<String,String> name2h2ik = configuration.getDecodings();
+		Map<String,String> name2h2ik = configuration.getNameToH2ik();
 		for(String name : name2h2ik.keySet()) {
 			String h2ik = name2h2ik.get(name);
 			DataSource unfilteredPids = new SqlDataSource(String.format(Templates.Decoding.PID_DECODE_QUERY, h2ik, h2ik), name, configuration);
@@ -360,7 +382,7 @@ public class Main {
 			stats[i] = new DetailStatisticsDataProcessor().process(
 					new SqlDataSource(Templates.Statistics.ADB_AMBULANT_DATA_BY_KV_QUERY.replaceAll("\\$\\{h2ik\\}", healthInsurances.get(hi)), "ArztFall_details", configuration).fetchData()
 			);
-			new HTMLTableWriter(configuration.getOutDirectory(), hi + "_stats.html", "Datenstand der Datenbereiche zum elektronischen Datenaustausch der GKV").process(stats);			
+			new HTMLTableWriter(configuration.getOutputDirectory(), hi + "_stats.html", "Datenstand der Datenbereiche zum elektronischen Datenaustausch der GKV").process(stats);			
 		}
 	}
 }

@@ -6,6 +6,7 @@ import java.util.Collection;
 
 import org.junit.Test;
 
+import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.database.Column;
 import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
@@ -36,8 +37,14 @@ public class SchemaDatabaseHostLoaderTest {
 						int k = 1;
 						for(Column c : columns)
 						{
-							if(k==1)assertEquals("columnname1", c.getName());
-							if(k==2)assertEquals("columnname2", c.getName());
+							if(k==1) {
+								assertEquals("columnname1", c.getName());
+								assertEquals(TeradataColumnType.CHARACTER, c.getType());
+							}
+							if(k==2) {
+								assertEquals("columnname2", c.getName());
+								assertEquals(TeradataColumnType.INTEGER, c.getType());
+							}
 							k++;
 						}
 					}
@@ -49,6 +56,7 @@ public class SchemaDatabaseHostLoaderTest {
 						for(Column c : columns)
 						{
 							assertEquals("columnname3", c.getName());
+							assertEquals(TeradataColumnType.CHARACTER, c.getType());
 						}
 					}
 					j++;
@@ -70,6 +78,7 @@ public class SchemaDatabaseHostLoaderTest {
 						for(Column c : columns)
 						{
 							assertEquals("columnname4", c.getName());
+							assertEquals(TeradataColumnType.INTEGER, c.getType());
 						}
 					}
 				}

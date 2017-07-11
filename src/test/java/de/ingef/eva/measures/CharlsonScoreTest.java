@@ -7,7 +7,7 @@ import java.util.Iterator;
 
 import org.junit.Test;
 
-import de.ingef.measures.CharlsonScore;
+import de.ingef.eva.measures.CharlsonScore;
 
 public class CharlsonScoreTest {
 

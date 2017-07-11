@@ -1,12 +1,12 @@
 package de.ingef.eva.database;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 
 public class TextTable implements Table {
 
 	private String _name = "";
-	private Collection<Column> _columns = new ArrayList<Column>();
+	private List<Column> _columns = new ArrayList<Column>();
 
 	public TextTable(String name) {
 		_name = name;
@@ -27,7 +27,7 @@ public class TextTable implements Table {
 	}
 
 	@Override
-	public Collection<Column> getAllColumns() {
+	public List<Column> getAllColumns() {
 		return _columns;
 	}
 

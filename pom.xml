@@ -4,8 +4,8 @@
                       http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.ingef.eva</groupId>
-  <artifactId>EVA-data-import</artifactId>
-  <version>1.0</version>
+  <artifactId>eva-dump</artifactId>
+  <version>1.0-SNAPSHOT</version>
 
   <dependencies>
     <dependency>
@@ -49,6 +49,11 @@
 		<version>1.4</version>
 	</dependency>
 	<dependency>
+		<groupId>org.apache.commons</groupId>
+		<artifactId>commons-csv</artifactId>
+		<version>1.4</version>
+	</dependency>
+	<dependency>
 		<groupId>com.j2html</groupId>
 		<artifactId>j2html</artifactId>
 		<version>1.0.0</version>
@@ -56,7 +61,7 @@
   </dependencies>
 
   <build>
-    <defaultGoal>install</defaultGoal>
+    <defaultGoal>package</defaultGoal>
     <directory>${basedir}/target</directory>
     <finalName>${project.artifactId}-${project.version}</finalName>
     <sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
@@ -76,6 +81,62 @@
 	      <target>1.8</target>
 	    </configuration>
 	  </plugin>
+	  <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.0.2</version>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${basedir}/target</outputDirectory>
+              <resources>
+	            <resource>
+	              <directory>${basedir}/resources</directory>
+	              <filtering>true</filtering>
+	            </resource>
+              </resources>              
+            </configuration>            
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+      	<groupId>org.apache.maven.plugins</groupId>
+      	<artifactId>maven-jar-plugin</artifactId>
+      	<version>3.0.2</version>
+      	<configuration>
+      		<archive>
+      			<manifest>
+      				<addClasspath>true</addClasspath>
+      				<classpathPrefix>lib</classpathPrefix>
+      				<mainClass>de.ingef.eva.Main</mainClass>
+      			</manifest>
+      		</archive>
+      	</configuration>
+      </plugin>
+      <plugin>
+    	<groupId>org.apache.maven.plugins</groupId>
+    	<artifactId>maven-shade-plugin</artifactId>
+    	<executions>
+        	<execution>
+            	<goals>
+                	<goal>shade</goal>
+            	</goals>
+            	<configuration>
+                	<shadedArtifactAttached>true</shadedArtifactAttached>
+	                <transformers>
+	                    <transformer implementation=
+	                      "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+	                        <mainClass>de.ingef.eva.Main</mainClass>
+	                	</transformer>
+	            	</transformers>
+	        	</configuration>
+        	</execution>
+    	</executions>
+		</plugin>
   	</plugins>
   </build>
 </project>

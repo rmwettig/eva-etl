@@ -1,7 +1,9 @@
 package de.ingef.eva.database;
 
+import de.ingef.eva.data.TeradataColumnType;
+
 public interface Column {
 	String getName();
 
-	String getType();
+	TeradataColumnType getType();
 }

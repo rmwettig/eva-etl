@@ -15,7 +15,7 @@
 								"table":"tablename2",
 								"type":"inner",
 								"column":["columnname3"],
-								"on": "onColumn",
+								"on": ["onColumn"],
 								"where":{
 									"id":[
 									{"value":"10", "type":"NUMERIC", "operator":"<"},

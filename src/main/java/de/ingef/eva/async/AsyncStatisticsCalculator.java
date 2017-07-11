@@ -1,7 +1,7 @@
 package de.ingef.eva.async;
 
 import de.ingef.eva.configuration.Configuration;
-import de.ingef.eva.datasource.DataTable;
+import de.ingef.eva.data.DataTable;
 import de.ingef.eva.datasource.sql.SqlDataSource;
 import lombok.RequiredArgsConstructor;
 

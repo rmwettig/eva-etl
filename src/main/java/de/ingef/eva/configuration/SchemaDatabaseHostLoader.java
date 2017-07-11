@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.database.Column;
 import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
@@ -44,7 +45,10 @@ public class SchemaDatabaseHostLoader implements DatabaseHostLoader {
 					Table t = new TextTable(tableName);
 					JsonNode columns = tables.path(tableName);
 					for (JsonNode column : columns) {
-						Column c = new TextColumn(column.path("column").asText(), column.path("type").asText());
+						Column c = new TextColumn(
+								column.path("column").asText(),
+								TeradataColumnType.fromTypeName(column.path("type").asText())
+						);
 						t.addColumn(c);
 					}
 					db.addTable(t);

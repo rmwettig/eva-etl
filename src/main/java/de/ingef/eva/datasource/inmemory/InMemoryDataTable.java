@@ -1,10 +1,10 @@
 package de.ingef.eva.datasource.inmemory;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import de.ingef.eva.datasource.DataTable;
+import de.ingef.eva.data.DataTable;
+import de.ingef.eva.data.RowElement;
 import de.ingef.eva.error.DataTableOperationException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -13,22 +13,19 @@ import lombok.RequiredArgsConstructor;
 public class InMemoryDataTable implements DataTable {
 
 	@Getter
+	private String delimiter = "";
+	@Getter
 	private final String name;
-	private final Iterator<String[]> rows;
-	private final List<String> header;
+	private final Iterator<List<RowElement>> rows;
+	private final List<RowElement> header;
 	
 	@Override
-	public List<String> getColumnNames() throws DataTableOperationException {
+	public List<RowElement> getColumnNames() throws DataTableOperationException {
 		return header;
 	}
 
 	@Override
-	public List<String> getColumnTypes() throws DataTableOperationException {
-		return new ArrayList<String>();
-	}
-
-	@Override
-	public String[] getNextRow() throws DataTableOperationException {
+	public List<RowElement> getNextRow(boolean ignoreMalformedRows) throws DataTableOperationException {
 		return rows.next();
 	}
 

@@ -1,27 +1,29 @@
 package de.ingef.eva.dataprocessor;
 
 import static j2html.TagCreator.caption;
+import static j2html.TagCreator.head;
 import static j2html.TagCreator.html;
+import static j2html.TagCreator.meta;
 import static j2html.TagCreator.style;
 import static j2html.TagCreator.table;
 import static j2html.TagCreator.tbody;
 import static j2html.TagCreator.td;
 import static j2html.TagCreator.th;
 import static j2html.TagCreator.tr;
-import static j2html.TagCreator.head;
-import static j2html.TagCreator.meta;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import de.ingef.eva.data.DataTable;
+import de.ingef.eva.data.RowElement;
 import de.ingef.eva.datasource.DataProcessor;
-import de.ingef.eva.datasource.DataTable;
 import de.ingef.eva.datasource.file.FileDataTable;
 import de.ingef.eva.error.DataTableOperationException;
 import j2html.tags.ContainerTag;
@@ -50,14 +52,15 @@ public class HTMLTableWriter implements DataProcessor {
 				table.open();
 				Pattern alertPattern = Pattern.compile("\\(0,[0-8]{1}\\d*\\)|\\([0-9]{2,},\\d*\\)|\\([2-9]{1},\\d*\\)|\\(1,[2-9]{1}\\d*\\)"); 
 				while(table.hasMoreRows()) {
-					String[] row = table.getNextRow();
-					if(quarterToHtmlData.containsKey(row[0])) {
+					List<RowElement> row = table.getNextRow(true);
+					String quarter = row.get(0).getContent();
+					if(quarterToHtmlData.containsKey(quarter)) {
 						// create td elements here with offset
-						quarterToHtmlData.get(row[0])[i] = rowToHtmlRowElements(row, alertPattern);
+						quarterToHtmlData.get(quarter)[i] = rowToHtmlRowElements(row, alertPattern);
 					} else {
 						ContainerTag[] tableDataEntries = new ContainerTag[dataTables.length - 1];
 						tableDataEntries[i] = rowToHtmlRowElements(row, alertPattern);
-						quarterToHtmlData.put(row[0], tableDataEntries);
+						quarterToHtmlData.put(quarter, tableDataEntries);
 					}
 				}
 				table.close();
@@ -106,14 +109,14 @@ public class HTMLTableWriter implements DataProcessor {
 		try {
 			dataTable.open();
 			ContainerTag header = tr();
-			dataTable.getColumnNames().forEach(column -> header.with(th().withText(column)));
+			dataTable.getColumnNames().forEach(rowElement -> header.with(th().withText(rowElement.getContent())));
 			
 			ContainerTag htmlTable = createHtmlTableStub(caption, globalTableStyles, header);
 			ContainerTag tableBody = tbody();
 			Pattern alertPattern = Pattern.compile("0,[0-8]{1}\\d*|[2-9],\\d+|1,[2-9]{1}\\d*");
 			while(dataTable.hasMoreRows()) {
 				ContainerTag htmlRow = tr();
-				for(ContainerTag entry : detailRowToHtmlRowElements(dataTable.getNextRow(), alertPattern))
+				for(ContainerTag entry : detailRowToHtmlRowElements(dataTable.getNextRow(true), alertPattern))
 					htmlRow.with(entry);
 				
 				tableBody.with(htmlRow);
@@ -146,26 +149,27 @@ public class HTMLTableWriter implements DataProcessor {
 	 * @param offset
 	 * @return single table data element
 	 */
-	private ContainerTag rowToHtmlRowElements(String[] row, Pattern alertPattern) {
+	private ContainerTag rowToHtmlRowElements(List<RowElement> row, Pattern alertPattern) {
 		//read from the remaining row array
-		String content = row[1];
+		String content = row.get(1).getContent();
 		ContainerTag element = td().withText(content);
 		if(alertPattern.matcher(content).find()) element.withClass("alertRatio");
 				
 		return element;
 	}
 	
-	private ContainerTag[] detailRowToHtmlRowElements(String[] row, Pattern alertPattern) {
-		ContainerTag[] elements = new ContainerTag[row.length];
+	private ContainerTag[] detailRowToHtmlRowElements(List<RowElement> row, Pattern alertPattern) {
+		int rowSize = row.size();
+		ContainerTag[] elements = new ContainerTag[rowSize];
 		for(int i = 0; i < elements.length - 1; i++)
 			//read from the remaining row array
-			elements[i] = td().withText(row[i]);
+			elements[i] = td().withText(row.get(i).getContent());
 		
-
-		String ratioText = row[row.length - 1];
-		elements[row.length - 1] = td().withText(row[row.length - 1]);
+		int lastEntry = rowSize - 1;
+		String ratioText = row.get(lastEntry).getContent();
+		elements[lastEntry] = td().withText(row.get(lastEntry).getContent());
 		Matcher matcher = alertPattern.matcher(ratioText);
-		if(matcher.find()) elements[row.length - 1].withClass("alertRatio");
+		if(matcher.find()) elements[lastEntry].withClass("alertRatio");
 		
 		return elements;
 	}
@@ -180,7 +184,8 @@ public class HTMLTableWriter implements DataProcessor {
 			e.printStackTrace();
 		}
 		
-		return new FileDataTable(outFile, "", fileName);
+		//TODO solve unused header information in a better way
+		return new FileDataTable(outFile, "", fileName, null);
 	}
 	
 	/**

@@ -5,55 +5,103 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.apache.logging.log4j.Logger;
+import java.util.stream.IntStream;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 
-public class Helper {
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.ingef.eva.constant.OutputDirectory;
+import de.ingef.eva.data.DataSet;
+import de.ingef.eva.data.DataTable;
+import de.ingef.eva.data.RowElement;
+import de.ingef.eva.data.SimpleRowElement;
+import de.ingef.eva.data.TeradataColumnType;
+import de.ingef.eva.database.Column;
+import de.ingef.eva.database.TextColumn;
+import de.ingef.eva.datasource.file.FastExportFileDataTable;
+import de.ingef.eva.datasource.file.FileDataTable;
+
+public final class Helper {
+	public static void createFolders(String path) {
+		File f = new File(path);
+		if(!f.exists())
+			f.mkdirs();
+	}
 	
-	public static long NanoSecondsToMinutes(long value) {
-		return value / 60000000000L;
+	public static float millisecondsToMinutes(long value) {
+		return value / (float) 60000;
 	}
-
-	public static Collection<String[]> convertResultSet(ResultSet results) throws SQLException {
-		ArrayList<String[]> converted = new ArrayList<String[]>(1000);
-
-		String[] names = extractColumnNames(results);
-		if (names != null)
-			converted.add(names);
-		int columnCount = results.getMetaData().getColumnCount();
-		while (results.next()) {
-			String[] row = new String[columnCount];
-			for (int i = 0; i < columnCount; i++) {
-				// index of sql set starts at 1
-				String content = results.getString(i + 1);
-				row[i] = content != null ? content : "";
+	
+	/**
+	 * 
+	 * @param directory directory which contains data files
+	 * @param extension file extension that is expected
+	 * @param headers table name to columns map
+	 * @param rowPrefix prefix for each row indicating beginning of actual data
+	 * @param infix a part that must occur in the filename
+	 * @return
+	 */
+	public static Collection<DataTable> loadDataTablesFromDirectory(String directory, String extension, Map<String,List<Column>> headers, String rowPrefix, String delimiter, String infix) {		
+		File rawDirectory = new File(directory);
+		Collection<DataTable> tables = new ArrayList<>();
+		if(!rawDirectory.exists()) return tables;
+		for(File f : rawDirectory.listFiles()) {
+			if(f.isDirectory()) continue;
+			String fileName = f.getName();
+			if(!fileName.endsWith(extension) && (!infix.isEmpty() || !fileName.contains(infix))) continue;
+			//expected filename has the form ACC_DB_TABLE.yyyy.csv
+			String commonFileName = fileName.substring(0, fileName.indexOf("."));
+			if(!headers.containsKey(commonFileName)) continue;
+			List<Column> columns = headers.get(commonFileName);
+			
+			List<RowElement> header = new ArrayList<>(columns.size());
+			for(int i = 0; i < columns.size(); i++) {
+				Column c = columns.get(i);
+				header.add(new SimpleRowElement(c.getName(), i, c.getType(), c.getName()));
 			}
-			converted.add(row);
+			DataTable dt;
+			//FIXME add File loader that can be injected
+			if(directory.toLowerCase().contains(OutputDirectory.RAW.toLowerCase()))
+				dt = new FastExportFileDataTable(f, delimiter, fileName.substring(0, fileName.lastIndexOf(".")), header, rowPrefix);
+			else if (directory.toLowerCase().contains(OutputDirectory.CLEAN.toLowerCase()))
+				dt = new FileDataTable(f, delimiter, fileName.substring(0, fileName.lastIndexOf(".")), header);
+			else
+				dt = new FileDataTable(f, delimiter, commonFileName, header);
+			
+			tables.add(dt);
 		}
-
-		return converted;
+		
+		return tables;
 	}
-
-	public static String[] extractColumnNames(ResultSet results) throws SQLException {
-		String[] names = null;
-		ResultSetMetaData metadata = results.getMetaData();
-		int columnCount = metadata.getColumnCount();
-		names = new String[columnCount];
-		for (int i = 0; i < columnCount; i++)
-			names[i] = metadata.getColumnName(i + 1);
-
-		return names;
+	
+	public static Map<String, List<Column>> parseTableHeaders(String path) throws JsonProcessingException, IOException {
+		File directory = new File(path);
+		Map<String, List<Column>> table2Headers = new HashMap<>();
+		for(File header : directory.listFiles()) {
+			String fileName = header.getName();
+			if(!fileName.endsWith(".header")) continue;
+			JsonNode root = new ObjectMapper().readTree(header);
+			JsonNode columnsNode = root.path("columns");
+			List<Column> columns = new ArrayList<>();
+			for(JsonNode columnNode : columnsNode)
+				columns.add(new TextColumn(columnNode.path("column").asText(), TeradataColumnType.fromTypeName(columnNode.path("type").asText())));
+			String tableName = fileName.substring(0, fileName.lastIndexOf("."));
+			table2Headers.put(tableName, columns);
+		}
+		
+		return table2Headers;
 	}
 	
 	/**
@@ -71,67 +119,6 @@ public class Helper {
 		}
 		
 		return years;
-	}
-
-	/**
-	 * Logs error messages for all nested sql exceptions
-	 * 
-	 * @param logger
-	 *            logger instance
-	 * @param root
-	 *            first sql exception retrieved
-	 * @param message
-	 *            template string for the message
-	 */
-	public static void logSqlExceptions(Logger logger, SQLException root, String message) {
-		logger.error(message, root.getMessage(), root.getStackTrace());
-		SQLException child = root.getNextException();
-		while (child != null) {
-			logger.error(message, child.getMessage(), child.getStackTrace());
-			child = child.getNextException();
-		}
-	}
-
-	public static List<Dataset> findDatasets(File[] files) {
-		Set<String> done = new HashSet<String>();
-		List<Dataset> datasets = new ArrayList<Dataset>(20);
-		for (File file : files) {
-			// database dump files are prefixed with
-			// database name and table e.g. db_table.x.csv
-			String commonName = file.getName();
-			commonName = commonName.substring(0, commonName.indexOf("."));
-
-			// if there is an entry for the prefix all files are found already
-			if (!done.contains(commonName)) {
-				Dataset ds = new Dataset(commonName);
-
-				for (File f : files) {
-					String fname = f.getName();
-					if (fname.startsWith(commonName)) {
-						if (fname.endsWith("header.csv"))
-							ds.setHeaderFile(f);
-						else if(fname.endsWith("csv"))
-							ds.addFile(f);
-					}
-				}
-				datasets.add(ds);
-				done.add(commonName);
-			}
-		}
-
-		return datasets;
-	}
-
-	public static StringBuilder mergeStrings(Collection<String> elements, String delimiter) {
-		StringBuilder merged = new StringBuilder();
-		Iterator<String> iter = elements.iterator();
-		while (iter.hasNext()) {
-			merged.append(iter.next());
-			if (iter.hasNext())
-				merged.append(delimiter);
-		}
-		
-		return merged;
 	}
 
 	public static Map<String, String> createMappingFromFile(String fileName) {
@@ -152,7 +139,7 @@ public class Helper {
 		
 		return mapping;
 	}
-	
+
 	/**
 	 * Finds the index of a named column by examining the header file
 	 * @param fileName header
@@ -175,10 +162,74 @@ public class Helper {
 		
 		return -1;
 	}
+
+	public static List<DataSet> findDatasets(String directoryPath) throws IOException {
+		Set<String> processedSubsetNames = new HashSet<>();
+		List<DataSet> datasets = new ArrayList<>(20);
+		File directory = new File(directoryPath);
+		if(!directory.exists() || !directory.isDirectory())
+			return datasets;
+		
+		File[] files = directory.listFiles();
+		for (File file : files) {
+			//database dump files are prefixed with
+			//database name and table e.g. db_table.yyyy.csv
+			String commonName = file.getName();
+			commonName = commonName.substring(0, commonName.indexOf("."));
+			
+			//if there is an entry for the prefix all files were found already
+			if (processedSubsetNames.contains(commonName)) continue;
+			List<DataTable> subsets = new ArrayList<>(10);
+			List<RowElement> columnNames = parseHeader(file);
+			for (File f : files) {
+				String fname = f.getName();
+				if(!fname.startsWith(commonName)) continue;
+				
+				subsets.add(new FileDataTable(f, ";", fname, columnNames));
+			}
+			processedSubsetNames.add(commonName);	
+			datasets.add(new DataSet(commonName, subsets, true));
+		}
+		
+		return datasets;
+	}
 	
-	public static void createFolders(String path) {
-		File f = new File(path);
-		if(!f.exists())
-			f.mkdirs();
+	private static List<RowElement> parseHeader(File fi) throws IOException {
+		List<RowElement> header = new ArrayList<>();
+		CSVParser reader = new CSVParser(
+				new BufferedReader(new FileReader(fi)),
+				CSVFormat.DEFAULT.withDelimiter(';').withRecordSeparator("\n")
+		);
+		
+		//just read the first line with the column names
+		for(CSVRecord record : reader) {
+			IntStream
+				.range(0, record.size())
+				.forEach(i -> header.add(new SimpleRowElement(record.get(i), i, TeradataColumnType.UNKNOWN, record.get(i))));
+			break;
+		}
+		reader.close();
+		
+		return header;
+	}
+	
+	/**
+	 * Reads column count from a two column csv
+	 * E.g.:
+	 * 		ACC_ADB_AVK_ADB_T_AM_EVO;20
+	 * 		ACC_ADB_AVK_ADB_T_KH_Diagnose;18
+	 * @param path file path
+	 * @return table name to column count map
+	 * @throws IOException
+	 */
+	public static Map<String,Integer> countColumnsInHeaderFiles(String path) throws IOException {
+		Map<String,Integer> table2columnCount = new HashMap<>();
+		BufferedReader reader = new BufferedReader(new FileReader(path));
+		reader.lines()
+			.filter(line -> line != null && !line.isEmpty())
+			.map(line -> line.split(";"))
+			.forEach(array -> table2columnCount.put(array[0], Integer.parseInt(array[1])));
+		reader.close();
+		return table2columnCount;
 	}
 }

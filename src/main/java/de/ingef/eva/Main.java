@@ -232,7 +232,7 @@ public class Main {
 
 		try {
 			final long start = System.nanoTime();
-			File[] filenames = new File(String.format("%s/", configuration.getTempDirectory())).listFiles();
+			File[] filenames = new File(String.format("%s/",configuration.getTempDirectory())).listFiles();
 			List<Dataset> dumpFiles = Helper.findDatasets(filenames);
 			DatabaseHost schema = new SchemaDatabaseHostLoader().loadFromFile(configuration.getSchemaFilePath());
 			Helper.createFolders(configuration.getOutDirectory());

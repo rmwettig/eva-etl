@@ -96,6 +96,7 @@ public class Helper {
 		Set<String> done = new HashSet<String>();
 		List<Dataset> datasets = new ArrayList<Dataset>(20);
 		for (File file : files) {
+			if (file.isDirectory()) continue;
 			// database dump files are prefixed with
 			// database name and table e.g. db_table.x.csv
 			String commonName = file.getName();

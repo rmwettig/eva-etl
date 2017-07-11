@@ -76,7 +76,8 @@ public class AsyncDumpProcessor implements Runnable {
 					if (!line.isEmpty()) {
 						String processedLine = removeLeadingJunk(line, _rowStartSignal);
 						StringBuilder cleanRow = new StringBuilder();
-						String[] columns = processedLine.split(";");
+						//-1 is required to keep empty columns at the end
+						String[] columns = processedLine.split(";", -1);
 						for(int i = 0; i < columns.length; i++) {
 							String cleaned = columns[i];
 							if(columnProcessors.containsKey(i))

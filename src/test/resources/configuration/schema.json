@@ -1,11 +1,28 @@
 {
-	"database1":
-	  		{
-	  			"tablename": ["columnname1", "columnname2"],
-	  			"tablename2": ["columnname3"]
-	  		},
-	"database2":
-		{
-			"tablename3":["columnname4"]
-		}
+	"database1": {
+		"tablename": [
+			{
+				"column": "columnname1",
+				"type": "CHARACTER"
+			},
+			{
+				"column": "columnname2",
+				"type": "INTEGER"
+			}
+		],
+		"tablename2": [
+			{
+				"column": "columnname3",
+				"type": "CHARACTER"
+			}
+		]
+	},
+	"database2": {
+		"tablename3": [
+			{
+				"column": "columnname4",
+				"type": "INTEGER"
+			}
+		]
+	}
 }

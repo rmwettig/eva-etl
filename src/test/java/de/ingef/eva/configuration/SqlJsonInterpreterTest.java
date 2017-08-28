@@ -1,13 +1,14 @@
 package de.ingef.eva.configuration;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -15,10 +16,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.ingef.eva.database.Column;
 import de.ingef.eva.database.DatabaseHost;
 import de.ingef.eva.query.Query;
-import de.ingef.eva.query.QueryCreator;
-import de.ingef.eva.query.SimpleQueryCreator;
+import de.ingef.eva.query.creation.QueryCreator;
+import de.ingef.eva.query.creation.SimpleQueryCreator;
 import de.ingef.eva.utility.Alias;
 
 public class SqlJsonInterpreterTest {
@@ -32,7 +34,7 @@ public class SqlJsonInterpreterTest {
 
 	@Test
 	public void testInterpret() throws JsonProcessingException, IOException {
-		JsonInterpreter sqlInterpreter = new SqlJsonInterpreter(new SimpleQueryCreator(), host, null);
+		JsonInterpreter sqlInterpreter = new SqlJsonInterpreter(new SimpleQueryCreator(host, ";ROW_START", ";"), host, null);
 		
 		JsonNode root = new ObjectMapper().readTree(new File("src/test/resources/configuration/sql.config.json"));
 		Collection<Query> jobs = sqlInterpreter.interpret(root.path("databases"));
@@ -122,7 +124,7 @@ public class SqlJsonInterpreterTest {
 	
 	@Test
 	public void testLatestQuery() throws JsonProcessingException, IOException {
-		QueryCreator qc = new SimpleQueryCreator();
+		QueryCreator qc = new SimpleQueryCreator(host, ";ROW_START", ";");
 		qc.setAliasFactory(new Alias(10));
 		JsonInterpreter sqlInterpreter = new SqlJsonInterpreter(qc, host, null);
 		JsonNode root = new ObjectMapper().readTree(new File("src/test/resources/configuration/sql.select.latest.config.json"));
@@ -133,12 +135,12 @@ public class SqlJsonInterpreterTest {
 		Query q = query.iterator().next();
 		assertNotNull(q);
 		
-		Collection<String> columns = q.getSelectedColumns();
+		Collection<Column> columns = q.getSelectedColumns();
 		assertEquals(2, columns.size());
 		
-		Iterator<String> columnNames = columns.iterator();
-		assertEquals("columnname1", columnNames.next());
-		assertEquals("columnname2", columnNames.next());
+		Iterator<Column> columnNames = columns.iterator();
+		assertEquals("columnname1", columnNames.next().getName());
+		assertEquals("columnname2", columnNames.next().getName());
 		
 		/*
 		 * Expected query:
@@ -170,7 +172,7 @@ public class SqlJsonInterpreterTest {
 		
 		//on
 		part = sql.substring(sql.indexOf("on") + 2, sql.indexOf("where"));
-		assertEquals("a.columnname1=b.columnname1", part.trim());
+		assertEquals("(a.columnname1=b.columnname1)", part.trim());
 		
 		//where
 		part = sql.substring(sql.indexOf("where") + 5, sql.lastIndexOf(";"));

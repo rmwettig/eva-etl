@@ -11,8 +11,9 @@ import java.util.Map;
 import java.util.Set;
 
 import de.ingef.eva.configuration.Configuration;
+import de.ingef.eva.data.DataTable;
+import de.ingef.eva.data.RowElement;
 import de.ingef.eva.datasource.DataProcessor;
-import de.ingef.eva.datasource.DataTable;
 import de.ingef.eva.datasource.file.FileDataTable;
 import de.ingef.eva.error.DataTableOperationException;
 import lombok.AllArgsConstructor;
@@ -63,7 +64,7 @@ public class ProcessPidDecode implements DataProcessor {
 		try {
 			pidTable.open();
 			while(pidTable.hasMoreRows()) {
-				pids.add(pidTable.getNextRow()[0]);
+				pids.add(pidTable.getNextRow(true).get(0).getContent());
 			}
 			pidTable.close();
 		} catch (DataTableOperationException e) {
@@ -103,24 +104,27 @@ public class ProcessPidDecode implements DataProcessor {
 			Set<String> uniquePids = new HashSet<>();
 			rawPids.open();
 			while(rawPids.hasMoreRows()) {
-				String[] row = rawPids.getNextRow();
-				String pid = row[row.length - 1];
+				List<RowElement> row = rawPids.getNextRow(true);
+				String pid = row.get(row.size() - 1).getContent();
+				String h2ik = row.get(0).getContent();
 				//skip entries with empty h2ik, pid
-				if(row[0] == null || row[0].isEmpty() || pid == null || pid.isEmpty()) continue;
+				if(h2ik == null || h2ik.isEmpty() || pid == null || pid.isEmpty()) continue;
 				pid = addPaddingZeros(pid);
 				uniquePids.add(pid);
 				//skip unwanted pids
 				if(unwantedPids.contains(pid)) continue;
-				String key = row[0] + pid;
+				String key = h2ik + pid;
+				String egkNr = row.get(1).getContent();
+				String kvNr = row.get(2).getContent(); 
 				if(!mappings.containsKey(key))
-					mappings.put(key, new Mapping(row[0], row[1], row[2], pid));
+					mappings.put(key, new Mapping(h2ik, egkNr, kvNr, pid));
 				else {
 					Mapping m = mappings.get(key);
 					//update egk and kv number if it was an invalid value before only
 					if(m.getEgknr() == null || m.getEgknr().isEmpty())
-						m.setEgknr(row[1]);
+						m.setEgknr(egkNr);
 					if(m.getKvNr() == null || m.getKvNr().isEmpty())
-						m.setKvNr(row[2]);
+						m.setKvNr(kvNr);
 				}
 			}
 			rawPids.close();
@@ -141,12 +145,12 @@ public class ProcessPidDecode implements DataProcessor {
 			log.warn("PID loss: {}", lossPercentage*100);
 	}
 
-	private DataTable createMappingDataTable(Map<String,Mapping> mappings, String name, List<String> columnNames) {
-		File outfile = new File(config.getOutDirectory() + "/decoding_" + name + ".csv");
+	private DataTable createMappingDataTable(Map<String,Mapping> mappings, String name, List<RowElement> columnNames) {
+		File outfile = new File(config.getOutputDirectory() + "/decoding_" + name + ".csv");
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(outfile))) {
 			StringBuilder header = new StringBuilder();
-			for(String columnName : columnNames) {
-				header.append(columnName);
+			for(RowElement columnName : columnNames) {
+				header.append(columnName.getContent());
 				header.append(";");
 			}
 			header.deleteCharAt(header.lastIndexOf(";"));
@@ -161,7 +165,8 @@ public class ProcessPidDecode implements DataProcessor {
 			log.error("Could not create mapping file.\nReason: {}", e.getMessage());
 		}
 		
-		return new FileDataTable(outfile, ";", name);
+		//TODO solve unused header in a better way
+		return new FileDataTable(outfile, ";", name, columnNames);
 	}
 	
 }

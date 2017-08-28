@@ -1,5 +1,6 @@
 package de.ingef.eva.dataprocessor;
 
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
@@ -10,8 +11,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import de.ingef.eva.data.DataTable;
+import de.ingef.eva.data.RowElement;
+import de.ingef.eva.data.SimpleRowElement;
+import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.datasource.DataProcessor;
-import de.ingef.eva.datasource.DataTable;
 import de.ingef.eva.datasource.inmemory.InMemoryDataTable;
 import de.ingef.eva.error.DataTableOperationException;
 import lombok.Getter;
@@ -84,10 +88,10 @@ public class StatisticsDataProcessor implements DataProcessor {
 		try {
 			table.open();
 			while(table.hasMoreRows()) {
-				String[] row = table.getNextRow();
-				int year = Integer.parseInt(row[0]);
-				int quarter = Integer.parseInt(row[1]);
-				int count = Integer.parseInt(row[2]);
+				List<RowElement> row = table.getNextRow(true);
+				int year = Integer.parseInt(row.get(0).getContent());
+				int quarter = Integer.parseInt(row.get(1).getContent());
+				int count = Integer.parseInt(row.get(2).getContent());
 				counts.add(new YearQuarterCount(year, quarter, count));
 			}
 			table.close();
@@ -129,35 +133,38 @@ public class StatisticsDataProcessor implements DataProcessor {
 	 * @return
 	 */
 	private DataTable createStatisticsTable(Map<String, CountRatio[]> quarterCounts, String[] columnNames, int columnCount, String name) {
-		List<String[]> rows = new ArrayList<>(100);
-		List<String> header = new ArrayList<>(columnCount);
-		header.add("Quartal");
-		for(String columnName : columnNames)
-			header.add(columnName);
+		List<List<RowElement>> rows = new ArrayList<>(100);
+		List<RowElement> header = new ArrayList<>(columnCount);
+		header.add(new SimpleRowElement("Quartal", 0, TeradataColumnType.CHARACTER, "Quartal"));
+		for(int i = 0; i < columnNames.length; i++)
+			header.add(new SimpleRowElement(columnNames[i], i, TeradataColumnType.CHARACTER, columnNames[i]));
+
 		NumberFormat nf = NumberFormat.getNumberInstance(Locale.GERMAN);
+		DecimalFormat df = new DecimalFormat("##0.0");
 		
 		for(String yearQuarter : quarterCounts.keySet()) {
-			String[] row = new String[columnCount];
-			row[0] = yearQuarter;
+			List<RowElement> row = new ArrayList<>(columnCount);
+			row.add(new SimpleRowElement("Quartal", 0, TeradataColumnType.CHARACTER, yearQuarter));
 			CountRatio[] rowEntries = quarterCounts.get(yearQuarter);
 			for(int i = 0; i < rowEntries.length; i++) {
 				CountRatio stats = rowEntries[i];
 				if(stats != null) {
 					float ratio = stats.getRatio();
 					String absoluteCount = nf.format(stats.getCount());
-					row[i + 1] = ratio > 0 ? absoluteCount + " (" + nf.format(ratio) + ")" : absoluteCount;
+					String content = ratio > 0 ? absoluteCount + " (" + df.format(ratio) + ")" : absoluteCount;
+					row.add(new SimpleRowElement(columnNames[i], row.size(), TeradataColumnType.CHARACTER, content));
 				} else {
-					row[i + 1] = "0";
+					row.add(new SimpleRowElement(columnNames[i], row.size(), TeradataColumnType.CHARACTER, "0"));
 				}
 			}
 			rows.add(row);
 		}
 		
 		//make sure that earliest year is first
-		rows.sort(new Comparator<String[]>() {
+		rows.sort(new Comparator<List<RowElement>>() {
 			@Override
-			public int compare(String[] o1, String[] o2) {
-				return o1[0].compareTo(o2[0]);
+			public int compare(List<RowElement> o1, List<RowElement> o2) {
+				return o1.get(0).getContent().compareTo(o2.get(0).getContent());
 			}
 		});
 		

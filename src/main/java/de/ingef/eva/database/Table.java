@@ -1,13 +1,13 @@
 package de.ingef.eva.database;
 
-import java.util.Collection;
+import java.util.List;
 
 public interface Table {
 	void addColumn(Column c);
 
 	Column findColumnByName(String name);
 
-	Collection<Column> getAllColumns();
+	List<Column> getAllColumns();
 
 	String getName();
 }

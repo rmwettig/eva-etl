@@ -5,8 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import de.ingef.eva.data.DataTable;
+import de.ingef.eva.data.RowElement;
+import de.ingef.eva.data.SimpleRowElement;
+import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.datasource.DataProcessor;
-import de.ingef.eva.datasource.DataTable;
 import de.ingef.eva.datasource.inmemory.InMemoryDataTable;
 import de.ingef.eva.error.DataTableOperationException;
 import lombok.AllArgsConstructor;
@@ -51,26 +54,26 @@ public class DetailStatisticsDataProcessor implements DataProcessor {
 		return new InMemoryDataTable(table.getName(), createDetailsTableRows(table).listIterator(), createHeader());
 	}
 
-	private List<String> createHeader() {
-		List<String> header = new ArrayList<>(5);
-		header.add("Quartal");
-		header.add("KV");
-		header.add("KV_NAME");
-		header.add("Anzahl Fälle");
-		header.add("Anteil VJQ");
+	private List<RowElement> createHeader() {
+		List<RowElement> header = new ArrayList<>(5);
+		header.add(new SimpleRowElement("Quartal", 0, TeradataColumnType.CHARACTER, "Quartal"));
+		header.add(new SimpleRowElement("KV", 1, TeradataColumnType.CHARACTER, "KV"));
+		header.add(new SimpleRowElement("KV_NAME", 2, TeradataColumnType.CHARACTER, "KV_NAME"));
+		header.add(new SimpleRowElement("Anzahl Fälle", 3, TeradataColumnType.INTEGER, "Anzahl Fälle"));
+		header.add(new SimpleRowElement("Anteil VJQ", 4, TeradataColumnType.FLOAT, "Anteil VJQ"));
 		
 		return header;
 	}
 	
-	private List<String[]> createDetailsTableRows(DataTable table) {
-		List<String[]> rows = new ArrayList<>();
+	private List<List<RowElement>> createDetailsTableRows(DataTable table) {
+		List<List<RowElement>> rows = new ArrayList<>();
 		try {
 			NumberFormat numberFormatter = NumberFormat.getNumberInstance(Locale.GERMAN);
 			table.open();
 			RegionalInfo lastInfo = null;
 			
 			while(table.hasMoreRows()) {
-				String[] row = table.getNextRow();
+				List<RowElement> row = table.getNextRow(true);
 				if(lastInfo == null) {
 					lastInfo = createRegionalInfo(row);
 				} else {
@@ -93,13 +96,13 @@ public class DetailStatisticsDataProcessor implements DataProcessor {
 		return rows;
 	}
 	
-	private RegionalInfo createRegionalInfo(String[] row) {
+	private RegionalInfo createRegionalInfo(List<RowElement> row) {
 		return new RegionalInfo(
-					Integer.parseInt(row[0]),
-					Integer.parseInt(row[1]),
-					Integer.parseInt(row[2]),
-					row[3],
-					Integer.parseInt(row[4])
+					Integer.parseInt(row.get(0).getContent()),
+					Integer.parseInt(row.get(1).getContent()),
+					Integer.parseInt(row.get(2).getContent()),
+					row.get(3).getContent(),
+					Integer.parseInt(row.get(4).getContent())
 				);
 	}
 	
@@ -110,8 +113,8 @@ public class DetailStatisticsDataProcessor implements DataProcessor {
 	 * @param formatter
 	 * @return
 	 */
-	private String[] createDetailsRow(RegionalInfo first, RegionalInfo second, NumberFormat formatter) {
-		String row[] = new String[5];
+	private List<RowElement> createDetailsRow(RegionalInfo first, RegionalInfo second, NumberFormat formatter) {
+		List<RowElement> row = new ArrayList<>(5);
 		RegionalInfo latest = second; 
 		RegionalInfo previous = first;
 		if(latest.getYear() < previous.getYear()){
@@ -119,23 +122,23 @@ public class DetailStatisticsDataProcessor implements DataProcessor {
 			previous = second;
 		}
 		
-		row[0] = latest.getYear() + "Q" + latest.getQuarter();
-		row[1] = latest.getKv() < 10 ? "0" + latest.getKv() : Integer.toString(latest.getKv());
-		row[2] = latest.getName();
-		row[3] = formatter.format(latest.getCount());
-		row[4] = formatter.format(latest.getCount() / (float) previous.getCount());
+		row.add(new SimpleRowElement("Quartal", 0, TeradataColumnType.CHARACTER, latest.getYear() + "Q" + latest.getQuarter()));
+		row.add(new SimpleRowElement("KV", 1, TeradataColumnType.CHARACTER, latest.getKv() < 10 ? "0" + latest.getKv() : Integer.toString(latest.getKv())));
+		row.add(new SimpleRowElement("Name", 2, TeradataColumnType.CHARACTER, latest.getName()));
+		row.add(new SimpleRowElement("Anzahl Fälle", 3, TeradataColumnType.INTEGER, formatter.format(latest.getCount())));
+		row.add(new SimpleRowElement("Anteil VJQ", 4, TeradataColumnType.FLOAT, formatter.format(latest.getCount() / (float) previous.getCount())));
 				
 		return row;
 	}
 	
-	private String[] createDetailsNotFoundRow(RegionalInfo last) {
-		String row[] = new String[5];
-		row[0] = last.getYear()+1+"Q"+last.getQuarter();
-		row[1] = last.getKv() < 10 ? "0" + last.getKv() : Integer.toString(last.getKv());
-		row[2] = last.getName();
-		row[3] = "0";
-		row[4] = "0";
-		
+	private List<RowElement> createDetailsNotFoundRow(RegionalInfo last) {
+		List<RowElement> row = new ArrayList<>(5);
+		row.add(new SimpleRowElement("Quartal", 0, TeradataColumnType.CHARACTER, last.getYear() + 1 + "Q" + last.getQuarter()));
+		row.add(new SimpleRowElement("KV", 1, TeradataColumnType.CHARACTER, last.getKv() < 10 ? "0" + last.getKv() : Integer.toString(last.getKv())));
+		row.add(new SimpleRowElement("Name", 2, TeradataColumnType.CHARACTER, last.getName()));
+		row.add(new SimpleRowElement("Anzahl", 3, TeradataColumnType.INTEGER, "0"));
+		row.add(new SimpleRowElement("Ratio", 4, TeradataColumnType.FLOAT, "0"));
+				
 		return row;
 	}
 }

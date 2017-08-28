@@ -1,17 +1,27 @@
 package de.ingef.eva.mapping;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import de.ingef.eva.configuration.Configuration;
-import de.ingef.eva.configuration.JsonConfigurationReader;
-import de.ingef.eva.datasource.DataTable;
+import de.ingef.eva.data.DataTable;
+import de.ingef.eva.data.RowElement;
+import de.ingef.eva.data.SimpleRowElement;
+import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.error.DataTableOperationException;
+import de.ingef.eva.error.InvalidConfigurationException;
+
 
 public class ProcessPidDecodeTest {
 
@@ -34,27 +44,33 @@ public class ProcessPidDecodeTest {
 			}
 			
 			@Override
-			public String[] getNextRow() throws DataTableOperationException {
-				return new String[]{rows[i++]};
+			public List<RowElement> getNextRow(boolean ignoreMalformedRows) throws DataTableOperationException {
+				String pid = rows[i++];
+				List<RowElement> converted = new ArrayList<>();
+				converted.add(new SimpleRowElement("pid", 0, TeradataColumnType.CHARACTER, pid));
+
+				return converted;
 			}
 			
 			@Override
 			public String getName() {
 				return "unwantedPids";
 			}
-			
+						
 			@Override
-			public List<String> getColumnTypes() throws DataTableOperationException {
-				return null;
-			}
-			
-			@Override
-			public List<String> getColumnNames() throws DataTableOperationException {
-				return null;
+			public List<RowElement> getColumnNames() throws DataTableOperationException {
+				return Arrays.asList(
+					new SimpleRowElement("pid", 0, TeradataColumnType.CHARACTER, "pid")
+				);
 			}
 			
 			@Override
 			public void close() throws DataTableOperationException {
+			}
+			
+			@Override
+			public String getDelimiter() {
+				return "";
 			}
 		};
 		
@@ -68,25 +84,29 @@ public class ProcessPidDecodeTest {
 				new String[]{"1", "", "", "0000005678"},
 				new String[]{"1", "22", "", "0000005677"},
 			};
+			
 			private int i = 0;
 			@Override
-			public List<String> getColumnNames() throws DataTableOperationException {
-				List<String> names = new ArrayList<String>(4);
-				names.add("h2ik");
-				names.add("egk_nr");
-				names.add("kv_nummer");
-				names.add("pid");
+			public List<RowElement> getColumnNames() throws DataTableOperationException {
+				List<RowElement> names = new ArrayList<>(4);
+				names.add(new SimpleRowElement("h2ik", 0, TeradataColumnType.CHARACTER, "h2ik"));
+				names.add(new SimpleRowElement("egk_nr", 1, TeradataColumnType.CHARACTER, "egk_nr"));
+				names.add(new SimpleRowElement("kv_nummer", 2, TeradataColumnType.CHARACTER, "kv_nummer"));
+				names.add(new SimpleRowElement("pid", 3, TeradataColumnType.CHARACTER, "pid"));
+
 				return names;
 			}
 
 			@Override
-			public List<String> getColumnTypes() throws DataTableOperationException {
-				return null;
-			}
+			public List<RowElement> getNextRow(boolean ignoreMalformedRows) throws DataTableOperationException {
+				String[] row = rows[i++];
+				List<RowElement> converted = new ArrayList<>();
+				converted.add(new SimpleRowElement("h2ik", 0, TeradataColumnType.CHARACTER, row[0]));
+				converted.add(new SimpleRowElement("egknr", 1, TeradataColumnType.CHARACTER, row[1]));
+				converted.add(new SimpleRowElement("kv_nummer", 2, TeradataColumnType.CHARACTER, row[2]));
+				converted.add(new SimpleRowElement("pid", 3, TeradataColumnType.CHARACTER, row[3]));
 
-			@Override
-			public String[] getNextRow() throws DataTableOperationException {
-				return rows[i++];
+				return converted;
 			}
 
 			@Override
@@ -107,15 +127,19 @@ public class ProcessPidDecodeTest {
 			public String getName() {
 				return "unfiltered pids";
 			}
+			
+			@Override
+			public String getDelimiter() {
+				return "";
+			}
 		};
 	}
 	
 	@Test
-	public void testProcess() throws DataTableOperationException {
-		Configuration config = new JsonConfigurationReader().ReadConfiguration("src/test/resources/configuration/decode/config.json");
+	public void testProcess() throws DataTableOperationException, JsonProcessingException, IOException, InvalidConfigurationException {
+		Configuration config = Configuration.loadFromJson("src/test/resources/configuration/decode/config.json"); 
 		DataTable cleaned = new ProcessPidDecode(config).process(unfilteredPids, unwantedPids);
 		assertTrue(cleaned.open());
-//		assertTrue(cleaned.hasMoreRows());
 		int rowIndex = 0;
 		/*
 		 * expected:
@@ -123,28 +147,29 @@ public class ProcessPidDecodeTest {
 		 * 1;22;;5677
 		 */
 		while(cleaned.hasMoreRows()) {
-			String[] row = cleaned.getNextRow();
+			List<RowElement> row = cleaned.getNextRow(true);
 			if(rowIndex == 0) {
-				assertEquals("h2ik", row[0]);
-				assertEquals("egk_nr", row[1]);
-				assertEquals("kv_nummer", row[2]);
-				assertEquals("pid", row[3]);
+				assertEquals("h2ik", row.get(0).getContent());
+				assertEquals("egk_nr", row.get(1).getContent());
+				assertEquals("kv_nummer", row.get(2).getContent());
+				assertEquals("pid", row.get(3).getContent());
 			} else {
-				assertEquals("1", row[0]);
-				assertFalse(row[3].isEmpty());
-				if(row[3].equalsIgnoreCase("0000001233")) {
-					assertEquals("34", row[1]);
-					assertEquals("12", row[2]);
+				assertEquals("1", row.get(0).getContent());
+				assertFalse(row.get(3).getContent().isEmpty());
+				if(row.get(3).getContent().equalsIgnoreCase("0000001233")) {
+					assertEquals("34", row.get(1).getContent());
+					assertEquals("12", row.get(2).getContent());
 				}
-				if(row[3].equalsIgnoreCase("0000005677")) {
-					assertEquals("22", row[1]);
-					assertEquals("", row[2]);
+				if(row.get(3).getContent().equalsIgnoreCase("0000005677")) {
+					assertEquals("22", row.get(1).getContent());
+					assertEquals("", row.get(2).getContent());
 				}
 			}
 			rowIndex++;
 		}
 		
 		assertEquals(3, rowIndex);
+		cleaned.close();
 	}
 
 }

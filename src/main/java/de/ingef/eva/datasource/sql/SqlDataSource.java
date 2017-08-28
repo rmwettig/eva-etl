@@ -6,9 +6,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import de.ingef.eva.configuration.Configuration;
+import de.ingef.eva.data.DataTable;
 import de.ingef.eva.datasource.DataSource;
-import de.ingef.eva.datasource.DataTable;
+import de.ingef.eva.configuration.Configuration;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -24,7 +24,11 @@ public class SqlDataSource implements DataSource {
 		try {
 			Class.forName("com.teradata.jdbc.TeraDriver");
 			try {
-				Connection conn = DriverManager.getConnection(config.createFullConnectionUrl(), config.getUsername(), config.getPassword());
+				Connection conn = DriverManager.getConnection(
+						config.getFullConnectionUrl(),
+						config.getUser(),
+						config.getPassword()
+				);
 				Statement statement = conn.createStatement();
 				log.info("Executing query: {}", query);
 				ResultSet result = statement.executeQuery(query);

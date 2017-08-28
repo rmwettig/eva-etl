@@ -3,8 +3,6 @@ package de.ingef.eva.configuration;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.logging.log4j.Logger;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,17 +11,10 @@ import de.ingef.eva.database.DatabaseHost;
 import de.ingef.eva.database.TextDatabase;
 import de.ingef.eva.database.TextSchema;
 import de.ingef.eva.database.TextTable;
+import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 public class ConfigurationDatabaseHostLoader implements DatabaseHostLoader {
-
-	private Logger _logger;
-
-	public ConfigurationDatabaseHostLoader() {
-	}
-
-	public ConfigurationDatabaseHostLoader(Logger logger) {
-		_logger = logger;
-	}
 
 	/**
 	 * Creates a {@see DatabaseHost} object from a Configuration file structure.
@@ -58,26 +49,13 @@ public class ConfigurationDatabaseHostLoader implements DatabaseHostLoader {
 				}
 				return schema;
 			} else
-				log("Cannot create schema object. No database entry found.");
+				log.error("Cannot create schema object. No database entry found.");
 
 		} catch (JsonProcessingException e) {
-			log(e);
+			log.error("Could not process Json-file '{}'.\n\tReason: {}.\n\tStackTrace: ", file, e.getMessage(), e);
 		} catch (IOException e) {
-			log(e);
+			log.error("Could not read file '{}'.\n\tReason: {}.\n\tStackTrace: ", file, e.getMessage(), e);
 		}
 		return null;
 	}
-
-	private void log(Exception e) {
-		if (_logger != null)
-			_logger.error("Error occured: {}.\n{}", e.getMessage(), e.getStackTrace());
-		else
-			e.printStackTrace();
-	}
-
-	private void log(String message) {
-		if (_logger != null)
-			_logger.error(message);
-	}
-
 }

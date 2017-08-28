@@ -1,66 +1,24 @@
 package de.ingef.eva.configuration;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.ingef.eva.error.InvalidConfigurationException;
 
 public class ConfigurationTest {
+
 	
 	@Test
-	public void testThreadCountValid() throws JsonProcessingException, IOException
-	{
-		ObjectMapper mapper = new ObjectMapper();
-		String json = "{ \"threads\":\"4\"}";
-		JsonNode root = mapper.readTree(json);
-		Configuration config = new Configuration(root);
-		assertEquals(4, config.getThreadCount());
-	}
-	
-	@Test
-	public void testThreadCountInvalidNegative() throws JsonProcessingException, IOException
-	{
-		ObjectMapper mapper = new ObjectMapper();
-		String json = "{ \"threads\":\"-4\"}";
-		JsonNode root = mapper.readTree(json);
-		Configuration config = new Configuration(root);
-		assertEquals(1, config.getThreadCount());
-		
-	}
-	
-	@Test
-	public void testThreadCountInvalidType() throws JsonProcessingException, IOException
-	{
-		ObjectMapper mapper = new ObjectMapper();
-		String json = "{ \"threads\":\"fd\"}";
-		JsonNode root = mapper.readTree(json);
-		Configuration config = new Configuration(root);
-		assertEquals(1, config.getThreadCount());
-	}
-	
-	@Test
-	public void testThreadCountInvalidZero() throws JsonProcessingException, IOException
-	{
-		ObjectMapper mapper = new ObjectMapper();
-		String json = "{ \"threads\":\"0\"}";
-		JsonNode root = mapper.readTree(json);
-		Configuration config = new Configuration(root);
-		assertEquals(1, config.getThreadCount());
-	}
-	
-	@Test
-	public void testIdMapping() throws JsonProcessingException, IOException {
-		ObjectMapper mapper = new ObjectMapper();
+	public void testIdMapping() throws JsonProcessingException, IOException, InvalidConfigurationException {
 		String jsonFile = "src/test/resources/configuration/mapping/mapping.json";
-		JsonNode root = mapper.readTree(new File(jsonFile));
-		Configuration config = new Configuration(root);
+		Configuration config = Configuration.loadFromJson(jsonFile);
 		
 		Collection<Mapping> mappings = config.getMappings();
 		assertNotNull(mappings);

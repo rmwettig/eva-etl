@@ -6,6 +6,8 @@ import java.io.File;
 
 import org.junit.Test;
 
+import de.ingef.eva.utility.Helper;
+
 public class HelperTest {
 
 	@Test

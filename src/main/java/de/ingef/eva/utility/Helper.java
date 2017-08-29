@@ -5,6 +5,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -232,4 +235,29 @@ public final class Helper {
 		reader.close();
 		return table2columnCount;
 	}
+	
+	public static boolean areCredentialsCorrect(String user, String password, String url) {
+		Connection conn = null;
+		try {
+			Class.forName("com.teradata.jdbc.TeraDriver");
+			conn = DriverManager.getConnection(
+					url,
+					user,
+					password
+			);
+			conn.close();
+			return true;
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			try {
+				if(conn != null && !conn.isClosed()) conn.close();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+				return false;
+			}
+			return false;
+		}
+		return false;
+}
 }

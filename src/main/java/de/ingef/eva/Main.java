@@ -82,6 +82,7 @@ public class Main {
 			CommandLine cmd = parser.parse(options, args);
 			if(cmd.hasOption("makejob")) {
 				Configuration config = Configuration.loadFromJson(cmd.getOptionValue("makejob"));
+				exitIfInvalidCredentials(config);
 				QuerySource qs = new JsonQuerySource(config);
 				Collection<Query> queries = qs.createQueries();
 				QueryExecutor<Query> executor = new FastExportJobWriter(config);
@@ -93,6 +94,7 @@ public class Main {
 				Stopwatch sw = new Stopwatch();
 				sw.start();
 				Configuration config = Configuration.loadFromJson(cmd.getOptionValue("dump"));
+				exitIfInvalidCredentials(config);
 				Collection<QueryJob> jobs = new FastExportJobLoader().loadFastExportJobs(config);
 				//FastExport processes must not survive main thread
 				ExecutorService threadPool = Executors.newFixedThreadPool(
@@ -228,6 +230,13 @@ public class Main {
 			log.error("Query execution failed: {}. StackTrace: ", e.getMessage(), e);
 		} catch (InterruptedException e) {
 			log.error("Cleaning was interrupted.\n\tReason: {}. StackTrace:", e.getMessage(), e);
+		}
+	}
+
+	private static void exitIfInvalidCredentials(Configuration config) {
+		if(!Helper.areCredentialsCorrect(config.getUser(), config.getPassword(), config.getFullConnectionUrl())) {
+			System.err.println("Invalid credentials.\n\tURL: " + config.getFullConnectionUrl() + "\n" +	"\tUser: " + config.getUser());
+			System.exit(-1);
 		}
 	}
 

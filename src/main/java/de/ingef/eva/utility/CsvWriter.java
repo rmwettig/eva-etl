@@ -9,20 +9,21 @@ import lombok.Getter;
 
 public class CsvWriter {
 	@Getter
-	private String delimiter = ";";
-	private String newLine = "\n";
+	private String delimiter;
+	private String newLine;
 	private File outputFile;
 	private BufferedWriter writer;
 	
 	private StringBuffer line = new StringBuffer();
 	
-	public CsvWriter(String delimiter, String newLine) {
+	public CsvWriter(File file, String delimiter, String newLine) {
 		this.delimiter = delimiter;
 		this.newLine = newLine;
+		this.outputFile = file;
 	}
 	
 	public CsvWriter(File file) {
-		outputFile = file;
+		this(file, ";", "\n");
 	}
 	
 	public void open() throws IOException {

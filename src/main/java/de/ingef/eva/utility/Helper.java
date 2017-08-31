@@ -15,6 +15,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.stream.IntStream;
 
 import org.apache.commons.csv.CSVFormat;
@@ -259,5 +262,20 @@ public final class Helper {
 			return false;
 		}
 		return false;
-}
+	}
+	
+	public static ExecutorService createThreadPool(int size, boolean spawnDaemonThreads) {
+		return Executors.newFixedThreadPool(
+				size,
+				new ThreadFactory() {
+					
+					@Override
+					public Thread newThread(Runnable r) {
+						Thread t = new Thread(r);
+						t.setDaemon(spawnDaemonThreads);
+						return t;
+					}
+				}
+			);
+	}
 }

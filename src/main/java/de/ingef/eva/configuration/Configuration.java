@@ -16,6 +16,7 @@ import de.ingef.eva.data.validation.NameRule;
 import de.ingef.eva.data.validation.ReplacePattern;
 import de.ingef.eva.data.validation.Rule;
 import de.ingef.eva.data.validation.TypeRule;
+import de.ingef.eva.dataprocessor.SeparationMapping;
 import de.ingef.eva.error.InvalidConfigurationException;
 import lombok.Getter;
 
@@ -37,6 +38,7 @@ public class Configuration {
 	private Map<String,String> nameToH2ik;
 	private Collection<Rule> rules;
 	private String fullConnectionUrl;
+	private SeparationMapping datasetMembership;
 	
 	public static Configuration loadFromJson(String path) throws JsonProcessingException, IOException, InvalidConfigurationException {
 		String SERVER = "server";
@@ -101,10 +103,36 @@ public class Configuration {
 		config.mappings = prepareMappingConfiguration(root);
 		config.nameToH2ik = prepareFilteringConfiguration(root);
 		config.rules = prepareValidationRules(root);
+		config.datasetMembership = prepareSeparationMappings(root);		
 		
 		return config;
 	}
 	
+	/**
+	 * Parses separation mappings field
+	 * @param root
+	 * @return empty mapping if field is missing
+	 */
+	private static SeparationMapping prepareSeparationMappings(JsonNode root) {
+		String SEPARATION = "separation";
+		String DATASET = "dataset";
+		String H2IKS = "h2iks";
+		JsonNode mappings = root.path(SEPARATION);
+		Map<String,String> mapping = new HashMap<>();
+		if(mappings.isMissingNode())
+			return new SeparationMapping(mapping);
+		for(JsonNode map : mappings) {
+			String datasetName = map.path(DATASET).asText("");
+			if(datasetName.isEmpty()) continue;
+			JsonNode h2iks = map.path(H2IKS);
+			if(h2iks.isMissingNode()) continue;
+			for(JsonNode h2ik : h2iks) {
+				mapping.put(h2ik.asText(), datasetName);
+			}
+		}
+		return new SeparationMapping(mapping);
+	}
+
 	private static Collection<Mapping> prepareMappingConfiguration(JsonNode root) throws InvalidConfigurationException {
 		String MAPPINGS = "mappings";
 		String SOURCE = "source";

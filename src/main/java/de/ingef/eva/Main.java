@@ -2,6 +2,7 @@ package de.ingef.eva;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -50,8 +51,10 @@ import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
 import de.ingef.eva.database.Table;
 import de.ingef.eva.dataprocessor.DataTableMergeProcessor;
+import de.ingef.eva.dataprocessor.DatasetSeparator;
 import de.ingef.eva.dataprocessor.DetailStatisticsDataProcessor;
 import de.ingef.eva.dataprocessor.HTMLTableWriter;
+import de.ingef.eva.dataprocessor.SeparationMapping;
 import de.ingef.eva.dataprocessor.StatisticsDataProcessor;
 import de.ingef.eva.dataprocessor.ValidationReportWriter;
 import de.ingef.eva.datasource.DataProcessor;
@@ -221,6 +224,28 @@ public class Main {
 					//pass on to validation report writer
 					new ValidationReportWriter(dbName + "-report.txt", configuration.getOutputDirectory()).process(reportData);
 				}
+			} else if(cmd.hasOption("separate")) {
+				Configuration config = Configuration.loadFromJson(cmd.getOptionValue("separate"));
+				SeparationMapping mapping = config.getDatasetMembership();
+				for(String dataset : mapping.getDatasetNames()) {
+					Helper.createFolders(Paths.get(config.getOutputDirectory(), OutputDirectory.PRODUCTION, dataset).toString());
+				}
+				Map<String,List<Column>> headers = Helper.parseTableHeaders(Paths.get(config.getOutputDirectory(), OutputDirectory.HEADERS).toString());
+				Collection<DataTable> dataTables = Helper.loadDataTablesFromDirectory(Paths.get(config.getOutputDirectory(), OutputDirectory.PRODUCTION).toString(), "csv", headers, "", ";", "ADB");
+				ExecutorService threadPool = Helper.createThreadPool(config.getThreadCount(), false);
+				for(DataTable dataTable : dataTables) {
+					CompletableFuture.supplyAsync(
+							() -> {
+								log.info("Separating file '{}'", dataTable.getName());
+								new DatasetSeparator(mapping, config.getOutputDirectory()).process(dataTable);
+								log.info("'{}' done.", dataTable.getName());
+								return null;
+							},
+							threadPool
+						);
+				}
+				threadPool.shutdown();
+				threadPool.awaitTermination(3, TimeUnit.DAYS);
 			}
 			else
 				new HelpFormatter().printHelp("java -jar eva-data.jar", options);
@@ -336,8 +361,8 @@ public class Main {
 		options.addOption(Option.builder("stats").hasArg().argName("config.json").desc("create database content statistics").build());
 		options.addOption(Option.builder("dump").hasArg().argName("config.json").desc("run FastExport scripts").build());
 		options.addOption(Option.builder("merge").hasArg().argName("config.json").desc("merge clean data slices").build());
-		options.addOption(Option.builder("validate").hasArgs().argName("config.json> <ADB> <FDB").desc("performs row length validation of generated files. Datasets can be specified.").build());
-		
+		options.addOption(Option.builder("validate").hasArgs().argName("config.json> ADB FDB").desc("performs row length validation of generated files. Datasets can be specified.").build());
+		options.addOption(Option.builder("separate").hasArg().argName("config.json").desc("creates distinct ADB datasets").build());
 		return options;
 	}
 	

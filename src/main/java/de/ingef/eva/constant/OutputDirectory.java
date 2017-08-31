@@ -13,5 +13,6 @@ public class OutputDirectory {
 	public static final String HEADERS = "headers";
 	/** FastExport logs **/
 	public static final String FEXP_LOGS = "fexp-logs";
-	
+	//FIXME use MERGED folder in merge step
+	public static final String MERGED = "merged";
 }

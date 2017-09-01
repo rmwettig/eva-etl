@@ -45,8 +45,10 @@ public class SqlDataTable implements DataTable {
 		List<RowElement> row = new ArrayList<>();
 		try {
 			int columnCount = metaData.getColumnCount();
-			for(int i = 1; i <= columnCount; i++)
-				row.add(createSimpleRowElement(i, resultSet.getString(i).trim()));
+			for(int i = 1; i <= columnCount; i++) {
+				String content = resultSet.getString(i) == null ? "" : resultSet.getString(i).trim();
+				row.add(createSimpleRowElement(i, content));
+			}
 		} catch (SQLException e) {
 			throw new DataTableOperationException("Could not retrieve next row.", e);
 		}

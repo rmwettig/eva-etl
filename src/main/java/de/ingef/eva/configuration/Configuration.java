@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -35,7 +36,7 @@ public class Configuration {
 	private FastExportConfiguration fastExportConfiguration;
 	private JsonNode databasesNode;
 	private Collection<Mapping> mappings; 
-	private Map<String,String> nameToH2ik;
+	private Map<String,List<String>> nameToH2ik;
 	private Collection<Rule> rules;
 	private String fullConnectionUrl;
 	private SeparationMapping datasetMembership;
@@ -181,8 +182,8 @@ public class Configuration {
 		return mappings;
 	}
 	
-	private static Map<String,String> prepareFilteringConfiguration(JsonNode root) throws InvalidConfigurationException {
-		Map<String,String> nameToH2ik = new HashMap<String,String>();
+	private static Map<String,List<String>> prepareFilteringConfiguration(JsonNode root) throws InvalidConfigurationException {
+		Map<String,List<String>> nameToH2ik = new HashMap<>();
 		String DECODING = "decoding";
 		String NAME = "name";
 		String H2IK = "h2ik";
@@ -192,15 +193,20 @@ public class Configuration {
 		if(!filteringNode.isArray()) throw new InvalidConfigurationException(String.format(ErrorMessage.INVALID_TYPE, "Array"));
 		
 		for(JsonNode decoder : filteringNode) {
-			JsonNode nameNode = decoder.path("name");
+			JsonNode nameNode = decoder.path(NAME);
 			if(nameNode.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, NAME));
 			JsonNode h2ikNode = decoder.path(H2IK);
-			if(h2ikNode.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, H2IK));
+			if(h2ikNode.isMissingNode() || !h2ikNode.isArray()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, H2IK));
 			String name = nameNode.asText();
 			if(name.isEmpty()) throw new InvalidConfigurationException(String.format(ErrorMessage.INVALID_VALUE, ""));
-			String h2ik = h2ikNode.asText();
-			if(h2ik.isEmpty()) throw new InvalidConfigurationException(String.format(ErrorMessage.INVALID_VALUE, ""));
-			nameToH2ik.put(name, h2ik);
+			List<String> h2iks = new ArrayList<>();
+			for(JsonNode node : h2ikNode) {
+				String h2ik = node.asText();
+				if(h2ik.isEmpty()) throw new InvalidConfigurationException(String.format(ErrorMessage.INVALID_VALUE, ""));
+				h2iks.add(h2ik);
+			}
+			
+			nameToH2ik.put(name, h2iks);
 		}
 		
 		return nameToH2ik;

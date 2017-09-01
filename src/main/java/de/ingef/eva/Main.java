@@ -158,6 +158,7 @@ public class Main {
 				log.info("Cleaning done in {}.", sw.createReadableDelta());
 			} else if (cmd.hasOption("makedecode")) {
 				Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("makedecode"));
+				exitIfInvalidCredentials(configuration);
 				createPidMappings(configuration);
 			} else if(cmd.hasOption("stats")) {
 				createDatabaseStatistics(Configuration.loadFromJson(cmd.getOptionValue("stats")));
@@ -367,11 +368,11 @@ public class Main {
 	}
 	
 	private static void createPidMappings(Configuration configuration) {
-		Map<String,String> name2h2ik = configuration.getNameToH2ik();
+		Map<String,List<String>> name2h2ik = configuration.getNameToH2ik();
 		for(String name : name2h2ik.keySet()) {
-			String h2ik = name2h2ik.get(name);
-			DataSource unfilteredPids = new SqlDataSource(String.format(Templates.Decoding.PID_DECODE_QUERY, h2ik, h2ik), name, configuration);
-			DataSource excludedPids = new SqlDataSource(String.format(Templates.Decoding.INVALID_PIDS_QUERY, h2ik, h2ik), name, configuration);
+			String h2iks = name2h2ik.get(name).stream().map(h -> "'" + h + "'").collect(Collectors.joining(", "));
+			DataSource unfilteredPids = new SqlDataSource(String.format(Templates.Decoding.PID_DECODE_QUERY, h2iks, h2iks), name, configuration);
+			DataSource excludedPids = new SqlDataSource(String.format(Templates.Decoding.INVALID_PIDS_QUERY, h2iks, h2iks), name, configuration);
 			DataProcessor cleanPidProcessor = new ProcessPidDecode(configuration);
 			cleanPidProcessor.process(unfilteredPids.fetchData(), excludedPids.fetchData());
 		}

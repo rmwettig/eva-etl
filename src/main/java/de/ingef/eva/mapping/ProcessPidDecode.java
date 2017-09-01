@@ -59,6 +59,11 @@ public class ProcessPidDecode implements DataProcessor {
 		return null;
 	}
 	
+	/**
+	 * Creates a pid set from data table.
+	 * @param pidTable will be closed after use
+	 * @return
+	 */
 	private Set<String> createFilterPids(DataTable pidTable) {
 		Set<String> pids = new HashSet<String>();
 		try {
@@ -94,7 +99,7 @@ public class ProcessPidDecode implements DataProcessor {
 	
 	/**
 	 * creates unique mappings with spread information combined
-	 * @param rawPids unfiltered pids
+	 * @param rawPids unfiltered pids. Will be closed after use
 	 * @param unwantedPids pids that must be removed from the set
 	 * @return h2ikToPid map
 	 */

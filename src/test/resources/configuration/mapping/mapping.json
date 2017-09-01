@@ -65,11 +65,11 @@
 	"decoding": [
 		{
 			"name": "Bosch",
-			"h2ik": "108036123"
+			"h2ik": ["108036123"]
 		},
 		{
 			"name": "Salzgitter",
-			"h2ik": "101922757"
+			"h2ik": ["101922757"]
 		}
 	],
 	"validation": [

@@ -289,17 +289,6 @@
 						}
 					]
 				}
-			},
-			{
-				"name": "ACC_SPECTRUM",
-				"views": [
-					{
-						"AVK_AU_FALL": {}
-					},
-					{
-						"AVK_AU_FALL_DIA": {}
-					}
-				]
 			}
 		]
 	},
@@ -339,6 +328,34 @@
 			"rule": "NAME",
 			"column": "FG",
 			"exclude": "[^\\d]"
+		}
+	],
+	"separation": [
+		{
+			"dataset" : "Salzgitter",
+			"h2iks" : ["101931440", "102137985", "101922757"]
+		},
+		{
+			"dataset" : "Bosch",
+			"h2iks" : ["108036123"]
+		}
+	],
+	"append" : [
+		{
+			"mode": "STATIC",
+			"targets": "out/test/static",
+			"match": "stat",
+			"targetColumn": "H2IK",
+			"value": "999999999",
+			"order": "FIRST" 
+		},
+		{
+			"mode": "DYNAMIC",
+			"targets": "out/test/dynamic",
+			"match": "dyn",
+			"source": "out/test/map.csv",
+			"keyColumn": "egk_nr",
+			"order": "LAST"
 		}
 	]
 }

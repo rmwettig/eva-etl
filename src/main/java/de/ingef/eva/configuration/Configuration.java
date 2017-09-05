@@ -12,6 +12,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.ingef.eva.configuration.append.AppendConfiguration;
 import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.data.validation.NameRule;
 import de.ingef.eva.data.validation.ReplacePattern;
@@ -40,6 +41,7 @@ public class Configuration {
 	private Collection<Rule> rules;
 	private String fullConnectionUrl;
 	private SeparationMapping datasetMembership;
+	private List<AppendConfiguration> appenderConfiguration;
 	
 	public static Configuration loadFromJson(String path) throws JsonProcessingException, IOException, InvalidConfigurationException {
 		String SERVER = "server";
@@ -53,7 +55,8 @@ public class Configuration {
 		String THREADS = "threads";
 		String DATABASES = "databases";
 		
-		JsonNode root = new ObjectMapper().readTree(new File(path));
+		ObjectMapper mapper = new ObjectMapper();
+		JsonNode root = mapper.readTree(new File(path));
 		Configuration config = new Configuration();
 		
 		JsonNode node = root.path(SERVER);
@@ -105,10 +108,24 @@ public class Configuration {
 		config.nameToH2ik = prepareFilteringConfiguration(root);
 		config.rules = prepareValidationRules(root);
 		config.datasetMembership = prepareSeparationMappings(root);		
-		
+		config.appenderConfiguration = prepareAppendConfiguration(root, mapper);
 		return config;
 	}
 	
+	private static List<AppendConfiguration> prepareAppendConfiguration(JsonNode root, ObjectMapper mapper) throws InvalidConfigurationException {
+		JsonNode appendNode = root.path("append");
+		List<AppendConfiguration> configurations = new ArrayList<>(appendNode.size());
+		for(JsonNode conf : appendNode) {
+			try {
+				configurations.add(mapper.treeToValue(conf, AppendConfiguration.class));
+			} catch (JsonProcessingException e) {
+				throw new InvalidConfigurationException("Could not read element in 'append'.", e);
+			}
+		}
+		
+		return configurations;
+	}
+
 	/**
 	 * Parses separation mappings field
 	 * @param root

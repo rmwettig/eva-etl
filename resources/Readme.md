@@ -40,20 +40,36 @@ Call
 
         `java -jar eva-data.jar -merge <config>.json`
 
-to merge slices into a single file. Provide more memory if you process larger files.
-To determine required memory look at the N largest files where N equals the number of used threads, for instance N = 4. Then, as of July 2017 the four largest ADB files are
-  * Arzt_GOP (11 GB)
-  * Arzt_Diagnose (6 GB)
-  * AM_EVO (3 GB)
-  * Leistungskosten (3 GB)
-Thus, the total memory needed amounts to 23 GB + 20% extra at least. Supply this value to the JVM by calling `java -Xmx28g -Xms28g -jar ...`.
+to merge slices into a single file.
 
-### 4. Append id mapping
+### 6. Append id mapping
 Call
 
-        `java -jar eva-data.jar <config.json> map`
+        `java -jar eva-data.jar -map <config.json>`
 
-to add an alternative id.
+to add an alternative id. This was intended for SPECTRUM-DB tables but will be replaced by a more generic `append` command.
+
+### 7. Create decoding file
+Call
+
+      `java -jar eva-data.jar -makedecode <config.json>`
+
+to create a mapping file containing egk, h2ik, kv number and pid.
+
+### 8. Separate ADB insurances into distinct data sets
+Call
+
+      `java -jar eva-data.jar -separate <config.json>`
+
+to extract health insurances from mixed ADB files.
+
+### 9. Append additional data to files
+Call
+
+    `java -jar eva-data.jar -append <config.json>`
+
+to execute specified append tasks.
+
 
 ## Config.json file fields
 * `server`: server name or IP
@@ -117,6 +133,23 @@ to add an alternative id.
   * `exclude`: Java regular expression to match unwanted characters
   * `replace` *optional*: String that is used to replace matched characters
   * `column`: name of the column to which the rule is applied
+* `separation` **__array(object)__**: datasets that should be distinguished in ADB files
+  * `dataset`: name of the dataset
+  * `h2iks` **__array(string)__**: one or more ik values associated to the dataset name
+* `append` **_array(object)_**: allows to modify files after export
+  * `mode`: specifies the append mode. Values: `STATIC`, `DYNAMIC`
+  * `match`: filenames must contain this string
+  * `targets`: path to files that should be modified
+  * `order`: determines whether new column(s) is (are) appended at the beginning or end
+
+  _Only if `mode=STATIC`_
+  * `targetColumn`: name of the new column
+  * `value`: inserted value
+  
+  _Only if `mode=MAP`_
+
+  * `source`: path to the file containing additional columns. The file is expected to have a header containing the column names. The `keyColumn` must be the first column. Entries must be semicolon separated.
+  * `keyColumn`: column that is used to find rows that belong to the same person. `keyColumn` must exist in both the source and target file.
 
 ### Option Nodes
 #### Where object
@@ -230,6 +263,34 @@ to add an alternative id.
 			"rule": "NAME",
 			"column": "FG",
 			"exclude": "[^\\d]"
+		}
+	],
+  "separation": [
+		{
+			"dataset" : "Salzgitter",
+			"h2iks" : ["101931440", "102137985", "101922757"]
+		},
+		{
+			"dataset" : "Bosch",
+			"h2iks" : ["108036123"]
+		}
+	],
+	"append" : [
+		{
+			"mode": "STATIC",
+			"targets": "out/test/static",
+			"match": "stat",
+			"targetColumn": "H2IK",
+			"value": "999999999",
+			"order": "FIRST" 
+		},
+		{
+			"mode": "DYNAMIC",
+			"targets": "out/test/dynamic",
+			"match": "dyn",
+			"source": "out/test/map.csv",
+			"keyColumn": "egk_nr",
+			"order": "LAST"
 		}
 	]
 }

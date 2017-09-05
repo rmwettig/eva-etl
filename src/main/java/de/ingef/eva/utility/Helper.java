@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -66,7 +68,7 @@ public final class Helper {
 		for(File f : rawDirectory.listFiles()) {
 			if(f.isDirectory()) continue;
 			String fileName = f.getName();
-			if(!fileName.endsWith(extension) && (!infix.isEmpty() || !fileName.contains(infix))) continue;
+			if(!fileName.endsWith(extension) && (infix.isEmpty() || !fileName.contains(infix))) continue;
 			//expected filename has the form ACC_DB_TABLE.yyyy.csv
 			String commonFileName = fileName.substring(0, fileName.indexOf("."));
 			if(!headers.containsKey(commonFileName)) continue;
@@ -90,6 +92,20 @@ public final class Helper {
 		}
 		
 		return tables;
+	}
+	
+	public static DataTable loadExternalDataTable(Path path) throws IOException {
+		try(BufferedReader reader = Files.newBufferedReader(path);) {
+			String[] header = reader.readLine().split(";");
+			reader.close();
+			List<RowElement> columnHeader = new ArrayList<>(header.length);
+			IntStream
+				.range(0, header.length)
+				.forEachOrdered(i -> columnHeader.add(new SimpleRowElement(header[i], i, TeradataColumnType.UNKNOWN, header[i])));
+			
+			File f = path.toFile();
+			return new FileDataTable(f, ";", f.getName().substring(0, f.getName().indexOf(".")), columnHeader);
+		}
 	}
 	
 	public static Map<String, List<Column>> parseTableHeaders(String path) throws JsonProcessingException, IOException {

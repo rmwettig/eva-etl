@@ -39,6 +39,7 @@ import de.ingef.eva.configuration.ConfigurationDatabaseHostLoader;
 import de.ingef.eva.configuration.Mapping;
 import de.ingef.eva.configuration.SchemaDatabaseHostLoader;
 import de.ingef.eva.configuration.Target;
+import de.ingef.eva.configuration.append.AppendConfiguration;
 import de.ingef.eva.constant.OutputDirectory;
 import de.ingef.eva.constant.Templates;
 import de.ingef.eva.data.DataSet;
@@ -53,8 +54,10 @@ import de.ingef.eva.database.Table;
 import de.ingef.eva.dataprocessor.DataTableMergeProcessor;
 import de.ingef.eva.dataprocessor.DatasetSeparator;
 import de.ingef.eva.dataprocessor.DetailStatisticsDataProcessor;
+import de.ingef.eva.dataprocessor.DynamicColumnAppender;
 import de.ingef.eva.dataprocessor.HTMLTableWriter;
 import de.ingef.eva.dataprocessor.SeparationMapping;
+import de.ingef.eva.dataprocessor.StaticColumnAppender;
 import de.ingef.eva.dataprocessor.StatisticsDataProcessor;
 import de.ingef.eva.dataprocessor.ValidationReportWriter;
 import de.ingef.eva.datasource.DataProcessor;
@@ -247,6 +250,60 @@ public class Main {
 				}
 				threadPool.shutdown();
 				threadPool.awaitTermination(3, TimeUnit.DAYS);
+			} else if(cmd.hasOption("append")) {
+				Configuration config = Configuration.loadFromJson(cmd.getOptionValue("append"));
+				List<AppendConfiguration> appendConf = config.getAppenderConfiguration();
+				ExecutorService threadPool = Executors.newFixedThreadPool(config.getThreadCount());
+				Map<String,List<Column>> headers = Helper.parseTableHeaders(config.getOutputDirectory() + "/" + OutputDirectory.HEADERS);
+				Collection<DataTable> tables = null;
+				for(int i = 0; i < appendConf.size(); i++) {
+					AppendConfiguration append = appendConf.get(i);
+					//check mapping mode
+					switch (append.getMode()) {
+						case STATIC:
+							if(append.getTargetColumn() == null || append.getTargetColumn().isEmpty()) {
+								log.error("Invalid 'targetColumn' value in appendConfig[{}]", i);
+								break;
+							}
+							if(append.getValue() == null || append.getValue().isEmpty()) {
+								log.error("Invalid 'value' in appendConfig[{}]", i);
+								break;
+							}
+							tables = Helper.loadDataTablesFromDirectory(append.getTargets(), "csv", headers, "", ";", append.getMatch());
+							for(DataTable dt : tables) {
+								threadPool.execute(new Runnable() {
+									@Override
+									public void run() {
+										new StaticColumnAppender(append.getTargetColumn(), append.getValue(), append.getMatch(), append.getOrder(), config.getOutputDirectory()).process(dt);	
+									}
+								});
+							}
+							break;
+						case DYNAMIC:
+							if(append.getKeyColumn() == null || append.getKeyColumn().isEmpty()) {
+								log.error("Invalid 'keyColumn' value in appendConfig[{}]", i);
+								break;
+							}
+			
+							tables = Helper.loadDataTablesFromDirectory(append.getTargets(), "csv", headers, "", ";", append.getMatch());
+							for(DataTable dt : tables) {
+								DataTable extraColumns = Helper.loadExternalDataTable(Paths.get(append.getSource()));
+								threadPool.execute(new Runnable() {
+									@Override
+									public void run() {
+										new DynamicColumnAppender(append.getKeyColumn(), append.getMatch(), config.getOutputDirectory()).process(dt, extraColumns);
+									}
+								});
+							}
+							break;
+
+						default:
+							log.warn("Could not process append mode '{}'", append.getMode());
+							break;
+					}
+				}
+				threadPool.shutdown();
+				threadPool.awaitTermination(3, TimeUnit.DAYS);
 			}
 			else
 				new HelpFormatter().printHelp("java -jar eva-data.jar", options);
@@ -364,6 +421,7 @@ public class Main {
 		options.addOption(Option.builder("merge").hasArg().argName("config.json").desc("merge clean data slices").build());
 		options.addOption(Option.builder("validate").hasArgs().argName("config.json> ADB FDB").desc("performs row length validation of generated files. Datasets can be specified.").build());
 		options.addOption(Option.builder("separate").hasArg().argName("config.json").desc("creates distinct ADB datasets").build());
+		options.addOption(Option.builder("append").hasArg().argName("config.json").desc("adds a column to files matching the pattern").build());
 		return options;
 	}
 	

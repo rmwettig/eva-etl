@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.data.DataTable;
@@ -105,8 +106,12 @@ public class ProcessPidDecode implements DataProcessor {
 	 */
 	private Map<String,Mapping> removeDuplicates(DataTable rawPids, Set<String> unwantedPids) {
 		try {
-			Map<String, Mapping> mappings = new HashMap<>();
+			Map<String, Mapping> ikPid2Mapping = new HashMap<>();
 			Set<String> uniquePids = new HashSet<>();
+			Set<String> uniqueKvNumbers = new HashSet<>();
+			Set<String> uniqueEgkNumbers = new HashSet<>();
+			int numberOfDuplicates = 0;
+			int rowCount = 0;
 			rawPids.open();
 			while(rawPids.hasMoreRows()) {
 				List<RowElement> row = rawPids.getNextRow(true);
@@ -115,27 +120,43 @@ public class ProcessPidDecode implements DataProcessor {
 				//skip entries with empty h2ik, pid
 				if(h2ik == null || h2ik.isEmpty() || pid == null || pid.isEmpty()) continue;
 				pid = addPaddingZeros(pid);
-				uniquePids.add(pid);
 				//skip unwanted pids
 				if(unwantedPids.contains(pid)) continue;
+				rowCount++;
+				if(uniquePids.contains(pid)) {
+					log.warn("Found duplicated pid: '{}'. Entry: [{}]", pid, rowToString(row));
+					numberOfDuplicates++;
+					continue;
+				}
+				uniquePids.add(pid);
 				String key = h2ik + pid;
-				String egkNr = row.get(1).getContent();
-				String kvNr = row.get(2).getContent(); 
-				if(!mappings.containsKey(key))
-					mappings.put(key, new Mapping(h2ik, egkNr, kvNr, pid));
+				String egkNo = row.get(1).getContent();
+				String kvNo = row.get(2).getContent();
+				if(egkNo != null && !egkNo.isEmpty() && uniqueEgkNumbers.contains(egkNo)) {
+					log.warn("Found duplicated egk number: '{}'. Entry: [{}]", egkNo, rowToString(row));
+					numberOfDuplicates++;
+					continue;
+				}
+				uniqueEgkNumbers.add(egkNo);
+				if(kvNo != null && !kvNo.isEmpty() && uniqueKvNumbers.contains(kvNo)) {
+					log.warn("Found duplicated kv number: '{}'. Entry: [{}]", kvNo, rowToString(row));
+					numberOfDuplicates++;
+					continue;
+				}
+				uniqueKvNumbers.add(kvNo);
+				//save first to columns as key if egk is not empty
+				//increase counter for each time the key was found -> report dup
+				if(!ikPid2Mapping.containsKey(key))
+					ikPid2Mapping.put(key, new Mapping(h2ik, egkNo, kvNo, pid));
 				else {
-					Mapping m = mappings.get(key);
-					//update egk and kv number if it was an invalid value before only
-					if(m.getEgknr() == null || m.getEgknr().isEmpty())
-						m.setEgknr(egkNr);
-					if(m.getKvNr() == null || m.getKvNr().isEmpty())
-						m.setKvNr(kvNr);
+					log.warn("Found duplicated ik+pid key: '{}'. Entry: [{}]", key, rowToString(row));
+					numberOfDuplicates++;
 				}
 			}
 			rawPids.close();
-			calculateLoss(uniquePids, mappings.keySet());
+			calculateLoss(numberOfDuplicates, rowCount);
 						
-			return mappings;
+			return ikPid2Mapping;
 		} 
 		catch (DataTableOperationException e) {
 			log.error(e.getStackTrace()[0]);
@@ -144,10 +165,10 @@ public class ProcessPidDecode implements DataProcessor {
 		return null;
 	}
 	
-	private void calculateLoss(Set<String> uniquePids, Set<String> keySet) {
-		float lossPercentage = keySet.size() / (float)uniquePids.size();
-		if(lossPercentage > 0.05f)
-			log.warn("PID loss: {}", lossPercentage*100);
+	private void calculateLoss(int numberOfDuplicates, int totalRowCount) {
+		float loss =  numberOfDuplicates / (float)totalRowCount;
+		if(loss > 0.05f)
+			log.warn("PID loss: {}", loss * 100);
 	}
 
 	private DataTable createMappingDataTable(Map<String,Mapping> mappings, String name, List<RowElement> columnNames) {
@@ -174,4 +195,7 @@ public class ProcessPidDecode implements DataProcessor {
 		return new FileDataTable(outfile, ";", name, columnNames);
 	}
 	
+	private String rowToString(List<RowElement> row) {
+		return row.stream().map(e -> e.getContent()).collect(Collectors.joining(", "));
+	}
 }

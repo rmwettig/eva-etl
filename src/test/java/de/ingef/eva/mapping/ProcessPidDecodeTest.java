@@ -136,14 +136,13 @@ public class ProcessPidDecodeTest {
 	}
 	
 	@Test
-	public void testProcess() throws DataTableOperationException, JsonProcessingException, IOException, InvalidConfigurationException {
+	public void removeRowsWithEntriesAlreadySeen() throws DataTableOperationException, JsonProcessingException, IOException, InvalidConfigurationException {
 		Configuration config = Configuration.loadFromJson("src/test/resources/configuration/decode/config.json"); 
 		DataTable cleaned = new ProcessPidDecode(config).process(unfilteredPids, unwantedPids);
 		assertTrue(cleaned.open());
 		int rowIndex = 0;
 		/*
 		 * expected:
-		 * 1;34;12;1233
 		 * 1;22;;5677
 		 */
 		while(cleaned.hasMoreRows()) {
@@ -156,10 +155,7 @@ public class ProcessPidDecodeTest {
 			} else {
 				assertEquals("1", row.get(0).getContent());
 				assertFalse(row.get(3).getContent().isEmpty());
-				if(row.get(3).getContent().equalsIgnoreCase("0000001233")) {
-					assertEquals("34", row.get(1).getContent());
-					assertEquals("12", row.get(2).getContent());
-				}
+				
 				if(row.get(3).getContent().equalsIgnoreCase("0000005677")) {
 					assertEquals("22", row.get(1).getContent());
 					assertEquals("", row.get(2).getContent());

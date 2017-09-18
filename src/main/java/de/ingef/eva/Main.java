@@ -171,14 +171,14 @@ public class Main {
 				Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("merge"));
 				List<DataSet> datasets = Helper.findDatasets(configuration.getOutputDirectory() + "/" + OutputDirectory.CLEAN);
 				ExecutorService threadPool = Executors.newFixedThreadPool(configuration.getThreadCount());
-				String productionDirectory = configuration.getOutputDirectory() + "/" + OutputDirectory.PRODUCTION;
-				Helper.createFolders(productionDirectory);
+				String mergeDirectory = configuration.getOutputDirectory() + "/" + OutputDirectory.MERGED;
+				Helper.createFolders(mergeDirectory);
 				for(DataSet ds : datasets) {
 					CompletableFuture
 							.supplyAsync(
 									() -> {
 										log.info("Merging '{}'", ds.getName());
-										DataTable dt = new DataTableMergeProcessor(productionDirectory).process(ds);
+										DataTable dt = new DataTableMergeProcessor(mergeDirectory).process(ds);
 										log.info("'{}' done.", dt.getName());
 										return dt;
 									},
@@ -235,7 +235,7 @@ public class Main {
 					Helper.createFolders(Paths.get(config.getOutputDirectory(), OutputDirectory.PRODUCTION, dataset).toString());
 				}
 				Map<String,List<Column>> headers = Helper.parseTableHeaders(Paths.get(config.getOutputDirectory(), OutputDirectory.HEADERS).toString());
-				Collection<DataTable> dataTables = Helper.loadDataTablesFromDirectory(Paths.get(config.getOutputDirectory(), OutputDirectory.PRODUCTION).toString(), "csv", headers, "", ";", "ADB");
+				Collection<DataTable> dataTables = Helper.loadDataTablesFromDirectory(Paths.get(config.getOutputDirectory(), OutputDirectory.MERGED).toString(), "csv", headers, "", ";", "ADB");
 				ExecutorService threadPool = Helper.createThreadPool(config.getThreadCount(), false);
 				for(DataTable dataTable : dataTables) {
 					CompletableFuture.supplyAsync(

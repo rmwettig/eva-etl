@@ -68,7 +68,10 @@ public final class Helper {
 		for(File f : rawDirectory.listFiles()) {
 			if(f.isDirectory()) continue;
 			String fileName = f.getName();
-			if(!fileName.endsWith(extension) && (infix.isEmpty() || !fileName.contains(infix))) continue;
+			//skip files if extension does not match
+			//and if it does not contain the specified infix (ignored if empty)
+			if(!(fileName.endsWith(extension) && (infix.isEmpty() || fileName.contains(infix)))) continue;
+			
 			//expected filename has the form ACC_DB_TABLE.yyyy.csv
 			String commonFileName = fileName.substring(0, fileName.indexOf("."));
 			if(!headers.containsKey(commonFileName)) continue;

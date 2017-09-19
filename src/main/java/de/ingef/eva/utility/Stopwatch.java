@@ -20,9 +20,7 @@ public class Stopwatch {
 		long minutes = delta / 60;
 		long seconds = Math.floorMod(delta, 60);
 		long hours = minutes / 60;
-		minutes += Math.floorMod(minutes, 60);
 		long days = hours / 24;
-		hours += Math.floorMod(days, 24);
 		
 		if(days > 0) {
 			deltaString.append(days + "d");

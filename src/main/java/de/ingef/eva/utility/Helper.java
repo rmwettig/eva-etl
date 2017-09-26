@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.commons.csv.CSVFormat;
@@ -296,5 +297,9 @@ public final class Helper {
 					}
 				}
 			);
+	}
+	
+	public static String joinIks(List<String> iks) {
+		return iks.stream().map(ik -> "'" + ik + "'").collect(Collectors.joining(","));
 	}
 }

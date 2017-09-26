@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.AbstractMap.SimpleEntry;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -439,42 +440,44 @@ public class Main {
 	
 	private static void createDatabaseStatistics(Configuration configuration) {
 		String[] tables = new String[]{"AU_Fall", "KH_Fall", "HeMi_EVO", "HiMi_EVO", "Arzt_Fall", "AM_EVO"};
-		Map<String,String> healthInsurances = new HashMap<>(2);
-		healthInsurances.put("Bosch", "108036123");
-		healthInsurances.put("Salzgitter", "101922757");
+		Map<String,List<String>> healthInsurances = new HashMap<>(2);
+		healthInsurances.put("Bosch", Arrays.asList("108036123"));
+		healthInsurances.put("Salzgitter", Arrays.asList("101922757", "101931440", "102137985"));
 		for(String hi : healthInsurances.keySet()) {
 			int i = 0;
 			DataTable overview;
 			//+1 because of detail stats
 			DataTable[] stats = new DataTable[tables.length + 1];
+			String iks = Helper.joinIks(healthInsurances.get(hi));
 			for(String table : tables) {
 				String query;
 				switch(table) {
 				case "AU_Fall":
-					query = Templates.Statistics.ADB_STATISTICS_FOR_AU_FALL.replace("${tableSuffix}", table).replace("${h2ik}", healthInsurances.get(hi));
+					query = Templates.Statistics.ADB_STATISTICS_FOR_AU_FALL.replace("${tableSuffix}", table);
 					break;
 				case "KH_Fall":
-					query = Templates.Statistics.ADB_STATISTICS_FOR_KH_FALL.replace("${tableSuffix}", table).replace("${h2ik}", healthInsurances.get(hi));
+					query = Templates.Statistics.ADB_STATISTICS_FOR_KH_FALL.replace("${tableSuffix}", table);
 					break;
 				case "HeMi_EVO":
 				case "HiMi_EVO":
-					query = Templates.Statistics.ADB_STATISTICS_FOR_HEMI_HIMI.replace("${tableSuffix}", table).replace("${h2ik}", healthInsurances.get(hi));
+					query = Templates.Statistics.ADB_STATISTICS_FOR_HEMI_HIMI.replace("${tableSuffix}", table);
 					break;
 				case "Arzt_Fall":
-					query = Templates.Statistics.ADB_STATISTICS_FOR_ARZT_FALL.replace("${tableSuffix}", table).replace("${h2ik}", healthInsurances.get(hi));
+					query = Templates.Statistics.ADB_STATISTICS_FOR_ARZT_FALL.replace("${tableSuffix}", table);
 					break;
 				case "AM_EVO":
-					query = Templates.Statistics.ADB_STATISTICS_FOR_AM_EVO.replace("${tableSuffix}", table).replace("${h2ik}", healthInsurances.get(hi));
+					query = Templates.Statistics.ADB_STATISTICS_FOR_AM_EVO.replace("${tableSuffix}", table);
 					break;
 				default:
 					continue;
 				}
+				query = query.replace("${h2ik}", iks);
 				//TODO consolidate api. statsDataProcessor can take multiple data sources but htmlWriter processes only oneq
 				DataTable dataTable = new SqlDataSource(query, table, configuration).fetchData();
 				stats[i++] = new StatisticsDataProcessor().process(dataTable);
 			}
 			stats[i] = new DetailStatisticsDataProcessor().process(
-					new SqlDataSource(Templates.Statistics.ADB_AMBULANT_DATA_BY_KV_QUERY.replaceAll("\\$\\{h2ik\\}", healthInsurances.get(hi)), "ArztFall_details", configuration).fetchData()
+					new SqlDataSource(Templates.Statistics.ADB_OUTPATIENT_DATA_BY_KV_QUERY.replaceAll("\\$\\{h2ik\\}", iks), "ArztFall_details", configuration).fetchData()
 			);
 			new HTMLTableWriter(configuration.getOutputDirectory(), hi + "_stats.html", "Datenstand der Datenbereiche zum elektronischen Datenaustausch der GKV").process(stats);			
 		}

@@ -33,7 +33,7 @@ public final class CalculateCharlsonScores {
 			) {
 				for(String hi : INSURANCES) {
 					ResultSet result = query.executeQuery(String.format(QUERY_TEMPLATE, hi));
-					Collection<String> scores = calculateMorbiscores(result);
+					Collection<String> scores = calculateCharlsonScores(result);
 					BufferedWriter writer = new BufferedWriter(new FileWriter(config.getOutputDirectory()+String.format("/charlsonscores.%s.csv", hi)));
 					writer.write("pid;Q_Start;Q_End;Score\n");
 					for(String line : scores) {
@@ -55,10 +55,11 @@ public final class CalculateCharlsonScores {
 		}
 	}
 	
-	private static Collection<String> calculateMorbiscores(ResultSet result) throws SQLException {
+	private static Collection<String> calculateCharlsonScores(ResultSet result) throws SQLException {
 		int columnCount = result.getMetaData().getColumnCount();
-		Map<String,CharlsonScore> pid2score = new HashMap<String,CharlsonScore>();
-		
+		Map<String,CharlsonScore> pid2score = new HashMap<>();
+		int minYear = Integer.MAX_VALUE;
+		int maxYear = Integer.MIN_VALUE;
 		while(result.next()) {
 			//columns are: pid, quarter, year, icd, disease class, weight
 			for(int i = 1; i <= columnCount; i++) {
@@ -69,7 +70,8 @@ public final class CalculateCharlsonScores {
 			int year = result.getInt(3);
 			String diseaseClass = result.getString(5);
 			int weight = result.getInt(6);
-			
+			minYear = Math.min(minYear, year);
+			maxYear = Math.max(maxYear, year);
 			if(pid2score.containsKey(pid))
 				pid2score.get(pid).updateWeightOrAddEntry(quarter, year, diseaseClass, weight);
 			else {
@@ -78,12 +80,15 @@ public final class CalculateCharlsonScores {
 				pid2score.put(pid, ms);
 			}
 		}
-		
+		//needed for lambda
+		final int min = minYear;
+		final int max = maxYear;
+		pid2score.forEach((pid,score) -> score.setYearLimits(min, max));
 		return scoresToRows(pid2score);
 	}
 	
 	private static Collection<String> scoresToRows(Map<String,CharlsonScore> pid2score) {
-		List<String> rows = new ArrayList<String>();
+		List<String> rows = new ArrayList<>();
 		for(String pid : pid2score.keySet()) {
 			CharlsonScore ms = pid2score.get(pid);
 			for(String score : ms.calculateSlidingScore())

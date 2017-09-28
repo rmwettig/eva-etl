@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -69,13 +70,12 @@ import de.ingef.eva.error.QueryExecutionException;
 import de.ingef.eva.mapping.ProcessPidDecode;
 import de.ingef.eva.measures.CalculateCharlsonScores;
 import de.ingef.eva.query.FastExportJobWriter;
-import de.ingef.eva.query.FastExportQueryExecutor;
+import de.ingef.eva.query.JdbcQueryExecutor;
 import de.ingef.eva.query.JsonQuerySource;
 import de.ingef.eva.query.Query;
 import de.ingef.eva.query.QueryExecutor;
 import de.ingef.eva.query.QueryJob;
 import de.ingef.eva.query.QuerySource;
-import de.ingef.eva.query.fastexport.FastExportJobLoader;
 import de.ingef.eva.utility.Helper;
 import de.ingef.eva.utility.Stopwatch;
 import lombok.extern.log4j.Log4j2;
@@ -102,8 +102,9 @@ public class Main {
 				sw.start();
 				Configuration config = Configuration.loadFromJson(cmd.getOptionValue("dump"));
 				exitIfInvalidCredentials(config);
-				Collection<QueryJob> jobs = new FastExportJobLoader().loadFastExportJobs(config);
-				//FastExport processes must not survive main thread
+				QuerySource qs = new JsonQuerySource(config);
+				Collection<Query> queries = qs.createQueries();
+				//export processes must not survive main thread
 				ExecutorService threadPool = Executors.newFixedThreadPool(
 						config.getThreadCount(),
 						new ThreadFactory() {
@@ -114,11 +115,23 @@ public class Main {
 							}
 						}
 					);
-				FastExportQueryExecutor queryExecutor = new FastExportQueryExecutor(config, threadPool, jobs.size());
-				for(QueryJob job : jobs) {
-					queryExecutor.execute(job);
+				CountDownLatch cdl = new CountDownLatch(queries.size());
+				for(Query q : queries) {
+					CompletableFuture.supplyAsync(() -> {
+						try {
+							new JdbcQueryExecutor(config, cdl).execute(q);
+						} catch (QueryExecutionException e) {
+							throw new RuntimeException("Could not execute query '"+ q.getName() +"'. Error: "+ e.getMessage() + ". Cause: " + e.getCause().getMessage());
+						}
+						return null;
+					}, threadPool)
+					.exceptionally(e -> {
+						log.error("{}", e);
+						return null;
+					});
+					
 				}
-				queryExecutor.shutdown();
+				cdl.await();
 				sw.stop();
 				log.info("Dumping done in {}.", sw.createReadableDelta());
 				

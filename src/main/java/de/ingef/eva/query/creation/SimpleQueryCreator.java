@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.ingef.eva.constant.Templates;
 import de.ingef.eva.database.Column;
 import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
@@ -32,7 +31,6 @@ public class SimpleQueryCreator implements QueryCreator {
 	private OrGroup _currentGroup;
 
 	private String _rowStartTerm;
-	private String _columnDelimiter;
 	
 	private class Where {
 		private String _column;
@@ -90,24 +88,18 @@ public class SimpleQueryCreator implements QueryCreator {
 			this.primaryColumns.add(primaryColumn);
 		}
 		
-		public Join(String query, String primaryColumn) {
-			this("","","inner", primaryColumn);
-			subQuery = query;
-		}
-
 		public void addPrimaryColumn(String onColumn) {
 			primaryColumns.add(onColumn);
 		}
 	}
 		
-	public SimpleQueryCreator(DatabaseHost schema, String rowStartTerm, String columnDelimiter) {
+	public SimpleQueryCreator(DatabaseHost schema, String rowStartTerm) {
 		_tables = new LinkedHashMap<String, Collection<String>>();
 		_joins = new ArrayList<Join>();
 		_where = new LinkedHashMap<String, Collection<OrGroup>>();
 		_joinRightTables = new HashSet<String>();
 		_tableAlias = new HashMap<String, String>();
-		_rowStartTerm = "'" + rowStartTerm + "'";
-		_columnDelimiter = "||'" + columnDelimiter + "'||";
+		_rowStartTerm = rowStartTerm.isEmpty() ? "" : "'" + rowStartTerm + "'";
 		_schema = schema;
 	}
 
@@ -147,10 +139,6 @@ public class SimpleQueryCreator implements QueryCreator {
 		_joinRightTables.add(rightTable);
 		createAlias(leftTable);
 		createAlias(rightTable);
-	}
-	
-	public void addJoin(String subQuery, String onColumn) {
-		
 	}
 	
 	/**
@@ -239,11 +227,11 @@ public class SimpleQueryCreator implements QueryCreator {
 		String selectFormat = "%s.%s.%s";
 		String aliasedFormat = "%s.%s";
 		StringBuilder selectClause = new StringBuilder();
-
 		selectClause.append("select\n\t");
-		selectClause.append(_rowStartTerm);
-		selectClause.append(_columnDelimiter);
-		selectClause.append("\n\t");
+		if(_rowStartTerm != null && !_rowStartTerm.isEmpty()) {
+			selectClause.append(_rowStartTerm);
+			selectClause.append(",\n\t");
+		}
 		StringBuilder fromClause = new StringBuilder();
 		fromClause.append("from\n\t");
 		List<Column> qColumns = new ArrayList<>();
@@ -257,21 +245,20 @@ public class SimpleQueryCreator implements QueryCreator {
 				fromClause.append(_database + "." + table);
 				if (hasAlias)
 					fromClause.append(" " + _tableAlias.get(table));
-				fromClause.append(",");
-				fromClause.append("\n\t");
+				fromClause.append(",\n\t");
 			}
 			Collection<String> columns = _tables.get(table);
 			qColumns.addAll(createAnnotatedColumns(table, columns));
+			
 			for (String column : columns) {
 				String col = (hasAlias) ? String.format(aliasedFormat, _tableAlias.get(table), column)
 						: String.format(selectFormat, _database, table, column);
-				selectClause.append(String.format(Templates.COLUMN_PROCESSING, col));
-				selectClause.append(_columnDelimiter);
-				selectClause.append("\n\t");
+				selectClause.append(col);
+				selectClause.append(",\n\t");
 			}
 		}
 
-		selectClause.replace(selectClause.lastIndexOf(_columnDelimiter), selectClause.length(), "\n");
+		selectClause.replace(selectClause.lastIndexOf(","), selectClause.length(), "\n");
 		fromClause.replace(fromClause.lastIndexOf(","), fromClause.length(), "\n");
 
 		selectClause.append(fromClause);

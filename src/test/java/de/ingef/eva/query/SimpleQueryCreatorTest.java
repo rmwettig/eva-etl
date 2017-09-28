@@ -44,7 +44,7 @@ public class SimpleQueryCreatorTest {
 	
 	@Test
 	public void testQueryWithOutJoin() {
-		SimpleQueryCreator creator = new SimpleQueryCreator(schema, ";ROW_START", ";");
+		SimpleQueryCreator creator = new SimpleQueryCreator(schema, ";ROW_START");
 		/**
 		 * select DB.table.column
 		 * from DB.table
@@ -65,10 +65,10 @@ public class SimpleQueryCreatorTest {
 		String q = creator.buildQuery().getQuery();
 		
 		assertTrue(q.startsWith("select"));
-		String[] arr = q.substring(q.indexOf("select")+ "select".length(), q.indexOf("from")).split("\\|\\|';'\\|\\|");
+		String[] arr = q.substring(q.indexOf("select")+ "select".length(), q.indexOf("from")).split(",");
 		assertEquals(2, arr.length);
 		assertEquals("';ROW_START'", arr[0].trim());
-		assertEquals("coalesce(trim(DB.table.column),'')", arr[1].trim());		
+		assertEquals("DB.table.column", arr[1].trim());		
 		
 		assertTrue(q.contains("from"));
 		arr = q.substring(q.indexOf("from")+ "from".length(), q.indexOf("where")).split(",");
@@ -88,7 +88,7 @@ public class SimpleQueryCreatorTest {
 	
 	@Test
 	public void testQueryWithJoin() {
-		SimpleQueryCreator creator = new SimpleQueryCreator(schema, ";ROW_START", ";");
+		SimpleQueryCreator creator = new SimpleQueryCreator(schema, "999999999");
 		/**
 		 * select DB.table.column,DB.table2.column
 		 * from DB.table
@@ -117,11 +117,11 @@ public class SimpleQueryCreatorTest {
 		String q = creator.buildQuery().getQuery();
 		assertTrue("No select", q.startsWith("select"));
 		
-		String[] arr = q.substring(q.indexOf("select")+ "select".length(), q.indexOf("from")).split("\\|\\|';'\\|\\|");
+		String[] arr = q.substring(q.indexOf("select")+ "select".length(), q.indexOf("from")).split(",");
 		assertEquals(3, arr.length);
-		assertEquals("';ROW_START'", arr[0].trim());
-		assertEquals("coalesce(trim(DB.table.column),'')", arr[1].trim());
-		assertEquals("coalesce(trim(DB.table2.column),'')", arr[2].trim());
+		assertEquals("'999999999'", arr[0].trim());
+		assertEquals("DB.table.column", arr[1].trim());
+		assertEquals("DB.table2.column", arr[2].trim());
 		
 		assertTrue("No from", q.contains("from"));
 		arr = q.substring(q.indexOf("from")+ "from".length(), q.indexOf("inner")).split(",");

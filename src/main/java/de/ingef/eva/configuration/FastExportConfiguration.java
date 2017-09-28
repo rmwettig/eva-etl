@@ -2,7 +2,6 @@ package de.ingef.eva.configuration;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import de.ingef.eva.constant.Templates;
 import de.ingef.eva.error.InvalidConfigurationException;
 import lombok.Getter;
 
@@ -56,7 +55,8 @@ public class FastExportConfiguration {
 		config.postDumpAction = (!node.isMissingNode()) ? node.asText() : "";
 		
 		node = feNode.path(RAW_DELIMITER);
-		config.rawColumnDelimiter = node.asText(Templates.RAW_COLUMN_DELIMITER);
+		if (node.isMissingNode()) throw new InvalidConfigurationException(String.format(ErrorMessage.MISSING_FIELD, RAW_DELIMITER));
+		config.rawColumnDelimiter = node.asText();
 		
 		return config;
 	}

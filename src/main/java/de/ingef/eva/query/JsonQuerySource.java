@@ -26,7 +26,7 @@ public class JsonQuerySource implements QuerySource {
 	@Override
 	public Collection<Query> createQueries() {
 		DatabaseHost schema = new SchemaDatabaseHostLoader().loadFromFile(configuration.getSchemaFile());
-		QueryCreator queryCreator = new SimpleQueryCreator(schema, configuration.getFastExportConfiguration().getRowPrefix(), configuration.getFastExportConfiguration().getRawColumnDelimiter());
+		QueryCreator queryCreator = new SimpleQueryCreator(schema, configuration.getFastExportConfiguration().getRowPrefix());
 		queryCreator.setAliasFactory(new Alias(120));
 		JsonInterpreter jsonInterpreter = new SqlJsonInterpreter(queryCreator, schema, log);
 		return jsonInterpreter.interpret(configuration.getDatabasesNode());

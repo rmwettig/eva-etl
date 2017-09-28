@@ -34,7 +34,7 @@ public class SqlJsonInterpreterTest {
 
 	@Test
 	public void testInterpret() throws JsonProcessingException, IOException {
-		JsonInterpreter sqlInterpreter = new SqlJsonInterpreter(new SimpleQueryCreator(host, ";ROW_START", ";"), host, null);
+		JsonInterpreter sqlInterpreter = new SqlJsonInterpreter(new SimpleQueryCreator(host, ";ROW_START"), host, null);
 		
 		JsonNode root = new ObjectMapper().readTree(new File("src/test/resources/configuration/sql.config.json"));
 		Collection<Query> jobs = sqlInterpreter.interpret(root.path("databases"));
@@ -59,12 +59,12 @@ public class SqlJsonInterpreterTest {
 		//select clause
 		String part = job.substring(0, job.indexOf("from"));
 		assertTrue("No select", part.startsWith("select"));
-		String[] arr = part.split("\\|\\|';'\\|\\|");
+		String[] arr = part.split(",");
 		assertEquals(4, arr.length);
 		assertEquals("';ROW_START'", arr[0].replace("select", "").trim());
-		assertEquals("coalesce(trim(database1.tablename.columnname1),'')", arr[1].trim());
-		assertEquals("coalesce(trim(database1.tablename.columnname2),'')", arr[2].trim());
-		assertEquals("coalesce(trim(database1.tablename2.columnname3),'')", arr[3].trim());
+		assertEquals("database1.tablename.columnname1", arr[1].trim());
+		assertEquals("database1.tablename.columnname2", arr[2].trim());
+		assertEquals("database1.tablename2.columnname3", arr[3].trim());
 				
 		//from clause
 		part = job.substring(job.indexOf("from"), job.indexOf("inner"));
@@ -124,7 +124,7 @@ public class SqlJsonInterpreterTest {
 	
 	@Test
 	public void testLatestQuery() throws JsonProcessingException, IOException {
-		QueryCreator qc = new SimpleQueryCreator(host, ";ROW_START", ";");
+		QueryCreator qc = new SimpleQueryCreator(host, ";ROW_START");
 		qc.setAliasFactory(new Alias(10));
 		JsonInterpreter sqlInterpreter = new SqlJsonInterpreter(qc, host, null);
 		JsonNode root = new ObjectMapper().readTree(new File("src/test/resources/configuration/sql.select.latest.config.json"));
@@ -157,10 +157,10 @@ public class SqlJsonInterpreterTest {
 		
 		//select clause
 		String part = sql.substring(sql.indexOf("select") + 6, sql.indexOf("from"));
-		String[] columnFields = part.split("\\|\\|';'\\|\\|");
+		String[] columnFields = part.split(",");
 		assertEquals("';ROW_START'", columnFields[0].trim());
-		assertEquals("coalesce(trim(a.columnname1),'')", columnFields[1].trim());
-		assertEquals("coalesce(trim(a.columnname2),'')", columnFields[2].trim());
+		assertEquals("a.columnname1", columnFields[1].trim());
+		assertEquals("a.columnname2", columnFields[2].trim());
 		
 		//from clause
 		part = sql.substring(sql.indexOf("from")+ 4, sql.indexOf("inner"));

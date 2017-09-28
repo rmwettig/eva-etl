@@ -52,7 +52,7 @@ public class ValidatorDataProcessor implements DataProcessor {
 				List<RowElement> row = dt.getNextRow(true);
 				//no elements present for writing
 				if(row.size() == 0 || row.size() != dt.getColumnNames().size()) {
-					log.warn("Cannot clean row in file '{}'. Expected length: {}, was: {}. Line: '{}'", dt.getColumnNames().size(), row.size(), row.stream().map(e -> e.getContent()).collect(Collectors.joining(dt.getDelimiter())));	
+					log.warn("Cannot clean row in file '{}'. Expected length: {}, was: {}. Line: '{}'", dt.getName(), dt.getColumnNames().size(), row.size(), row.stream().map(e -> e.getContent()).collect(Collectors.joining(dt.getDelimiter())));	
 					continue;
 				}
 				

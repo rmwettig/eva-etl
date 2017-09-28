@@ -13,6 +13,7 @@
 		"logTable": "mw_fe_log",
 		"sessions": "24",
 		"rowPrefix": "ROW_START;",
+		"rawDelimiter": ";",
 		"postDumpAction": "java -jar ./eva-data.jar ./debugConfig.json",
 		"jobFilename": "debug.fx"
 	},

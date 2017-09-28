@@ -16,7 +16,7 @@ public class FastExportFileDataTable extends FileDataTable {
 	
 	@Override
 	protected String prepareLine(String line) throws DataTableOperationException {
-		if(line.isEmpty()) return line;
+		if(line.isEmpty() || rowStartSignal == null || rowStartSignal.isEmpty()) return line;
 		try {
 			return line.substring(line.indexOf(rowStartSignal) + rowStartSignal.length() + delimiter.length());
 		} catch (IndexOutOfBoundsException e) {

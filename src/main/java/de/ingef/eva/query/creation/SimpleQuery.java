@@ -10,11 +10,21 @@ public class SimpleQuery implements Query {
 
 	private String _name;
 	private String _query;
+	private String _dbName;
+	private String _tableName;
+	private String _sliceName;
 	private Collection<Column> _columns = new ArrayList<Column>(10);
 
 	public SimpleQuery(String query, Collection<Column> columns) {
+		this(query, columns, "", "", "");
+	}
+	
+	public SimpleQuery(String query, Collection<Column> columns, String dbName, String tableName, String sliceName) {
 		_query = query;
 		_columns = columns;
+		_dbName = dbName;
+		_tableName = tableName;
+		_sliceName = sliceName;
 	}
 
 	@Override
@@ -35,5 +45,20 @@ public class SimpleQuery implements Query {
 	@Override
 	public void setName(String name) {
 		_name = name;
+	}
+
+	@Override
+	public String getDBName() {
+		return _dbName;
+	}
+
+	@Override
+	public String getTableName() {
+		return _tableName;
+	}
+
+	@Override
+	public String getSliceName() {
+		return _sliceName;
 	}
 }

@@ -9,4 +9,7 @@ public interface Query {
 	void setName(String name);
 	Collection<Column> getSelectedColumns();
 	String getQuery();
+	String getDBName();
+	String getTableName();
+	String getSliceName();
 }

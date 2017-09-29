@@ -8,6 +8,4 @@ public interface RowElement {
 	public String getName();
 	public String getContent();
 	public TeradataColumnType getType();
-	
-	public <T> T asType(Class<T> type) throws ClassCastException;
 }

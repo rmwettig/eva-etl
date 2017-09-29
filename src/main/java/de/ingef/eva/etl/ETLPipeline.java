@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutorService;
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.etl.stage.Export;
 import de.ingef.eva.etl.stage.Filter;
+import de.ingef.eva.etl.stage.Transform;
 
 public class ETLPipeline {
 

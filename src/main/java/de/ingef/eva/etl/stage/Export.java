@@ -8,7 +8,9 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -16,6 +18,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import de.ingef.eva.data.RowElement;
+import de.ingef.eva.data.SimpleRowElement;
+import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.etl.Row;
 import de.ingef.eva.query.Query;
 import lombok.Getter;
@@ -36,6 +40,7 @@ public class Export {
 	public boolean initialize(int queueSize, int threadCount) {
 		threadPool = Executors.newFixedThreadPool(threadCount);
 		output = new ArrayBlockingQueue<>(queueSize);
+		return true;
 	}
 	
 	public void start(Collection<Query> queries, String url, String user, String password) {
@@ -77,7 +82,7 @@ public class Export {
 						rs = ps.executeQuery();
 						
 						if(!conn.isValid(5)) {
-							log.info("Retrying query for : '{}'. Query: {}", query.getName(), query.getQuery().replaceAll("\n", ""));
+							log.info("Retrying query for : '{}'. Query: {}", q.getName(), q.getQuery().replaceAll("\n", " "));
 							rs.close();
 							ps.close();
 							conn.close();
@@ -94,10 +99,13 @@ public class Export {
 							for(int columnIndex = 1; columnIndex <= columnCount; columnIndex++) {
 								//perform null checks on raw data from database
 								//otherwise threads stall and program does not terminate
-								String value = rs.getString(columnIndex) == null ? "" : rs.getString(columnIndex).trim();  
-								columns.add(new RowElement(value, metaData.getColumnLabel(columnIndex)));
+								String value = rs.getString(columnIndex) == null ? "" : rs.getString(columnIndex).trim();
+								TeradataColumnType type = TeradataColumnType.fromTypeName(metaData.getColumnLabel(columnIndex));
+								columns.add(new SimpleRowElement(value, type));
 							}
-							output.put(new Row(q.getDBName(), q.getTableName(), columns));
+							Map<String,Integer> columnNames2Index = createColumnIndexLookup(metaData);
+							
+							output.put(new Row(q.getDBName(), q.getTableName(), columns, columnNames2Index));
 						}
 						System.out.println("\tDone.");
 					} catch(SQLException e) {
@@ -127,6 +135,15 @@ public class Export {
 		});
 	}
 	
+	private Map<String, Integer> createColumnIndexLookup(ResultSetMetaData metaData) throws SQLException {
+		int count = metaData.getColumnCount();
+		Map<String,Integer> map = new HashMap<>(count);
+		for(int i = 0; i < count; i++) {
+			map.put(metaData.getColumnLabel(i + 1), i);
+		}
+		return map;
+	}
+
 	private Connection createConnection(String url, String user, String password) throws ClassNotFoundException, SQLException {
 		Class.forName("com.teradata.jdbc.TeraDriver");
 		return DriverManager.getConnection(url, user, password);

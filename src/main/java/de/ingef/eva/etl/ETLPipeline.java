@@ -22,6 +22,7 @@ public class ETLPipeline {
 	
 	private Export exportStage;
 	private Filter filterStage;
+	private Transform transformStage;
 	
 	public ETLPipeline() {
 		poisonPill = new Row("POISON", "POISON", null, null);

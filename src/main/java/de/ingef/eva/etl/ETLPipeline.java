@@ -1,13 +1,12 @@
 package de.ingef.eva.etl;
 
-import java.util.Collection;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.etl.stage.Export;
-import de.ingef.eva.query.Query;
+import de.ingef.eva.etl.stage.Filter;
 
 public class ETLPipeline {
 
@@ -15,8 +14,6 @@ public class ETLPipeline {
 	private BlockingQueue<Row> filtered;
 	private BlockingQueue<Row> transformed;
 	
-	
-	private ExecutorService filterThreads;
 	private ExecutorService transformThreads;
 	private ExecutorService outputThreads;
 	
@@ -24,12 +21,14 @@ public class ETLPipeline {
 	private Configuration config;
 	
 	private Export exportStage;
+	private Filter filterStage;
 	
 	public ETLPipeline() {
-		poisonPill = new Row("POISON", "POISON", null);
+		poisonPill = new Row("POISON", "POISON", null, null);
 	}
 	
 	public boolean initalize(Configuration configuration) {
+		//FIXME read queue size from config as well as thread pool sizes
 		int queueSize = 100_000;
 		initializeQueues(queueSize);
 		config = configuration;
@@ -38,6 +37,10 @@ public class ETLPipeline {
 		exportStage.initialize(queueSize, 2);
 		raw = exportStage.getOutput();
 		
+		filterStage = new Filter(poisonPill, raw);
+		filterStage.initialize(queueSize, 2);
+		filtered = filterStage.getOutput();
+		
 		return true;
 	}
 
@@ -45,14 +48,5 @@ public class ETLPipeline {
 		raw = new ArrayBlockingQueue<>(queueSize);
 		filtered = new ArrayBlockingQueue<>(queueSize);
 		transformed = new ArrayBlockingQueue<>(queueSize);
-	}
-	
-	public void start(Collection<Query> queries) {
-		startExportTasks(queries, raw, exportThreads);
-	}
-
-	private void startExportTasks(Collection<Query> queries, BlockingQueue<Row> output, ExecutorService threadPool) {
-		
-	}
-	
+	}	
 }

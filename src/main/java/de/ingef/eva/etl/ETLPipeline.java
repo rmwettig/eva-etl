@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import de.ingef.eva.configuration.Configuration;
@@ -40,6 +41,12 @@ public class ETLPipeline {
 			startExport(q, threadPool, url, user, password, filters, transformers, configuration.getOutputDirectory());
 		}
 		
+		threadPool.shutdown();
+		try {
+			threadPool.awaitTermination(3, TimeUnit.DAYS);
+		} catch (InterruptedException e) {
+			log.error("Export tasks did not terminate normally. {}", e);
+		}
 	}
 	
 	private Connection createConnection(String url, String user, String password) throws ClassNotFoundException, SQLException {

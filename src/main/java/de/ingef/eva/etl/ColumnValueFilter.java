@@ -11,7 +11,7 @@ public class ColumnValueFilter extends Filter {
 	public ColumnValueFilter(String name, String columnName, String regexPattern) {
 		super(name);
 		regex = Pattern.compile(regexPattern);
-		column = columnName;
+		column = columnName.toLowerCase();
 	}
 	
 	@Override

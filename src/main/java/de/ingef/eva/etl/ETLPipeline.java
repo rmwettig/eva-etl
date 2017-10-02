@@ -190,7 +190,7 @@ public class ETLPipeline {
 		int count = metaData.getColumnCount();
 		Map<String,Integer> map = new HashMap<>(count);
 		for(int i = 0; i < count; i++) {
-			map.put(metaData.getColumnLabel(i + 1), i);
+			map.put(metaData.getColumnLabel(i + 1).toLowerCase(), i);
 		}
 		return map;
 	}

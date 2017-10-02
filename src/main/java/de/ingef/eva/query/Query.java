@@ -9,9 +9,9 @@ public interface Query {
 	void setName(String name);
 	Collection<Column> getSelectedColumns();
 	String getQuery();
-	String getDBName();
+	String getDbName();
 	String getTableName();
 	String getSliceName();
-	String getDatasetLabel();
-	void setDatasetLabel(String dataset);
+	String getDatasetName();
+	void setDatasetName(String dataset);
 }

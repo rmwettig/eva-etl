@@ -87,7 +87,7 @@ public class ETLPipeline {
 							}
 							Map<String,Integer> columnNames2Index = createColumnIndexLookup(metaData);
 							
-							Row row = new Row(q.getDBName(), q.getTableName(), columns, columnNames2Index);
+							Row row = new Row(q.getDbName(), q.getTableName(), columns, columnNames2Index);
 							if(!isRowValid(filters, row))
 								continue;
 							Row transformedRow = transformRow(transformers, row);
@@ -146,11 +146,11 @@ public class ETLPipeline {
 	}
 
 	private CsvWriter createWriter(String rootDirectory, Query q) throws IOException {
-		Path root = Paths.get(rootDirectory, q.getDBName(), q.getDatasetLabel());
+		Path root = Paths.get(rootDirectory, q.getDbName(), q.getDatasetName());
 		if(!Files.exists(root)) {
 			Files.createDirectories(root);
 		}
-		String fileName = q.getDBName() + "_" + q.getTableName()  + "." + q.getSliceName(); 
+		String fileName = q.getDbName() + "_" + q.getTableName()  + "." + q.getSliceName(); 
 		CsvWriter writer = new CsvWriter(root.resolve(fileName).toFile());
 		writer.open();
 		return writer;

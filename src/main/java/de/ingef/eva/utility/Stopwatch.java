@@ -15,12 +15,22 @@ public class Stopwatch {
 	public String createReadableDelta() {
 		StringBuffer deltaString = new StringBuffer();
 		long delta = stopTime - startTime;
-		// 1.5h => 90 min => 5400s
-		//conversion: 5400s / 60 = 90 for minutes, 5400s mod 60 for remaining seconds
-		long minutes = delta / 60;
-		long seconds = Math.floorMod(delta, 60);
-		long hours = minutes / 60;
-		long days = hours / 24;
+
+		long secondsInMilli = 1000;
+		long minutesInMilli = secondsInMilli * 60;
+		long hoursInMilli = minutesInMilli * 60;
+		long daysInMilli = hoursInMilli * 24;
+		
+		long days = delta / daysInMilli;
+		delta = delta % daysInMilli;
+		
+		long hours = delta / hoursInMilli;
+		delta = delta % hoursInMilli;
+		
+		long minutes = delta / minutesInMilli;
+		delta = delta % minutesInMilli;
+		
+		long seconds = delta / secondsInMilli;
 		
 		if(days > 0) {
 			deltaString.append(days + "d");

@@ -5,11 +5,11 @@ public class Stopwatch {
 	private long stopTime = 0;
 	
 	public void start() {
-		startTime = sampleTime();
+		startTime = System.currentTimeMillis();
 	}
 	
 	public void stop() {
-		stopTime = sampleTime();
+		stopTime = System.currentTimeMillis();
 	}
 	
 	public String createReadableDelta() {
@@ -50,10 +50,5 @@ public class Stopwatch {
 		}
 		
 		return deltaString.toString();
-	}
-	
-	private long sampleTime() {
-		//samples time in seconds
-		return System.currentTimeMillis() / 1000;
 	}
 }

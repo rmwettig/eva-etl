@@ -147,9 +147,10 @@ public class ETLPipeline {
 	}
 
 	private void writeHeader(CsvWriter writer, Map<String, Integer> columnName2Index) throws IOException {
-		List<String> header = new ArrayList<>(columnName2Index.size());
-		columnName2Index.forEach((name, index) -> header.add(index, name));
-		header.stream().forEachOrdered(h -> writer.addEntry(h));
+		String[] header = new String[columnName2Index.size()];
+		columnName2Index.forEach((name, index) -> header[index] = name);
+		for(String h : header)
+			writer.addEntry(h);
 		writer.writeLine();
 	}
 

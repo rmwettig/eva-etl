@@ -3,6 +3,11 @@ package de.ingef.eva.etl;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+/**
+ * Checks if a row column has values matching the given pattern
+ * @author Martin.Wettig
+ *
+ */
 public class ColumnValueFilter extends Filter {
 
 	private String column;

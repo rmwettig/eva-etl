@@ -36,7 +36,7 @@ public class JdbcQueryExecutor implements QueryExecutor<Query> {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		try {
-			CsvWriter writer = createOutput(query.getName());
+			CsvWriter writer = createOutput(query);
 			writer.open();
 			conn = createConnection();
 			ps = conn.prepareStatement(query.getQuery());
@@ -91,12 +91,12 @@ public class JdbcQueryExecutor implements QueryExecutor<Query> {
 		return null;
 	}
 
-	private CsvWriter createOutput(String queryName) throws IOException {
-		Path p = Paths.get(configuration.getOutputDirectory(), OutputDirectory.RAW);
+	private CsvWriter createOutput(Query query) throws IOException {
+		Path p = Paths.get(configuration.getOutputDirectory(), OutputDirectory.RAW, query.getDatasetName());
 		if(!Files.exists(p)) {
 			Files.createDirectories(p);
 		}
-		return new CsvWriter(p.resolve(queryName + ".csv").toFile());
+		return new CsvWriter(p.resolve(query.getName() + ".csv").toFile());
 	}
 
 	private Connection createConnection() throws ClassNotFoundException, SQLException {

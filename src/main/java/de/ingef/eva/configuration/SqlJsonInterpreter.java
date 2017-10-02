@@ -57,11 +57,16 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 			String dbName = findDatabaseName(source);
 			if (dbName.isEmpty())
 				continue;
+			String dataset = findDatasetName(source);
 			_queryCreator.setDatabase(dbName);
-			if (!findViews(source, _schema.findDatabaseByName(dbName), years))
+			if (!findViews(source, _schema.findDatabaseByName(dbName), years, dataset))
 				continue;
 		}
 		return _jobs;
+	}
+
+	private String findDatasetName(JsonNode source) {
+		return source.path("dataset").asText("");
 	}
 
 	private int[] calculateYearSlices(JsonNode node) {
@@ -136,9 +141,10 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 	 * @param source
 	 * @param schemaDatabase
 	 * @param years
+	 * @param dataset TODO
 	 * @return false if 'views' entry is missing
 	 */
-	private boolean findViews(JsonNode source, Database schemaDatabase, int[] years) {
+	private boolean findViews(JsonNode source, Database schemaDatabase, int[] years, String dataset) {
 		JsonNode views = source.path("views");
 		if (views.isMissingNode() || !views.isArray()) {
 			if (_logger != null)
@@ -154,9 +160,9 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 			Table t = schemaDatabase.findTableByName(tableName);
 			if (t != null) {
 				if (t.findColumnByName("Bezugsjahr") != null)
-					processViewByYear(source, view, tableName, "Bezugsjahr", schemaDatabase, years);
+					processViewByYear(source, view, tableName, "Bezugsjahr", schemaDatabase, years, dataset);
 				else
-					processView(source, view, tableName, schemaDatabase);
+					processView(source, view, tableName, schemaDatabase, dataset);
 			} else {
 				if (_logger != null)
 					_logger.warn("Did not found an table entry for '{}' in database '{}'", tableName,
@@ -177,22 +183,23 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 	 * @param yearColumn
 	 * @param schemaDatabase
 	 * @param years
+	 * @param dataset TODO
 	 * @return false if view could not be processed
 	 */
 	private boolean processViewByYear(JsonNode source, JsonNode view, String tableName, String yearColumn,
-			Database schemaDatabase, int[] years) {
+			Database schemaDatabase, int[] years, String dataset) {
 		for (int year : years) {
 			_queryCreator.startOrGroup();
 			_queryCreator.addWhere(tableName, yearColumn, Integer.toString(year), "=", "NUMERIC");
 			_queryCreator.endOrGroup(tableName);
-			if (!processView(source, view, tableName, schemaDatabase, Integer.toString(year)))
+			if (!processView(source, view, tableName, schemaDatabase, Integer.toString(year), dataset))
 				return false;
 		}
 		return true;
 	}
 
 	private boolean processView(JsonNode source, JsonNode view, String tableName, Database schemaDatabase,
-			String partLabel) {
+			String partLabel, String dataset) {
 		_queryCreator.addTable(tableName);
 		JsonNode selectParameters = view.path(tableName);
 		JsonNode latestNode = selectParameters.path("latest");
@@ -220,6 +227,8 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 		query.setDbName(schemaDatabase.getName());
 		query.setSliceName(partLabel);
 		query.setTableName(tableName);
+		query.setDatasetName(dataset);
+
 		_jobs.add(query);
 
 		return true;
@@ -234,8 +243,8 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 	 * @param schemaDatabase
 	 * @return null if no columns are selected
 	 */
-	private boolean processView(JsonNode source, JsonNode view, String tableName, Database schemaDatabase) {
-		return processView(source, view, tableName, schemaDatabase, "");
+	private boolean processView(JsonNode source, JsonNode view, String tableName, Database schemaDatabase, String dataset) {
+		return processView(source, view, tableName, schemaDatabase, "", dataset);
 	}
 
 	/**

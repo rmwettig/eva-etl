@@ -16,5 +16,5 @@ public interface Query {
 	String getSliceName();
 	void setSliceName(String name);
 	String getDatasetName();
-	void setDatasetName(String dataset);
+	void setDatasetName(String name);
 }

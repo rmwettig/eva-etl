@@ -155,14 +155,25 @@ public class ETLPipeline {
 	}
 
 	private CsvWriter createWriter(String rootDirectory, Query q) throws IOException {
-		Path root = Paths.get(rootDirectory, OutputDirectory.RAW, q.getDbName(), q.getDatasetName());
+		String dbShortName = createDbShortName(q.getDbName());
+		Path root = Paths.get(rootDirectory, OutputDirectory.RAW, dbShortName, q.getDatasetName());
 		if(!Files.exists(root)) {
 			Files.createDirectories(root);
 		}
-		String fileName = q.getDbName() + "_" + q.getTableName()  + "." + q.getSliceName() + ".csv"; 
+		String fileName = createOutputFileName(q); 
 		CsvWriter writer = new CsvWriter(root.resolve(fileName).toFile());
 		writer.open();
 		return writer;
+	}
+
+	private String createOutputFileName(Query q) {
+		return q.getDbName() + "_" + q.getTableName()  + "." + q.getSliceName() + ".csv";
+	}
+
+	private String createDbShortName(String dbName) {
+		if(dbName.contains("_"))
+			return dbName.split("_")[1];
+		return dbName;
 	}
 
 	private Row transformRow(List<Transformer> transformers, Row row) {

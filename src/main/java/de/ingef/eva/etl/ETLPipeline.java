@@ -157,7 +157,7 @@ public class ETLPipeline {
 		if(!Files.exists(root)) {
 			Files.createDirectories(root);
 		}
-		String fileName = q.getDbName() + "_" + q.getTableName()  + "." + q.getSliceName(); 
+		String fileName = q.getDbName() + "_" + q.getTableName()  + "." + q.getSliceName() + ".csv"; 
 		CsvWriter writer = new CsvWriter(root.resolve(fileName).toFile());
 		writer.open();
 		return writer;

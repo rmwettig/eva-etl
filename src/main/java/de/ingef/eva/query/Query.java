@@ -9,4 +9,6 @@ public interface Query {
 	void setName(String name);
 	Collection<Column> getSelectedColumns();
 	String getQuery();
+	String getDatasetName();
+	void setDatasetName(String name);
 }

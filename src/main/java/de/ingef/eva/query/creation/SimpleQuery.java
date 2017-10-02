@@ -5,13 +5,17 @@ import java.util.Collection;
 
 import de.ingef.eva.database.Column;
 import de.ingef.eva.query.Query;
+import lombok.Getter;
+import lombok.Setter;
 
 public class SimpleQuery implements Query {
 
 	private String _name;
 	private String _query;
 	private Collection<Column> _columns = new ArrayList<Column>(10);
-
+	@Getter @Setter
+	private String datasetName;
+	
 	public SimpleQuery(String query, Collection<Column> columns) {
 		_query = query;
 		_columns = columns;

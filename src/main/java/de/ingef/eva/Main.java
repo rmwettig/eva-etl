@@ -2,16 +2,13 @@ package de.ingef.eva;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,18 +16,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -41,32 +34,30 @@ import de.ingef.eva.configuration.ConfigurationDatabaseHostLoader;
 import de.ingef.eva.configuration.Mapping;
 import de.ingef.eva.configuration.SchemaDatabaseHostLoader;
 import de.ingef.eva.configuration.Target;
-import de.ingef.eva.configuration.append.AppendConfiguration;
+import de.ingef.eva.configuration.append.AppendOrder;
 import de.ingef.eva.constant.OutputDirectory;
 import de.ingef.eva.constant.Templates;
 import de.ingef.eva.data.DataSet;
 import de.ingef.eva.data.DataTable;
 import de.ingef.eva.data.TeradataColumnType;
-import de.ingef.eva.data.validation.RowLengthValidator;
 import de.ingef.eva.data.validation.ValidatorDataProcessor;
 import de.ingef.eva.database.Column;
 import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
 import de.ingef.eva.database.Table;
 import de.ingef.eva.dataprocessor.DataTableMergeProcessor;
-import de.ingef.eva.dataprocessor.DatasetSeparator;
 import de.ingef.eva.dataprocessor.DetailStatisticsDataProcessor;
-import de.ingef.eva.dataprocessor.DynamicColumnAppender;
 import de.ingef.eva.dataprocessor.HTMLTableWriter;
-import de.ingef.eva.dataprocessor.SeparationMapping;
-import de.ingef.eva.dataprocessor.StaticColumnAppender;
 import de.ingef.eva.dataprocessor.StatisticsDataProcessor;
-import de.ingef.eva.dataprocessor.ValidationReportWriter;
 import de.ingef.eva.datasource.DataProcessor;
 import de.ingef.eva.datasource.DataSource;
 import de.ingef.eva.datasource.sql.SqlDataSource;
-import de.ingef.eva.error.InvalidConfigurationException;
 import de.ingef.eva.error.QueryExecutionException;
+import de.ingef.eva.etl.ColumnValueFilter;
+import de.ingef.eva.etl.ETLPipeline;
+import de.ingef.eva.etl.Filter;
+import de.ingef.eva.etl.StaticColumnAppenderTransformer;
+import de.ingef.eva.etl.Transformer;
 import de.ingef.eva.mapping.ProcessPidDecode;
 import de.ingef.eva.measures.CalculateCharlsonScores;
 import de.ingef.eva.query.FastExportJobWriter;
@@ -74,7 +65,6 @@ import de.ingef.eva.query.JdbcQueryExecutor;
 import de.ingef.eva.query.JsonQuerySource;
 import de.ingef.eva.query.Query;
 import de.ingef.eva.query.QueryExecutor;
-import de.ingef.eva.query.QueryJob;
 import de.ingef.eva.query.QuerySource;
 import de.ingef.eva.utility.Helper;
 import de.ingef.eva.utility.Stopwatch;
@@ -104,34 +94,9 @@ public class Main {
 				exitIfInvalidCredentials(config);
 				QuerySource qs = new JsonQuerySource(config);
 				Collection<Query> queries = qs.createQueries();
-				//export processes must not survive main thread
-				ExecutorService threadPool = Executors.newFixedThreadPool(
-						config.getThreadCount(),
-						new ThreadFactory() {
-							public Thread newThread(Runnable r) {
-								Thread t = Executors.defaultThreadFactory().newThread(r);
-								t.setDaemon(true);
-								return t;
-							}
-						}
-					);
-				CountDownLatch cdl = new CountDownLatch(queries.size());
-				for(Query q : queries) {
-					CompletableFuture.supplyAsync(() -> {
-						try {
-							new JdbcQueryExecutor(config, cdl).execute(q);
-						} catch (QueryExecutionException e) {
-							throw new RuntimeException("Could not execute query '"+ q.getName() +"'. Error: "+ e.getMessage() + ". Cause: " + e.getCause().getMessage());
-						}
-						return null;
-					}, threadPool)
-					.exceptionally(e -> {
-						log.error("{}", e);
-						return null;
-					});
-					
-				}
-				cdl.await();
+				List<Filter> filters = Arrays.asList(new ColumnValueFilter("2-digit FG", "fg", "[0-9]{2}"));
+				List<Transformer> transformers = Arrays.asList(new StaticColumnAppenderTransformer("FDB", "", "H2IK", "999999999", AppendOrder.FIRST));
+				new ETLPipeline().run(config, queries, filters, transformers);
 				sw.stop();
 				log.info("Dumping done in {}.", sw.createReadableDelta());
 				

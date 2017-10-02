@@ -217,6 +217,9 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 		String qName = schemaDatabase.getName() + "_" + tableName;
 		qName += (partLabel.isEmpty()) ? partLabel : "." + partLabel;
 		query.setName(qName);
+		query.setDbName(schemaDatabase.getName());
+		query.setSliceName(partLabel);
+		query.setTableName(tableName);
 		_jobs.add(query);
 
 		return true;

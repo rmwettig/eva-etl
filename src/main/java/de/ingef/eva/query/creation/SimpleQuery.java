@@ -14,8 +14,11 @@ public class SimpleQuery implements Query {
 	@Setter
 	private String name;
 	private String query;
+	@Setter
 	private String dbName;
+	@Setter
 	private String tableName;
+	@Setter
 	private String sliceName;
 	@Setter
 	private String datasetName;

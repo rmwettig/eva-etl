@@ -32,6 +32,7 @@ import org.apache.commons.cli.ParseException;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.ingef.eva.async.AsyncMapper;
 import de.ingef.eva.configuration.Configuration;
@@ -90,66 +91,18 @@ public class Main {
 		try {
 			CommandLine cmd = parser.parse(options, args);
 			if(cmd.hasOption("makejob")) {
-				Configuration config = Configuration.loadFromJson(cmd.getOptionValue("makejob"));
-				exitIfInvalidCredentials(config);
-				QuerySource qs = new JsonQuerySource(config);
-				Collection<Query> queries = qs.createQueries();
-				QueryExecutor<Query> executor = new FastExportJobWriter(config);
-				for(Query query : queries) {
-					executor.execute(query);
-				}
-				log.info("Teradata FastExport job file created.");
+				makejob(cmd);
 			} else if(cmd.hasOption("dump")) {
-				Stopwatch sw = new Stopwatch();
-				sw.start();
-				Configuration config = Configuration.loadFromJson(cmd.getOptionValue("dump"));
-				exitIfInvalidCredentials(config);
-				QuerySource qs = new JsonQuerySource(config);
-				Collection<Query> queries = qs.createQueries();
-				List<Filter> filters = Arrays.asList(new ColumnValueFilter("2-digit FG", "fg", "[0-9]{2}"));
-				List<Transformer> transformers = Arrays.asList(new StaticColumnAppenderTransformer("FDB", "", "H2IK", "999999999", AppendOrder.FIRST));
-				new ETLPipeline().run(config, queries, filters, transformers);
-				sw.stop();
-				log.info("Dumping done in {}.", sw.createReadableDelta());
-				
+				export(cmd);
 			} else if(cmd.hasOption("fetchschema")) {
-				String path = cmd.getOptionValue("fetchschema");
-				DatabaseHost schema = new ConfigurationDatabaseHostLoader().loadFromFile(path);
-				Configuration configuration = Configuration.loadFromJson(path);
-				createHeaderLookup(configuration, schema);
-				log.info("Teradata column lookup created.");
+				fetchschema(cmd);
 			} else if(cmd.hasOption("map")) {
 				Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("map"));
 				mapFiles(configuration);
 			} else if(cmd.hasOption("charlsonscores")) {
-				Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("charlsonscores"));
-				CalculateCharlsonScores.calculate(configuration, null);
+				charlsonscores(cmd);
 			} else if(cmd.hasOption("clean")) {
-				Stopwatch sw = new Stopwatch();
-				sw.start();
-				Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("clean"));
-				Map<String,List<Column>> table2header = Helper.parseTableHeaders(configuration.getOutputDirectory() + "/" + OutputDirectory.HEADERS);
-				Collection<DataTable> tables = Helper.loadDataTablesFromDirectory(
-						configuration.getOutputDirectory() + "/" + OutputDirectory.RAW,
-						".csv",
-						table2header,
-						configuration.getFastExportConfiguration().getRowPrefix(),
-						configuration.getFastExportConfiguration().getRawColumnDelimiter(), ""
-					);
-				//TODO harmonize config general rules and column/table specific-rules
-				ExecutorService threadPool = Executors.newFixedThreadPool(configuration.getThreadCount());
-				for(DataTable table : tables) {
-					threadPool.execute(new Runnable() {
-						@Override
-						public void run() {
-							new ValidatorDataProcessor(configuration, configuration.getRules()).process(table);	
-						}
-					}); 
-				}
-				threadPool.shutdown();
-				threadPool.awaitTermination(14, TimeUnit.DAYS);
-				sw.stop();
-				log.info("Cleaning done in {}.", sw.createReadableDelta());
+				clean(cmd);
 			} else if (cmd.hasOption("makedecode")) {
 				Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("makedecode"));
 				exitIfInvalidCredentials(configuration);
@@ -157,144 +110,13 @@ public class Main {
 			} else if(cmd.hasOption("stats")) {
 				createDatabaseStatistics(Configuration.loadFromJson(cmd.getOptionValue("stats")));
 			} else if(cmd.hasOption("merge")) {
-				Stopwatch sw = new Stopwatch();
-				sw.start();
-				Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("merge"));
-				List<DataSet> datasets = Helper.findDatasets(configuration.getOutputDirectory() + "/" + OutputDirectory.CLEAN);
-				ExecutorService threadPool = Executors.newFixedThreadPool(configuration.getThreadCount());
-				String mergeDirectory = configuration.getOutputDirectory() + "/" + OutputDirectory.MERGED;
-				Helper.createFolders(mergeDirectory);
-				for(DataSet ds : datasets) {
-					CompletableFuture
-							.supplyAsync(
-									() -> {
-										log.info("Merging '{}'", ds.getName());
-										DataTable dt = new DataTableMergeProcessor(mergeDirectory).process(ds);
-										log.info("'{}' done.", dt.getName());
-										return dt;
-									},
-									threadPool
-							);
-				}
-				threadPool.shutdown();
-				threadPool.awaitTermination(14, TimeUnit.DAYS);
-				sw.stop();
-				log.info("Merging done in {}.", sw.createReadableDelta());
+				merge(cmd);
 			} else if(cmd.hasOption("validate")) {
-				String[] validationOptions = cmd.getOptionValues("validate");
-				Configuration configuration = Configuration.loadFromJson(validationOptions[0]);
-				DatabaseHost schema = new SchemaDatabaseHostLoader().loadFromFile(configuration.getSchemaFile());
-				//get data tables from different directories
-				String rawDelimiter = configuration.getFastExportConfiguration().getRawColumnDelimiter();
-				String[] dataDirectory = new String[] {
-						OutputDirectory.RAW,
-						OutputDirectory.CLEAN,
-						OutputDirectory.PRODUCTION
-				};
-				Map<String,String> directory2delimiter = Collections.unmodifiableMap(
-						Stream.of(
-								new SimpleEntry<>(OutputDirectory.RAW, rawDelimiter),
-								new SimpleEntry<>(OutputDirectory.CLEAN, ";"),
-								new SimpleEntry<>(OutputDirectory.PRODUCTION, ";")
-						).collect(Collectors.toMap(e ->  e.getKey(), e -> e.getValue()))
-				);
-				DataTable[] reportData = new DataTable[dataDirectory.length];
-				for (int optionIndex = 1; optionIndex < validationOptions.length; optionIndex++) {
-					String dbName = validationOptions[optionIndex];
-					Map<String,Integer> table2ColumnCount = Helper.countColumnsInHeaderFiles("./" + dbName.toLowerCase() + "-column-count.csv");
-					for(int i = 0; i < dataDirectory.length; i++) {
-						String dataSource = dataDirectory[i];
-						Collection<DataTable> dataTables = Helper.loadDataTablesFromDirectory(
-								configuration.getOutputDirectory() + "/" + dataDirectory[i],
-								"csv",
-								Helper.parseTableHeaders(configuration.getOutputDirectory() + "/" + OutputDirectory.HEADERS),
-								configuration.getFastExportConfiguration().getRowPrefix(),
-								directory2delimiter.get(dataSource), dbName
-						);
-						Collection<Table> tables = schema.findDatabaseByName("ACC_" + dbName).getAllTables();
-						//pass on to row length validator
-						DataTable[] data = new DataTable[table2ColumnCount.size()];
-						reportData[i] = new RowLengthValidator(dataSource.toUpperCase(), table2ColumnCount).process(dataTables.toArray(data));
-					}
-					//pass on to validation report writer
-					new ValidationReportWriter(dbName + "-report.txt", configuration.getOutputDirectory()).process(reportData);
-				}
+				validate(cmd);
 			} else if(cmd.hasOption("separate")) {
-				Configuration config = Configuration.loadFromJson(cmd.getOptionValue("separate"));
-				SeparationMapping mapping = config.getDatasetMembership();
-				for(String dataset : mapping.getDatasetNames()) {
-					Helper.createFolders(Paths.get(config.getOutputDirectory(), OutputDirectory.PRODUCTION, dataset).toString());
-				}
-				Map<String,List<Column>> headers = Helper.parseTableHeaders(Paths.get(config.getOutputDirectory(), OutputDirectory.HEADERS).toString());
-				Collection<DataTable> dataTables = Helper.loadDataTablesFromDirectory(Paths.get(config.getOutputDirectory(), OutputDirectory.MERGED).toString(), "csv", headers, "", ";", "ADB");
-				ExecutorService threadPool = Helper.createThreadPool(config.getThreadCount(), false);
-				for(DataTable dataTable : dataTables) {
-					CompletableFuture.supplyAsync(
-							() -> {
-								log.info("Separating file '{}'", dataTable.getName());
-								new DatasetSeparator(mapping, config.getOutputDirectory()).process(dataTable);
-								log.info("'{}' done.", dataTable.getName());
-								return null;
-							},
-							threadPool
-						);
-				}
-				threadPool.shutdown();
-				threadPool.awaitTermination(3, TimeUnit.DAYS);
+				separate(cmd);
 			} else if(cmd.hasOption("append")) {
-				Configuration config = Configuration.loadFromJson(cmd.getOptionValue("append"));
-				List<AppendConfiguration> appendConf = config.getAppenderConfiguration();
-				ExecutorService threadPool = Executors.newFixedThreadPool(config.getThreadCount());
-				Map<String,List<Column>> headers = Helper.parseTableHeaders(config.getOutputDirectory() + "/" + OutputDirectory.HEADERS);
-				Collection<DataTable> tables = null;
-				for(int i = 0; i < appendConf.size(); i++) {
-					AppendConfiguration append = appendConf.get(i);
-					//check mapping mode
-					switch (append.getMode()) {
-						case STATIC:
-							if(append.getTargetColumn() == null || append.getTargetColumn().isEmpty()) {
-								log.error("Invalid 'targetColumn' value in appendConfig[{}]", i);
-								break;
-							}
-							if(append.getValue() == null || append.getValue().isEmpty()) {
-								log.error("Invalid 'value' in appendConfig[{}]", i);
-								break;
-							}
-							tables = Helper.loadDataTablesFromDirectory(append.getTargets(), "csv", headers, "", ";", append.getMatch());
-							for(DataTable dt : tables) {
-								threadPool.execute(new Runnable() {
-									@Override
-									public void run() {
-										new StaticColumnAppender(append.getTargetColumn(), append.getValue(), append.getMatch(), append.getOrder(), config.getOutputDirectory()).process(dt);	
-									}
-								});
-							}
-							break;
-						case DYNAMIC:
-							if(append.getKeyColumn() == null || append.getKeyColumn().isEmpty()) {
-								log.error("Invalid 'keyColumn' value in appendConfig[{}]", i);
-								break;
-							}
-			
-							tables = Helper.loadDataTablesFromDirectory(append.getTargets(), "csv", headers, "", ";", append.getMatch());
-							for(DataTable dt : tables) {
-								DataTable extraColumns = Helper.loadExternalDataTable(Paths.get(append.getSource()));
-								threadPool.execute(new Runnable() {
-									@Override
-									public void run() {
-										new DynamicColumnAppender(append.getKeyColumn(), append.getMatch(), config.getOutputDirectory()).process(dt, extraColumns);
-									}
-								});
-							}
-							break;
-
-						default:
-							log.warn("Could not process append mode '{}'", append.getMode());
-							break;
-					}
-				}
-				threadPool.shutdown();
-				threadPool.awaitTermination(3, TimeUnit.DAYS);
+				append(cmd);
 			}
 			else
 				new HelpFormatter().printHelp("java -jar eva-data.jar", options);
@@ -305,6 +127,229 @@ public class Main {
 		} catch (InterruptedException e) {
 			log.error("Cleaning was interrupted.\n\tReason: {}. StackTrace:", e.getMessage(), e);
 		}
+	}
+
+	private static void append(CommandLine cmd)
+			throws JsonProcessingException, IOException, InvalidConfigurationException, InterruptedException {
+		Configuration config = Configuration.loadFromJson(cmd.getOptionValue("append"));
+		List<AppendConfiguration> appendConf = config.getAppenderConfiguration();
+		ExecutorService threadPool = Executors.newFixedThreadPool(config.getThreadCount());
+		Map<String,List<Column>> headers = Helper.parseTableHeaders(config.getOutputDirectory() + "/" + OutputDirectory.HEADERS);
+		Collection<DataTable> tables = null;
+		for(int i = 0; i < appendConf.size(); i++) {
+			AppendConfiguration append = appendConf.get(i);
+			//check mapping mode
+			switch (append.getMode()) {
+				case STATIC:
+					if(append.getTargetColumn() == null || append.getTargetColumn().isEmpty()) {
+						log.error("Invalid 'targetColumn' value in appendConfig[{}]", i);
+						break;
+					}
+					if(append.getValue() == null || append.getValue().isEmpty()) {
+						log.error("Invalid 'value' in appendConfig[{}]", i);
+						break;
+					}
+					tables = Helper.loadDataTablesFromDirectory(append.getTargets(), "csv", headers, "", ";", append.getMatch());
+					for(DataTable dt : tables) {
+						threadPool.execute(new Runnable() {
+							@Override
+							public void run() {
+								new StaticColumnAppender(append.getTargetColumn(), append.getValue(), append.getMatch(), append.getOrder(), config.getOutputDirectory()).process(dt);	
+							}
+						});
+					}
+					break;
+				case DYNAMIC:
+					if(append.getKeyColumn() == null || append.getKeyColumn().isEmpty()) {
+						log.error("Invalid 'keyColumn' value in appendConfig[{}]", i);
+						break;
+					}
+
+					tables = Helper.loadDataTablesFromDirectory(append.getTargets(), "csv", headers, "", ";", append.getMatch());
+					for(DataTable dt : tables) {
+						DataTable extraColumns = Helper.loadExternalDataTable(Paths.get(append.getSource()));
+						threadPool.execute(new Runnable() {
+							@Override
+							public void run() {
+								new DynamicColumnAppender(append.getKeyColumn(), append.getMatch(), config.getOutputDirectory()).process(dt, extraColumns);
+							}
+						});
+					}
+					break;
+
+				default:
+					log.warn("Could not process append mode '{}'", append.getMode());
+					break;
+			}
+		}
+		threadPool.shutdown();
+		threadPool.awaitTermination(3, TimeUnit.DAYS);
+	}
+
+	private static void separate(CommandLine cmd)
+			throws JsonProcessingException, IOException, InvalidConfigurationException, InterruptedException {
+		Configuration config = Configuration.loadFromJson(cmd.getOptionValue("separate"));
+		SeparationMapping mapping = config.getDatasetMembership();
+		for(String dataset : mapping.getDatasetNames()) {
+			Helper.createFolders(Paths.get(config.getOutputDirectory(), OutputDirectory.PRODUCTION, dataset).toString());
+		}
+		Map<String,List<Column>> headers = Helper.parseTableHeaders(Paths.get(config.getOutputDirectory(), OutputDirectory.HEADERS).toString());
+		Collection<DataTable> dataTables = Helper.loadDataTablesFromDirectory(Paths.get(config.getOutputDirectory(), OutputDirectory.MERGED).toString(), "csv", headers, "", ";", "ADB");
+		ExecutorService threadPool = Helper.createThreadPool(config.getThreadCount(), false);
+		for(DataTable dataTable : dataTables) {
+			CompletableFuture.supplyAsync(
+					() -> {
+						log.info("Separating file '{}'", dataTable.getName());
+						new DatasetSeparator(mapping, config.getOutputDirectory()).process(dataTable);
+						log.info("'{}' done.", dataTable.getName());
+						return null;
+					},
+					threadPool
+				);
+		}
+		threadPool.shutdown();
+		threadPool.awaitTermination(3, TimeUnit.DAYS);
+	}
+
+	private static void validate(CommandLine cmd)
+			throws JsonProcessingException, IOException, InvalidConfigurationException {
+		String[] validationOptions = cmd.getOptionValues("validate");
+		Configuration configuration = Configuration.loadFromJson(validationOptions[0]);
+		DatabaseHost schema = new SchemaDatabaseHostLoader().loadFromFile(configuration.getSchemaFile());
+		//get data tables from different directories
+		String rawDelimiter = configuration.getFastExportConfiguration().getRawColumnDelimiter();
+		String[] dataDirectory = new String[] {
+				OutputDirectory.RAW,
+				OutputDirectory.CLEAN,
+				OutputDirectory.PRODUCTION
+		};
+		Map<String,String> directory2delimiter = Collections.unmodifiableMap(
+				Stream.of(
+						new SimpleEntry<>(OutputDirectory.RAW, rawDelimiter),
+						new SimpleEntry<>(OutputDirectory.CLEAN, ";"),
+						new SimpleEntry<>(OutputDirectory.PRODUCTION, ";")
+				).collect(Collectors.toMap(e ->  e.getKey(), e -> e.getValue()))
+		);
+		DataTable[] reportData = new DataTable[dataDirectory.length];
+		for (int optionIndex = 1; optionIndex < validationOptions.length; optionIndex++) {
+			String dbName = validationOptions[optionIndex];
+			Map<String,Integer> table2ColumnCount = Helper.countColumnsInHeaderFiles("./" + dbName.toLowerCase() + "-column-count.csv");
+			for(int i = 0; i < dataDirectory.length; i++) {
+				String dataSource = dataDirectory[i];
+				Collection<DataTable> dataTables = Helper.loadDataTablesFromDirectory(
+						configuration.getOutputDirectory() + "/" + dataDirectory[i],
+						"csv",
+						Helper.parseTableHeaders(configuration.getOutputDirectory() + "/" + OutputDirectory.HEADERS),
+						configuration.getFastExportConfiguration().getRowPrefix(),
+						directory2delimiter.get(dataSource), dbName
+				);
+				Collection<Table> tables = schema.findDatabaseByName("ACC_" + dbName).getAllTables();
+				//pass on to row length validator
+				DataTable[] data = new DataTable[table2ColumnCount.size()];
+				reportData[i] = new RowLengthValidator(dataSource.toUpperCase(), table2ColumnCount).process(dataTables.toArray(data));
+			}
+			//pass on to validation report writer
+			new ValidationReportWriter(dbName + "-report.txt", configuration.getOutputDirectory()).process(reportData);
+		}
+	}
+
+	private static void merge(CommandLine cmd)
+			throws JsonProcessingException, IOException, InvalidConfigurationException, InterruptedException {
+		Stopwatch sw = new Stopwatch();
+		sw.start();
+		Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("merge"));
+		List<DataSet> datasets = Helper.findDatasets(configuration.getOutputDirectory() + "/" + OutputDirectory.CLEAN);
+		ExecutorService threadPool = Executors.newFixedThreadPool(configuration.getThreadCount());
+		String mergeDirectory = configuration.getOutputDirectory() + "/" + OutputDirectory.MERGED;
+		Helper.createFolders(mergeDirectory);
+		for(DataSet ds : datasets) {
+			CompletableFuture
+					.supplyAsync(
+							() -> {
+								log.info("Merging '{}'", ds.getName());
+								DataTable dt = new DataTableMergeProcessor(mergeDirectory).process(ds);
+								log.info("'{}' done.", dt.getName());
+								return dt;
+							},
+							threadPool
+					);
+		}
+		threadPool.shutdown();
+		threadPool.awaitTermination(14, TimeUnit.DAYS);
+		sw.stop();
+		log.info("Merging done in {}.", sw.createReadableDelta());
+	}
+
+	private static void clean(CommandLine cmd)
+			throws JsonProcessingException, IOException, InvalidConfigurationException, InterruptedException {
+		Stopwatch sw = new Stopwatch();
+		sw.start();
+		Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("clean"));
+		Map<String,List<Column>> table2header = Helper.parseTableHeaders(configuration.getOutputDirectory() + "/" + OutputDirectory.HEADERS);
+		Collection<DataTable> tables = Helper.loadDataTablesFromDirectory(
+				configuration.getOutputDirectory() + "/" + OutputDirectory.RAW,
+				".csv",
+				table2header,
+				configuration.getFastExportConfiguration().getRowPrefix(),
+				configuration.getFastExportConfiguration().getRawColumnDelimiter(), ""
+			);
+		//TODO harmonize config general rules and column/table specific-rules
+		ExecutorService threadPool = Executors.newFixedThreadPool(configuration.getThreadCount());
+		for(DataTable table : tables) {
+			threadPool.execute(new Runnable() {
+				@Override
+				public void run() {
+					new ValidatorDataProcessor(configuration, configuration.getRules()).process(table);	
+				}
+			}); 
+		}
+		threadPool.shutdown();
+		threadPool.awaitTermination(14, TimeUnit.DAYS);
+		sw.stop();
+		log.info("Cleaning done in {}.", sw.createReadableDelta());
+	}
+
+	private static void charlsonscores(CommandLine cmd)
+			throws JsonProcessingException, IOException, InvalidConfigurationException {
+		Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("charlsonscores"));
+		CalculateCharlsonScores.calculate(configuration, null);
+	}
+
+	private static void makejob(CommandLine cmd)
+			throws JsonProcessingException, IOException, InvalidConfigurationException, QueryExecutionException {
+		Configuration config = Configuration.loadFromJson(cmd.getOptionValue("makejob"));
+		exitIfInvalidCredentials(config);
+		QuerySource qs = new JsonQuerySource(config);
+		Collection<Query> queries = qs.createQueries();
+		QueryExecutor<Query> executor = new FastExportJobWriter(config);
+		for(Query query : queries) {
+			executor.execute(query);
+		}
+		log.info("Teradata FastExport job file created.");
+	}
+
+	private static void fetchschema(CommandLine cmd)
+			throws JsonProcessingException, IOException, InvalidConfigurationException {
+		String path = cmd.getOptionValue("fetchschema");
+		DatabaseHost schema = new ConfigurationDatabaseHostLoader().loadFromFile(path);
+		Configuration configuration = Configuration.loadFromJson(path);
+		createHeaderLookup(configuration, schema);
+		log.info("Teradata column lookup created.");
+	}
+
+	private static void export(CommandLine cmd)
+			throws JsonProcessingException, IOException, InvalidConfigurationException {
+		Stopwatch sw = new Stopwatch();
+		sw.start();
+		Configuration config = Configuration.loadFromJson(cmd.getOptionValue("dump"));
+		exitIfInvalidCredentials(config);
+		QuerySource qs = new JsonQuerySource(config);
+		Collection<Query> queries = qs.createQueries();
+		List<Filter> filters = Arrays.asList(new ColumnValueFilter("2-digit FG", "fg", "[0-9]{2}"));
+		List<Transformer> transformers = Arrays.asList(new StaticColumnAppenderTransformer("FDB", "", "H2IK", "999999999", AppendOrder.FIRST));
+		new ETLPipeline().run(config, queries, filters, transformers);
+		sw.stop();
+		log.info("Dumping done in {}.", sw.createReadableDelta());
 	}
 
 	private static void exitIfInvalidCredentials(Configuration config) {

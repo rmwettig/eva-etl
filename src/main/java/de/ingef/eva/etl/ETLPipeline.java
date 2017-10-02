@@ -1,5 +1,9 @@
 package de.ingef.eva.etl;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -8,28 +12,48 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.data.RowElement;
 import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.query.Query;
+import de.ingef.eva.utility.CsvWriter;
+import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class ETLPipeline {
 	
-	public void run(Configuration configuration, Collection<Query> queries, List<FilterBase> filters, List<Transformer> transformers) {
+	public void run(Configuration configuration, Collection<Query> queries, List<Filter> filters, List<Transformer> transformers) {
 		ExecutorService threadPool = Executors.newFixedThreadPool(configuration.getThreadCount());
+		String user = configuration.getUser();
+		String url = configuration.getFullConnectionUrl();
+		String password = configuration.getPassword();
+		for(Query q : queries) {
+			startExport(q, threadPool, url, user, password, filters, transformers, configuration.getOutputDirectory());
+		}
+		
+	}
+	
+	private Connection createConnection(String url, String user, String password) throws ClassNotFoundException, SQLException {
+		Class.forName("com.teradata.jdbc.TeraDriver");
+		return DriverManager.getConnection(url, user, password);
+	}
+	
+	private void startExport(Query q, ExecutorService threadPool, String url, String user, String password, List<Filter> filters, List<Transformer> transformers, String rootOutput) {
 		CompletableFuture.supplyAsync(
 				() -> {
 					Connection conn = null;
 					PreparedStatement ps = null;
 					ResultSet rs = null;
+					CsvWriter writer = null;
 					try {
 						Class.forName("com.teradata.jdbc.TeraDriver");
 						conn = DriverManager.getConnection(url, user, password);
@@ -50,6 +74,8 @@ public class ETLPipeline {
 						ResultSetMetaData metaData = rs.getMetaData();
 						int columnCount = metaData.getColumnCount();
 						System.out.println("\tFetching...");
+						writer = createWriter(rootOutput, q);
+						boolean wasHeaderWritten = false;
 						while(rs.next()) {
 							List<RowElement> columns = new ArrayList<>(columnCount);
 							for(int columnIndex = 1; columnIndex <= columnCount; columnIndex++) {
@@ -61,25 +87,39 @@ public class ETLPipeline {
 							}
 							Map<String,Integer> columnNames2Index = createColumnIndexLookup(metaData);
 							
-							output.put(new Row(q.getDBName(), q.getTableName(), columns, columnNames2Index));
+							Row row = new Row(q.getDBName(), q.getTableName(), columns, columnNames2Index);
+							if(!isRowValid(filters, row))
+								continue;
+							Row transformedRow = transformRow(transformers, row);
+							if(!wasHeaderWritten) {
+								writeHeader(writer, transformedRow.getColumnName2Index());
+								wasHeaderWritten = true;
+							}
+							writeToFile(writer, transformedRow);
+							
 						}
 						System.out.println("\tDone.");
 					} catch(SQLException e) {
 						throw new RuntimeException(e);
 					} catch (ClassNotFoundException e) {
 						throw new RuntimeException("Could not find Teradata driver", e);
-					} catch (InterruptedException e) {
-						throw new RuntimeException(e);
+					} catch (IOException e1) {
+						throw new RuntimeException("Could not create output file for query: '" + q.getName() +"'", e1);
 					} finally {
 						try {
+							if(writer != null)
+								writer.close();
 							if(rs != null && !rs.isClosed())
 								rs.close();
 							if(ps != null && !ps.isClosed())
 								ps.close();
 							if(conn != null && !conn.isClosed())
 								conn.close();
+							
 						} catch(SQLException e) {
 							throw new RuntimeException("Could not close sql resources", e);
+						} catch (IOException e1) {
+							throw new RuntimeException("Could not close file output", e1);
 						}
 					}
 					return null;
@@ -89,5 +129,60 @@ public class ETLPipeline {
 			log.error("Export error occurred: {}", e);
 			return null;
 		});
+	}
+
+	private void writeToFile(CsvWriter writer, Row transformedRow) throws IOException {
+		List<RowElement> transformedColumns = transformedRow.getColumns();		
+		for(RowElement e : transformedColumns)
+			writer.addEntry(e.getContent());
+		writer.writeLine();
+	}
+
+	private void writeHeader(CsvWriter writer, Map<String, Integer> columnName2Index) throws IOException {
+		List<String> header = new ArrayList<>(columnName2Index.size());
+		columnName2Index.forEach((name, index) -> header.add(index, name));
+		header.stream().forEachOrdered(h -> writer.addEntry(h));
+		writer.writeLine();
+	}
+
+	private CsvWriter createWriter(String rootDirectory, Query q) throws IOException {
+		Path root = Paths.get(rootDirectory, q.getDBName(), q.getDatasetLabel());
+		if(!Files.exists(root)) {
+			Files.createDirectories(root);
+		}
+		String fileName = q.getDBName() + "_" + q.getTableName()  + "." + q.getSliceName(); 
+		CsvWriter writer = new CsvWriter(root.resolve(fileName).toFile());
+		writer.open();
+		return writer;
+	}
+
+	private Row transformRow(List<Transformer> transformers, Row row) {
+		Row transformed = row;
+		for(Transformer t : transformers) {
+			transformed = t.transform(transformed);
+		}
+		return transformed;
+	}
+
+	private boolean isRowValid(List<Filter> filters, Row row) {
+		for(Filter f : filters) {
+			if(!f.isValid(row)) {
+				log.error("Invalid row in table '{}'. Filter '{}' failed. [{}]",
+						row.getTable(),
+						f.getName(),
+						row.getColumns().stream().map(e -> e.getContent()).collect(Collectors.joining(", ")));
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	private Map<String, Integer> createColumnIndexLookup(ResultSetMetaData metaData) throws SQLException {
+		int count = metaData.getColumnCount();
+		Map<String,Integer> map = new HashMap<>(count);
+		for(int i = 0; i < count; i++) {
+			map.put(metaData.getColumnLabel(i + 1), i);
+		}
+		return map;
 	}
 }

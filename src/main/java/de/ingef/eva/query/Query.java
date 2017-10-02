@@ -12,4 +12,6 @@ public interface Query {
 	String getDBName();
 	String getTableName();
 	String getSliceName();
+	String getDatasetLabel();
+	void setDatasetLabel(String dataset);
 }

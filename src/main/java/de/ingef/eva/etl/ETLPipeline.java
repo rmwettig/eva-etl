@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import de.ingef.eva.configuration.Configuration;
+import de.ingef.eva.constant.OutputDirectory;
 import de.ingef.eva.data.RowElement;
 import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
@@ -153,7 +154,7 @@ public class ETLPipeline {
 	}
 
 	private CsvWriter createWriter(String rootDirectory, Query q) throws IOException {
-		Path root = Paths.get(rootDirectory, q.getDbName(), q.getDatasetName());
+		Path root = Paths.get(rootDirectory, OutputDirectory.RAW, q.getDbName(), q.getDatasetName());
 		if(!Files.exists(root)) {
 			Files.createDirectories(root);
 		}

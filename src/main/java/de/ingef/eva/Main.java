@@ -13,7 +13,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -46,11 +45,9 @@ import de.ingef.eva.database.Column;
 import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
 import de.ingef.eva.database.Table;
-import de.ingef.eva.dataprocessor.DatasetSeparator;
 import de.ingef.eva.dataprocessor.DetailStatisticsDataProcessor;
 import de.ingef.eva.dataprocessor.DynamicColumnAppender;
 import de.ingef.eva.dataprocessor.HTMLTableWriter;
-import de.ingef.eva.dataprocessor.SeparationMapping;
 import de.ingef.eva.dataprocessor.StaticColumnAppender;
 import de.ingef.eva.dataprocessor.StatisticsDataProcessor;
 import de.ingef.eva.datasource.DataProcessor;
@@ -101,8 +98,6 @@ public class Main {
 				createDatabaseStatistics(Configuration.loadFromJson(cmd.getOptionValue("stats")));
 			} else if(cmd.hasOption("merge")) {
 				merge(cmd);
-			} else if(cmd.hasOption("separate")) {
-				separate(cmd);
 			} else if(cmd.hasOption("append")) {
 				append(cmd);
 			}
@@ -169,31 +164,6 @@ public class Main {
 					log.warn("Could not process append mode '{}'", append.getMode());
 					break;
 			}
-		}
-		threadPool.shutdown();
-		threadPool.awaitTermination(3, TimeUnit.DAYS);
-	}
-
-	private static void separate(CommandLine cmd)
-			throws JsonProcessingException, IOException, InvalidConfigurationException, InterruptedException {
-		Configuration config = Configuration.loadFromJson(cmd.getOptionValue("separate"));
-		SeparationMapping mapping = config.getDatasetMembership();
-		for(String dataset : mapping.getDatasetNames()) {
-			Helper.createFolders(Paths.get(config.getOutputDirectory(), OutputDirectory.PRODUCTION, dataset).toString());
-		}
-		Map<String,List<Column>> headers = Helper.parseTableHeaders(Paths.get(config.getOutputDirectory(), OutputDirectory.HEADERS).toString());
-		Collection<DataTable> dataTables = Helper.loadDataTablesFromDirectory(Paths.get(config.getOutputDirectory(), OutputDirectory.MERGED).toString(), "csv", headers, "", ";", "ADB");
-		ExecutorService threadPool = Helper.createThreadPool(config.getThreadCount(), false);
-		for(DataTable dataTable : dataTables) {
-			CompletableFuture.supplyAsync(
-					() -> {
-						log.info("Separating file '{}'", dataTable.getName());
-						new DatasetSeparator(mapping, config.getOutputDirectory()).process(dataTable);
-						log.info("'{}' done.", dataTable.getName());
-						return null;
-					},
-					threadPool
-				);
 		}
 		threadPool.shutdown();
 		threadPool.awaitTermination(3, TimeUnit.DAYS);

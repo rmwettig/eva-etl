@@ -8,10 +8,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +18,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -38,7 +35,6 @@ import de.ingef.eva.async.AsyncMapper;
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.configuration.ConfigurationDatabaseHostLoader;
 import de.ingef.eva.configuration.Mapping;
-import de.ingef.eva.configuration.SchemaDatabaseHostLoader;
 import de.ingef.eva.configuration.Target;
 import de.ingef.eva.configuration.append.AppendConfiguration;
 import de.ingef.eva.configuration.append.AppendOrder;
@@ -46,7 +42,6 @@ import de.ingef.eva.constant.OutputDirectory;
 import de.ingef.eva.constant.Templates;
 import de.ingef.eva.data.DataTable;
 import de.ingef.eva.data.TeradataColumnType;
-import de.ingef.eva.data.validation.RowLengthValidator;
 import de.ingef.eva.database.Column;
 import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
@@ -58,7 +53,6 @@ import de.ingef.eva.dataprocessor.HTMLTableWriter;
 import de.ingef.eva.dataprocessor.SeparationMapping;
 import de.ingef.eva.dataprocessor.StaticColumnAppender;
 import de.ingef.eva.dataprocessor.StatisticsDataProcessor;
-import de.ingef.eva.dataprocessor.ValidationReportWriter;
 import de.ingef.eva.datasource.DataProcessor;
 import de.ingef.eva.datasource.DataSource;
 import de.ingef.eva.datasource.sql.SqlDataSource;
@@ -107,8 +101,6 @@ public class Main {
 				createDatabaseStatistics(Configuration.loadFromJson(cmd.getOptionValue("stats")));
 			} else if(cmd.hasOption("merge")) {
 				merge(cmd);
-			} else if(cmd.hasOption("validate")) {
-				validate(cmd);
 			} else if(cmd.hasOption("separate")) {
 				separate(cmd);
 			} else if(cmd.hasOption("append")) {
@@ -205,48 +197,6 @@ public class Main {
 		}
 		threadPool.shutdown();
 		threadPool.awaitTermination(3, TimeUnit.DAYS);
-	}
-
-	private static void validate(CommandLine cmd)
-			throws JsonProcessingException, IOException, InvalidConfigurationException {
-		String[] validationOptions = cmd.getOptionValues("validate");
-		Configuration configuration = Configuration.loadFromJson(validationOptions[0]);
-		DatabaseHost schema = new SchemaDatabaseHostLoader().loadFromFile(configuration.getSchemaFile());
-		//get data tables from different directories
-		String rawDelimiter = configuration.getFastExportConfiguration().getRawColumnDelimiter();
-		String[] dataDirectory = new String[] {
-				OutputDirectory.RAW,
-				OutputDirectory.CLEAN,
-				OutputDirectory.PRODUCTION
-		};
-		Map<String,String> directory2delimiter = Collections.unmodifiableMap(
-				Stream.of(
-						new SimpleEntry<>(OutputDirectory.RAW, rawDelimiter),
-						new SimpleEntry<>(OutputDirectory.CLEAN, ";"),
-						new SimpleEntry<>(OutputDirectory.PRODUCTION, ";")
-				).collect(Collectors.toMap(e ->  e.getKey(), e -> e.getValue()))
-		);
-		DataTable[] reportData = new DataTable[dataDirectory.length];
-		for (int optionIndex = 1; optionIndex < validationOptions.length; optionIndex++) {
-			String dbName = validationOptions[optionIndex];
-			Map<String,Integer> table2ColumnCount = Helper.countColumnsInHeaderFiles("./" + dbName.toLowerCase() + "-column-count.csv");
-			for(int i = 0; i < dataDirectory.length; i++) {
-				String dataSource = dataDirectory[i];
-				Collection<DataTable> dataTables = Helper.loadDataTablesFromDirectory(
-						configuration.getOutputDirectory() + "/" + dataDirectory[i],
-						"csv",
-						Helper.parseTableHeaders(configuration.getOutputDirectory() + "/" + OutputDirectory.HEADERS),
-						configuration.getFastExportConfiguration().getRowPrefix(),
-						directory2delimiter.get(dataSource), dbName
-				);
-				Collection<Table> tables = schema.findDatabaseByName("ACC_" + dbName).getAllTables();
-				//pass on to row length validator
-				DataTable[] data = new DataTable[table2ColumnCount.size()];
-				reportData[i] = new RowLengthValidator(dataSource.toUpperCase(), table2ColumnCount).process(dataTables.toArray(data));
-			}
-			//pass on to validation report writer
-			new ValidationReportWriter(dbName + "-report.txt", configuration.getOutputDirectory()).process(reportData);
-		}
 	}
 
 	private static void merge(CommandLine cmd)

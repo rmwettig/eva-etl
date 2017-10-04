@@ -66,7 +66,6 @@ public class Merger {
 		private final String db;
 		private final String datasetName;
 		private final String fileName;
-		private final Path outPath;
 		private final List<Path> files;
 		
 		@Override
@@ -142,7 +141,7 @@ public class Merger {
 	}
 
 	private Path createMergeDirectories(String rootDirectory, Dataset ds) throws IOException {
-		Path output = Paths.get(rootDirectory, ds.getDb(), ds.getDatasetName());
+		Path output = Paths.get(rootDirectory, OutputDirectory.PRODUCTION, ds.getDb(), ds.getDatasetName());
 		if(!Files.exists(output))
 			Files.createDirectories(output);
 		return output;
@@ -183,16 +182,15 @@ public class Merger {
 				continue;
 			String commonName = fileName.substring(0, fileName.indexOf("."));
 			//skip already known datasets
-			if(!commonName2dataset.containsKey(commonName)) {
+			if(commonName2dataset.containsKey(commonName)) {
 				commonName2dataset.get(commonName).getFiles().add(datasetDirectory.resolve(fileName));
 			} else {
 				List<Path> files = new ArrayList<>();
 				files.add(datasetDirectory.resolve(fileName));
 				Dataset ds = new Dataset(
-						datasetDirectory.getName(1).toString(),
 						datasetDirectory.getName(2).toString(),
+						datasetDirectory.getName(3).toString(),
 						commonName,
-						datasetDirectory.subpath(1, datasetDirectory.getNameCount()),
 						files);
 				commonName2dataset.put(commonName, ds);
 			}

@@ -44,7 +44,6 @@ import de.ingef.eva.configuration.append.AppendConfiguration;
 import de.ingef.eva.configuration.append.AppendOrder;
 import de.ingef.eva.constant.OutputDirectory;
 import de.ingef.eva.constant.Templates;
-import de.ingef.eva.data.DataSet;
 import de.ingef.eva.data.DataTable;
 import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.data.validation.RowLengthValidator;
@@ -53,7 +52,6 @@ import de.ingef.eva.database.Column;
 import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
 import de.ingef.eva.database.Table;
-import de.ingef.eva.dataprocessor.DataTableMergeProcessor;
 import de.ingef.eva.dataprocessor.DatasetSeparator;
 import de.ingef.eva.dataprocessor.DetailStatisticsDataProcessor;
 import de.ingef.eva.dataprocessor.DynamicColumnAppender;
@@ -70,6 +68,7 @@ import de.ingef.eva.error.QueryExecutionException;
 import de.ingef.eva.etl.ColumnValueFilter;
 import de.ingef.eva.etl.ETLPipeline;
 import de.ingef.eva.etl.Filter;
+import de.ingef.eva.etl.Merger;
 import de.ingef.eva.etl.StaticColumnAppenderTransformer;
 import de.ingef.eva.etl.Transformer;
 import de.ingef.eva.mapping.ProcessPidDecode;
@@ -258,24 +257,7 @@ public class Main {
 		Stopwatch sw = new Stopwatch();
 		sw.start();
 		Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("merge"));
-		List<DataSet> datasets = Helper.findDatasets(configuration.getOutputDirectory() + "/" + OutputDirectory.CLEAN);
-		ExecutorService threadPool = Executors.newFixedThreadPool(configuration.getThreadCount());
-		String mergeDirectory = configuration.getOutputDirectory() + "/" + OutputDirectory.MERGED;
-		Helper.createFolders(mergeDirectory);
-		for(DataSet ds : datasets) {
-			CompletableFuture
-					.supplyAsync(
-							() -> {
-								log.info("Merging '{}'", ds.getName());
-								DataTable dt = new DataTableMergeProcessor(mergeDirectory).process(ds);
-								log.info("'{}' done.", dt.getName());
-								return dt;
-							},
-							threadPool
-					);
-		}
-		threadPool.shutdown();
-		threadPool.awaitTermination(14, TimeUnit.DAYS);
+		new Merger().run(configuration);
 		sw.stop();
 		log.info("Merging done in {}.", sw.createReadableDelta());
 	}

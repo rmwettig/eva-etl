@@ -150,7 +150,7 @@ public class Merger {
 	/**
 	 * Finds all terminal dataset directories
 	 * @param outputDirectory root directory of output
-	 * @return paths with exemplary shape 'out/ADB/Bosch'
+	 * @return paths with exemplary shape 'out/raw/ADB/Bosch'
 	 * @throws IOException
 	 */
 	private List<Path> readDatasetDirectories(String outputDirectory) throws IOException {

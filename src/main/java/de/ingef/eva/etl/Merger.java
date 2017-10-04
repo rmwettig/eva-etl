@@ -115,11 +115,13 @@ public class Merger {
 								reader.readLine();
 							} else {
 								writer.write(reader.readLine());
+								writer.write("\n");
 								wasHeaderWritten = true;
 							}
 							String line = null;
 							while( (line = reader.readLine()) != null) {
 								writer.write(line);
+								writer.write("\n");
 							}
 							reader.close();
 						}

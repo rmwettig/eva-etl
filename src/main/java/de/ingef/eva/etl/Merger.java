@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.constant.OutputDirectory;
+import de.ingef.eva.utility.Helper;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -76,7 +77,7 @@ public class Merger {
 	
 	public void run(Configuration config) {		
 		try {
-			ExecutorService threadPool = Executors.newFixedThreadPool(config.getThreadCount());
+			ExecutorService threadPool = Helper.createThreadPool(config.getThreadCount(), true);
 			List<Path> datasetLeaves = readDatasetDirectories(config.getOutputDirectory());
 			List<Dataset> datasets = findDatasets(datasetLeaves);
 			createMergeTasks(config.getOutputDirectory(), datasets, threadPool);

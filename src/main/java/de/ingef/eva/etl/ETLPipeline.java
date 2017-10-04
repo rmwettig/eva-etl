@@ -28,13 +28,14 @@ import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.query.Query;
 import de.ingef.eva.utility.CsvWriter;
+import de.ingef.eva.utility.Helper;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class ETLPipeline {
 	
 	public void run(Configuration configuration, Collection<Query> queries, List<Filter> filters, List<Transformer> transformers) {
-		ExecutorService threadPool = Executors.newFixedThreadPool(configuration.getThreadCount());
+		ExecutorService threadPool = Helper.createThreadPool(configuration.getThreadCount(), true);
 		String user = configuration.getUser();
 		String url = configuration.getFullConnectionUrl();
 		String password = configuration.getPassword();

@@ -47,7 +47,6 @@ import de.ingef.eva.constant.Templates;
 import de.ingef.eva.data.DataTable;
 import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.data.validation.RowLengthValidator;
-import de.ingef.eva.data.validation.ValidatorDataProcessor;
 import de.ingef.eva.database.Column;
 import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
@@ -100,8 +99,6 @@ public class Main {
 				mapFiles(configuration);
 			} else if(cmd.hasOption("charlsonscores")) {
 				charlsonscores(cmd);
-			} else if(cmd.hasOption("clean")) {
-				clean(cmd);
 			} else if (cmd.hasOption("makedecode")) {
 				Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("makedecode"));
 				exitIfInvalidCredentials(configuration);
@@ -262,35 +259,6 @@ public class Main {
 		log.info("Merging done in {}.", sw.createReadableDelta());
 	}
 
-	private static void clean(CommandLine cmd)
-			throws JsonProcessingException, IOException, InvalidConfigurationException, InterruptedException {
-		Stopwatch sw = new Stopwatch();
-		sw.start();
-		Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("clean"));
-		Map<String,List<Column>> table2header = Helper.parseTableHeaders(configuration.getOutputDirectory() + "/" + OutputDirectory.HEADERS);
-		Collection<DataTable> tables = Helper.loadDataTablesFromDirectory(
-				configuration.getOutputDirectory() + "/" + OutputDirectory.RAW,
-				".csv",
-				table2header,
-				configuration.getFastExportConfiguration().getRowPrefix(),
-				configuration.getFastExportConfiguration().getRawColumnDelimiter(), ""
-			);
-		//TODO harmonize config general rules and column/table specific-rules
-		ExecutorService threadPool = Executors.newFixedThreadPool(configuration.getThreadCount());
-		for(DataTable table : tables) {
-			threadPool.execute(new Runnable() {
-				@Override
-				public void run() {
-					new ValidatorDataProcessor(configuration, configuration.getRules()).process(table);	
-				}
-			}); 
-		}
-		threadPool.shutdown();
-		threadPool.awaitTermination(14, TimeUnit.DAYS);
-		sw.stop();
-		log.info("Cleaning done in {}.", sw.createReadableDelta());
-	}
-
 	private static void charlsonscores(CommandLine cmd)
 			throws JsonProcessingException, IOException, InvalidConfigurationException {
 		Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("charlsonscores"));
@@ -432,7 +400,6 @@ public class Main {
 		options.addOption(Option.builder("fetchschema").hasArg().argName("config.json").desc("create the database schema as a file").build());
 		options.addOption(Option.builder("map").hasArg().argName("config.json").desc("map files to different ids").build());
 		options.addOption(Option.builder("charlsonscores").hasArg().argName("config.json").desc("calculate Charlson scores").build());
-		options.addOption(Option.builder("clean").hasArg().argName("config.json").desc("post-process dumped data").build());
 		options.addOption(Option.builder("makedecode").hasArg().argName("config.json").desc("create PID mappings").build());
 		options.addOption(Option.builder("stats").hasArg().argName("config.json").desc("create database content statistics").build());
 		options.addOption(Option.builder("dump").hasArg().argName("config.json").desc("run FastExport scripts").build());

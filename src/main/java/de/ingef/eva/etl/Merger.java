@@ -26,6 +26,11 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * Merges table year slices into one file
+ * @author Martin.Wettig
+ *
+ */
 @Log4j2
 public class Merger {
 	

@@ -67,21 +67,6 @@ public class Merger {
 		private final String datasetName;
 		private final String fileName;
 		private final List<Path> files;
-		
-		@Override
-		public boolean equals(Object obj) {
-			if(!(obj instanceof Dataset))
-				return false;
-			Dataset other = (Dataset) obj;
-			return (db.equalsIgnoreCase(other.getDb()) &&
-					datasetName.equalsIgnoreCase(other.getDatasetName()) &&
-					fileName.equalsIgnoreCase(other.getFileName()));
-		}
-		
-		@Override
-		public int hashCode() {
-			return (db + "_" + datasetName + "_" + fileName).hashCode();
-		}
 	}
 	
 	public void run(Configuration config) {		

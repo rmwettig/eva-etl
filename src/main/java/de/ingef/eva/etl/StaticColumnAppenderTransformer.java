@@ -22,7 +22,7 @@ public class StaticColumnAppenderTransformer extends Transformer {
 		
 	@Override
 	public Row transform(Row row) {
-		if(!row.getDb().contains(targetDb) || !row.getTable().contains(targetTable))
+		if((targetDb != null && !row.getDb().contains(targetDb)) || (targetTable != null && !row.getTable().contains(targetTable)))
 			return row;
 		
 		List<RowElement> columns = row.getColumns();

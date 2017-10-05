@@ -8,9 +8,9 @@ import lombok.RequiredArgsConstructor;
 public class AppendConfiguration {
 	private final AppendMode mode;
 	private final AppendOrder order;
-	private final String targets;
-	private final String match;
-	private final String targetColumn;
+	private final String targetDb;
+	private final String targetTable;
+	private final String valueName;
 	private final String value;
 	private final String source;
 	private final String keyColumn;

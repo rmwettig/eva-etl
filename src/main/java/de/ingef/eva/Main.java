@@ -61,6 +61,7 @@ import de.ingef.eva.etl.Filter;
 import de.ingef.eva.etl.Merger;
 import de.ingef.eva.etl.StaticColumnAppenderTransformer;
 import de.ingef.eva.etl.Transformer;
+import de.ingef.eva.etl.TransformerFactory;
 import de.ingef.eva.mapping.ProcessPidDecode;
 import de.ingef.eva.measures.CalculateCharlsonScores;
 import de.ingef.eva.query.FastExportJobWriter;
@@ -216,7 +217,7 @@ public class Main {
 		QuerySource qs = new JsonQuerySource(config);
 		Collection<Query> queries = qs.createQueries();
 		List<Filter> filters = Arrays.asList(new ColumnValueFilter("2-digit FG", "fg", "[0-9]{2}"));
-		List<Transformer> transformers = Arrays.asList(new StaticColumnAppenderTransformer("FDB", "", "H2IK", "999999999", AppendOrder.FIRST));
+		List<Transformer> transformers = new TransformerFactory().create(config.getAppenderConfiguration());
 		new ETLPipeline().run(config, queries, filters, transformers);
 		sw.stop();
 		log.info("Dumping done in {}.", sw.createReadableDelta());

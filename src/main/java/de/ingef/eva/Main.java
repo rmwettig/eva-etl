@@ -47,7 +47,6 @@ import de.ingef.eva.datasource.DataProcessor;
 import de.ingef.eva.datasource.DataSource;
 import de.ingef.eva.datasource.sql.SqlDataSource;
 import de.ingef.eva.error.InvalidConfigurationException;
-import de.ingef.eva.error.QueryExecutionException;
 import de.ingef.eva.etl.ColumnValueFilter;
 import de.ingef.eva.etl.ETLPipeline;
 import de.ingef.eva.etl.Filter;
@@ -56,10 +55,8 @@ import de.ingef.eva.etl.Transformer;
 import de.ingef.eva.etl.TransformerFactory;
 import de.ingef.eva.mapping.ProcessPidDecode;
 import de.ingef.eva.measures.CalculateCharlsonScores;
-import de.ingef.eva.query.FastExportJobWriter;
 import de.ingef.eva.query.JsonQuerySource;
 import de.ingef.eva.query.Query;
-import de.ingef.eva.query.QueryExecutor;
 import de.ingef.eva.query.QuerySource;
 import de.ingef.eva.utility.Helper;
 import de.ingef.eva.utility.Stopwatch;
@@ -72,9 +69,7 @@ public class Main {
 		CommandLineParser parser = new DefaultParser();
 		try {
 			CommandLine cmd = parser.parse(options, args);
-			if(cmd.hasOption("makejob")) {
-				makejob(cmd);
-			} else if(cmd.hasOption("dump")) {
+			if(cmd.hasOption("dump")) {
 				export(cmd);
 			} else if(cmd.hasOption("fetchschema")) {
 				fetchschema(cmd);
@@ -95,8 +90,6 @@ public class Main {
 				new HelpFormatter().printHelp("java -jar eva-data.jar", options);
 		} catch (ParseException | IOException | InvalidConfigurationException e) {
 			e.printStackTrace();
-		} catch (QueryExecutionException e) {
-			log.error("Query execution failed: {}. StackTrace: ", e.getMessage(), e);
 		} catch (InterruptedException e) {
 			log.error("Cleaning was interrupted.\n\tReason: {}. StackTrace:", e.getMessage(), e);
 		}
@@ -116,19 +109,6 @@ public class Main {
 			throws JsonProcessingException, IOException, InvalidConfigurationException {
 		Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("charlsonscores"));
 		CalculateCharlsonScores.calculate(configuration, null);
-	}
-
-	private static void makejob(CommandLine cmd)
-			throws JsonProcessingException, IOException, InvalidConfigurationException, QueryExecutionException {
-		Configuration config = Configuration.loadFromJson(cmd.getOptionValue("makejob"));
-		exitIfInvalidCredentials(config);
-		QuerySource qs = new JsonQuerySource(config);
-		Collection<Query> queries = qs.createQueries();
-		QueryExecutor<Query> executor = new FastExportJobWriter(config);
-		for(Query query : queries) {
-			executor.execute(query);
-		}
-		log.info("Teradata FastExport job file created.");
 	}
 
 	private static void fetchschema(CommandLine cmd)
@@ -249,7 +229,6 @@ public class Main {
 	
 	private static Options createCliOptions() {
 		Options options = new Options();
-		options.addOption(Option.builder("makejob").hasArg().argName("config.json").desc("create FastExport scripts").build());
 		options.addOption(Option.builder("fetchschema").hasArg().argName("config.json").desc("create the database schema as a file").build());
 		options.addOption(Option.builder("map").hasArg().argName("config.json").desc("map files to different ids").build());
 		options.addOption(Option.builder("charlsonscores").hasArg().argName("config.json").desc("calculate Charlson scores").build());

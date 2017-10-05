@@ -7,12 +7,4 @@ public class OutputDirectory {
 	public static final String CLEAN = "clean";
 	/** final data usable for production **/
 	public static final String PRODUCTION = "production";
-	/** FastExport scripts **/
-	public static final String FEXP_JOBS = "fexp-jobs";
-	/** table headers **/
-	public static final String HEADERS = "headers";
-	/** FastExport logs **/
-	public static final String FEXP_LOGS = "fexp-logs";
-	//FIXME use MERGED folder in merge step
-	public static final String MERGED = "merged";
 }

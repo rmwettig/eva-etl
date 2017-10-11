@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -117,7 +116,7 @@ public class Merger {
 							reader.close();
 						}
 					} catch (IOException e) {
-						throw new RuntimeException("Could not create merge output. {}", e);
+						throw new RuntimeException(e);
 					} finally {
 						try {
 							if(writer != null)
@@ -129,7 +128,10 @@ public class Merger {
 					return null;
 				},
 				threadPool
-			);
+			).exceptionally(e -> {
+				log.error("Could not merge '{}'. ", ds.getFileName(), e);
+				return null;
+			});
 		}
 	}
 

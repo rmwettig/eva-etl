@@ -10,7 +10,9 @@ import de.ingef.eva.data.RowElement;
 import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 @RequiredArgsConstructor
 public class StaticColumnAppenderTransformer extends Transformer {
 
@@ -26,8 +28,13 @@ public class StaticColumnAppenderTransformer extends Transformer {
 			return row;
 		
 		List<RowElement> columns = row.getColumns();
-		List<RowElement> transformed = new ArrayList<>(columns.size() + 1);
 		Map<String,Integer> indices = row.getColumnName2Index();
+		if(hasColumnAlready(indices)) {
+			log.warn("Skip row from '{}.{}' as column '{}' exists already.", row.getDb(), row.getTable(), valueName);
+			return row;
+		}
+		List<RowElement> transformed = new ArrayList<>(columns.size() + 1);
+		
 		Map<String,Integer> transformedIndices = new HashMap<>(indices.size() + 1);
 		if(order == AppendOrder.FIRST) {
 			transformed.add(new SimpleRowElement(value, TeradataColumnType.CHARACTER));
@@ -43,5 +50,9 @@ public class StaticColumnAppenderTransformer extends Transformer {
 		}
 		
 		return new Row(row.getDb(), row.getTable(), transformed, transformedIndices);
+	}
+
+	private boolean hasColumnAlready(Map<String,Integer> columns) {
+		return columns.containsKey(valueName);
 	}
 }

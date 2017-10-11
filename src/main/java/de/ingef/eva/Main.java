@@ -128,7 +128,7 @@ public class Main {
 		exitIfInvalidCredentials(config);
 		QuerySource qs = new JsonQuerySource(config);
 		Collection<Query> queries = qs.createQueries();
-		List<Filter> filters = Arrays.asList(new ColumnValueFilter("2-digit FG", "fg", "[0-9]{2}"));
+		List<Filter> filters = Arrays.asList(new ColumnValueFilter("2-digit FG", "fg", "^$|[0-9]{2}"));
 		List<Transformer> transformers = new TransformerFactory().create(config.getAppenderConfiguration());
 		new ETLPipeline().run(config, queries, filters, transformers);
 		sw.stop();

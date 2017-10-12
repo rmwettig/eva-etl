@@ -2,9 +2,11 @@ package de.ingef.eva.utility;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
+import de.ingef.eva.constant.OutputDirectory;
 import lombok.Getter;
 
 public class CsvWriter {
@@ -27,7 +29,7 @@ public class CsvWriter {
 	}
 	
 	public void open() throws IOException {
-		writer = new BufferedWriter(new FileWriter(outputFile));
+		writer = Files.newBufferedWriter(Paths.get(outputFile.getAbsolutePath()), OutputDirectory.DATA_CHARSET);
 	}
 	
 	public void close() throws IOException {

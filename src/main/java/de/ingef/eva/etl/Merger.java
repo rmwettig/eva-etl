@@ -96,7 +96,7 @@ public class Merger {
 			CompletableFuture.supplyAsync(() -> {
 					BufferedWriter writer = null;
 					try {
-						writer = Files.newBufferedWriter(directory.resolve(ds.getFileName() + ".csv"));
+						writer = Files.newBufferedWriter(directory.resolve(ds.getFileName() + ".csv"), OutputDirectory.DATA_CHARSET);
 						boolean wasHeaderWritten = false;
 						for(Path slice : ds.getFiles()) {
 							BufferedReader reader = Files.newBufferedReader(slice);

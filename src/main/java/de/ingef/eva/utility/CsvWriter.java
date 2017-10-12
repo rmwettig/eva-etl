@@ -16,7 +16,7 @@ public class CsvWriter {
 	private File outputFile;
 	private BufferedWriter writer;
 	
-	private StringBuffer line = new StringBuffer();
+	private StringBuilder line = new StringBuilder();
 	
 	public CsvWriter(File file, String delimiter, String newLine) {
 		this.delimiter = delimiter;
@@ -46,7 +46,7 @@ public class CsvWriter {
 		line.deleteCharAt(line.length() - 1);
 		writer.write(line.toString());
 		writer.write(newLine);
-		line = new StringBuffer();
+		line.setLength(0);
 	}
 	
 	

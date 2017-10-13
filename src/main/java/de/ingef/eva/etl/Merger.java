@@ -67,11 +67,27 @@ public class Merger {
 	
 	@Getter
 	@RequiredArgsConstructor
+	@Log4j2
 	private static class Dataset {
 		private final String db;
 		private final String datasetName;
 		private final String fileName;
 		private final List<Path> files;
+		
+		public long calculateSize() {
+			return files.stream()
+					.map(this::getFileSize)
+					.collect(Collectors.summingLong(size -> size));
+		}
+		
+		private long getFileSize(Path path) {
+			try {
+				return Files.size(path);
+			} catch (IOException e) {
+				log.error("Could not determine file size. ", e);
+			}
+			return 0L;
+		}
 	}
 	
 	public void run(Configuration config) {		
@@ -92,6 +108,10 @@ public class Merger {
 	
 	private void createMergeTasks(String rootDirectory, List<Dataset> datasets, ExecutorService threadPool) throws IOException {
 		for(Dataset ds : datasets) {
+			if(ds.calculateSize() == 0) {
+				log.warn("Table '{}' in dataset '{}' is empty and will not be merged.", ds.getFileName(), ds.getDatasetName());
+				continue;
+			}
 			Path directory = createMergeDirectories(rootDirectory, ds);
 			CompletableFuture.supplyAsync(() -> {
 					BufferedWriter writer = null;

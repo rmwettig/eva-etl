@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -90,7 +89,7 @@ public class ETLPipeline {
 							for(int columnIndex = 1; columnIndex <= columnCount; columnIndex++) {
 								//perform null checks on raw data from database
 								//otherwise threads stall and program does not terminate
-								String value = rs.getString(columnIndex) == null ? "" : rs.getString(columnIndex).trim();
+								String value = rs.getString(columnIndex) == null ? "" : cleanValue(rs.getString(columnIndex));
 								TeradataColumnType type = TeradataColumnType.fromTypeName(metaData.getColumnLabel(columnIndex));
 								columns.add(new SimpleRowElement(value, type));
 							}
@@ -138,6 +137,10 @@ public class ETLPipeline {
 			log.error("Export error occurred for query: DB: {}, Table: {}, Slice: {}", q.getDbName(), q.getTableName(), q.getSliceName(), e);
 			return null;
 		});
+	}
+
+	private String cleanValue(String value) {
+		return value.replaceAll(";", "_").trim();
 	}
 
 	private void writeToFile(CsvWriter writer, Row transformedRow) throws IOException {

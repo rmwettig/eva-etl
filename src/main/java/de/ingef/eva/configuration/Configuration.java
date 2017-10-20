@@ -20,6 +20,7 @@ import de.ingef.eva.data.validation.Rule;
 import de.ingef.eva.data.validation.TypeRule;
 import de.ingef.eva.dataprocessor.SeparationMapping;
 import de.ingef.eva.error.InvalidConfigurationException;
+import de.ingef.eva.etl.FilterConfig;
 import lombok.Getter;
 
 @Getter
@@ -42,6 +43,7 @@ public class Configuration {
 	private String fullConnectionUrl;
 	private SeparationMapping datasetMembership;
 	private List<AppendConfiguration> appenderConfiguration;
+	private List<FilterConfig> filterConfiguration;
 	
 	public static Configuration loadFromJson(String path) throws JsonProcessingException, IOException, InvalidConfigurationException {
 		String SERVER = "server";
@@ -109,9 +111,24 @@ public class Configuration {
 		config.rules = prepareValidationRules(root);
 		config.datasetMembership = prepareSeparationMappings(root);		
 		config.appenderConfiguration = prepareAppendConfiguration(root, mapper);
+		config.filterConfiguration = prepareFilterConfiguration(root, mapper);
 		return config;
 	}
 	
+	private static List<FilterConfig> prepareFilterConfiguration(JsonNode root, ObjectMapper mapper) throws InvalidConfigurationException {
+		JsonNode filtersNode = root.path("filters");
+		List<FilterConfig> filterConfigs = new ArrayList<>(filtersNode.size());
+		for(JsonNode conf : filtersNode) {
+			try {
+				filterConfigs.add(mapper.treeToValue(conf, FilterConfig.class));
+			} catch (JsonProcessingException e) {
+				throw new InvalidConfigurationException("Invalid filter configuration.", e);
+			}
+		}
+		
+		return filterConfigs;
+	}
+
 	private static List<AppendConfiguration> prepareAppendConfiguration(JsonNode root, ObjectMapper mapper) throws InvalidConfigurationException {
 		JsonNode appendNode = root.path("append");
 		List<AppendConfiguration> configurations = new ArrayList<>(appendNode.size());

@@ -357,5 +357,13 @@
 			"keyColumn": "egk_nr",
 			"order": "LAST"
 		}
+	],
+	"filters": [
+		{
+			"filterName": "2-digit FG",
+			"description": "enforce valid FG value if not empty",
+			"columnName": "fg",
+			"regex": "^$|[0-9]{2}"
+		}
 	]
 }

@@ -50,6 +50,7 @@ import de.ingef.eva.error.InvalidConfigurationException;
 import de.ingef.eva.etl.ColumnValueFilter;
 import de.ingef.eva.etl.ETLPipeline;
 import de.ingef.eva.etl.Filter;
+import de.ingef.eva.etl.FilterFactory;
 import de.ingef.eva.etl.Merger;
 import de.ingef.eva.etl.Transformer;
 import de.ingef.eva.etl.TransformerFactory;
@@ -128,7 +129,7 @@ public class Main {
 		exitIfInvalidCredentials(config);
 		QuerySource qs = new JsonQuerySource(config);
 		Collection<Query> queries = qs.createQueries();
-		List<Filter> filters = Arrays.asList(new ColumnValueFilter("2-digit FG", "fg", "^$|[0-9]{2}"));
+		List<Filter> filters = new FilterFactory().create(config.getFilterConfiguration());
 		List<Transformer> transformers = new TransformerFactory().create(config.getAppenderConfiguration());
 		new ETLPipeline().run(config, queries, filters, transformers);
 		sw.stop();

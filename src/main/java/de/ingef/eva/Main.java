@@ -150,7 +150,7 @@ public class Main {
 	 */
 	private static void createHeaderLookup(Configuration configuration, DatabaseHost schema) {
 		try (Connection connection = DriverManager.getConnection(
-				configuration.getConnectionUrl()+ "/" +configuration.getConnectionParameters(),
+				configuration.getFullConnectionUrl(),
 				configuration.getUser(),
 				configuration.getPassword()
 				);
@@ -186,7 +186,7 @@ public class Main {
 			}
 			jsonWriter.writeEndObject();// json
 		} catch (SQLException e) {
-			e.printStackTrace();
+			log.error("Could not open connection to '{}'. ", configuration.getFullConnectionUrl(), e);
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}

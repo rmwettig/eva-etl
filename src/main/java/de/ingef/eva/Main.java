@@ -255,6 +255,10 @@ public class Main {
 	}
 	
 	private static void createDatabaseStatistics(Configuration configuration) {
+		createADBStatistics(configuration);
+	}
+
+	private static void createADBStatistics(Configuration configuration) {
 		String[] tables = new String[]{"AU_Fall", "KH_Fall", "HeMi_EVO", "HiMi_EVO", "Arzt_Fall", "AM_EVO"};
 		Map<String,List<String>> healthInsurances = new HashMap<>(2);
 		healthInsurances.put("Bosch", Arrays.asList("108036123"));

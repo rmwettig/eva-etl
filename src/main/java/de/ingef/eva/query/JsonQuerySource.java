@@ -3,7 +3,6 @@ package de.ingef.eva.query;
 import java.util.Collection;
 
 import de.ingef.eva.configuration.Configuration;
-import de.ingef.eva.configuration.JsonInterpreter;
 import de.ingef.eva.configuration.SchemaDatabaseHostLoader;
 import de.ingef.eva.configuration.SqlJsonInterpreter;
 import de.ingef.eva.database.DatabaseHost;
@@ -26,10 +25,10 @@ public class JsonQuerySource implements QuerySource {
 	@Override
 	public Collection<Query> createQueries() {
 		DatabaseHost schema = new SchemaDatabaseHostLoader().loadFromFile(configuration.getSchemaFile());
-		QueryCreator queryCreator = new SimpleQueryCreator(schema, configuration.getFastExportConfiguration().getRowPrefix());
+		QueryCreator queryCreator = new SimpleQueryCreator(schema);
 		queryCreator.setAliasFactory(new Alias(120));
-		JsonInterpreter jsonInterpreter = new SqlJsonInterpreter(queryCreator, schema, log);
-		return jsonInterpreter.interpret(configuration.getDatabasesNode());
+		SqlJsonInterpreter jsonInterpreter = new SqlJsonInterpreter(queryCreator, schema);
+		return jsonInterpreter.interpret(configuration.getDatabases());
 	}
 
 }

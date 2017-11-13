@@ -1,353 +1,283 @@
 {
-	"server": "192.168.146.1",
+	"host": "192.168.146.1",
 	"url": "jdbc:teradata://",
 	"parameters": "TYPE=FASTEXPORT,CHARSET=UTF8",
-	"username": "",
-	"userpassword": "",
-	"outputdirectory": "out",
-	"tempdirectory": "tmp",
-	"threads": "2",
-	"schemafile": "headerlookup.json",
-	"fastexport": {
-		"logDatabase": "sb_hri",
-		"logTable": "mw_fexp_dev_log",
-		"sessions": "24",
-		"rowPrefix": "ROW_START",
-		"postDumpAction": "java -jar ./eva-data.jar P:/eva-dump-configs/config.json",
-		"jobFilename": "eva-dump.fx"
-	},
-	"headerFile": "headerlookup.json",
+	"user": "",
+	"password": "",
+	"outputDirectory": "out",
+	"cacheDirectory": "tmp",
+	"threadCount": "2",
+	"schemaFile": "headerlookup.json",
 	"databases": {
 		"startYear": "2010",
 		"endYear": "2016",
 		"sources": [
 			{
-				"name": "ACC_ADB",
+				"db": "ACC_ADB",
+				"datasetName": "Bosch_Salzgitter",
 				"views": [
 					{
-						"AVK_ADB_T_AM_EVO": {
-						}
+						"name": "AVK_ADB_T_AM_EVO"
 					},
 					{
-						"AVK_ADB_T_Arzt_Diagnose": {
-						}
+						"name": "AVK_ADB_T_Arzt_Diagnose"
 					},
 					{
-						"AVK_ADB_T_Arzt_Fall": {
-						}
+						"name": "AVK_ADB_T_Arzt_Fall"
 					},
 					{
-						"AVK_ADB_T_Arzt_GOP": {
-						}
+						"name": "AVK_ADB_T_Arzt_GOP"
 					},
 					{
-						"AVK_ADB_T_Arzt_OPS": {
-						}
+						"name": "AVK_ADB_T_Arzt_OPS"
 					},
 					{
-						"AVK_ADB_T_AU_Fall": {
-						}
+						"name": "AVK_ADB_T_AU_Fall"
 					},
 					{
-						"AVK_ADB_T_DMP_Doku": {
-						}
+						"name": "AVK_ADB_T_DMP_Doku"
 					},
 					{
-						"AVK_ADB_T_HeMi_EVO": {
-						}
+						"name": "AVK_ADB_T_HeMi_EVO"
 					},
 					{
-						"AVK_ADB_T_HiMi_EVO": {
-						}
+						"name": "AVK_ADB_T_HiMi_EVO"
 					},
 					{
-						"AVK_ADB_T_HKP_EVO": {
-						}
+						"name": "AVK_ADB_T_HKP_EVO"
 					},
 					{
-						"AVK_ADB_T_KH_Diagnose": {
-							"join": [
-								{
-									"table": "AVK_ADB_T_KH_FALL",
-									"column": [
-										"verweildauer",
-										"aufnahmedatum",
-										"aufnahmegrund",
-										"entlassungsgrund",
-										"behandlungstyp"
-									],
-									"type": "inner",
-									"on": ["pid", "kh_fall_id"],
-									"where": {}
-								}
-							]
-						}
+						"name": "AVK_ADB_T_KH_Diagnose",
+						"join": [
+							{
+								"table": "AVK_ADB_T_KH_FALL",
+								"column": [
+									"verweildauer",
+									"aufnahmedatum",
+									"aufnahmegrund",
+									"entlassungsgrund",
+									"behandlungstyp"
+								],
+								"type": "INNER",
+								"on": [
+									"pid",
+									"kh_fall_id"
+								],
+								"where": [
+								]
+							}
+						]
 					},
 					{
-						"AVK_ADB_T_KH_Fall": {
-						}
+						"name": "AVK_ADB_T_KH_Fall"
 					},
 					{
-						"AVK_ADB_T_KH_OPS": {
-							"join": [
-								{
-									"table": "AVK_ADB_T_KH_FALL",
-									"column": [
-										"verweildauer",
-										"aufnahmedatum",
-										"aufnahmegrund",
-										"entlassungsgrund",
-										"behandlungstyp"
-									],
-									"type": "inner",
-									"on": ["pid", "kh_fall_id"],
-									"where": {}
-								}
-							]
-						}
+						"name": "AVK_ADB_T_KH_OPS",
+						"join": [
+							{
+								"table": "AVK_ADB_T_KH_FALL",
+								"column": [
+									"verweildauer",
+									"aufnahmedatum",
+									"aufnahmegrund",
+									"entlassungsgrund",
+									"behandlungstyp"
+								],
+								"type": "INNER",
+								"on": [
+									"pid",
+									"kh_fall_id"
+								],
+								"where": [
+								]
+							}
+						]
 					},
 					{
-						"AVK_ADB_T_Leistungskosten": {
-						}
+						"name": "AVK_ADB_T_Leistungskosten"
 					},
 					{
-						"AVK_ADB_T_VERS_INFO": {
-						}
+						"name": "AVK_ADB_T_VERS_INFO"
 					},
 					{
-						"AVK_ADB_T_Vers_Region": {
-						}
+						"name": "AVK_ADB_T_Vers_Region"
 					},
 					{
-						"AVK_ADB_T_Vers_SozDem": {
-						}
+						"name": "AVK_ADB_T_Vers_SozDem"
 					},
 					{
-						"AVK_ADB_T_Vers_Stamm": {
-						}
+						"name": "AVK_ADB_T_Vers_Stamm"
 					},
 					{
-						"AVK_ADB_T_Vers_Tage": {
-						}
+						"name": "AVK_ADB_T_Vers_Tage"
 					},
 					{
-						"AVK_ADB_T_VERS_TAGE_QUARTAL": {
-						}
+						"name": "AVK_ADB_T_VERS_TAGE_QUARTAL"
 					},
 					{
-						"AVK_ADB_T_ZA_Fall": {
-						}
+						"name": "AVK_ADB_T_ZA_Fall"
 					},
 					{
-						"AVK_ADB_T_ZA_LEISTDATEN": {
-						}
+						"name": "AVK_ADB_T_ZA_LEISTDATEN"
 					}
 				],
-				"where": {
-					"h2ik": [
-						{
-							"value": "101922757",
-							"type": "STRING",
-							"operator": "="
-						},
-						{
-							"value": "108036123",
-							"type": "STRING",
-							"operator": "="
-						}
-					]
-				}
+				"where": [
+					{
+						"name": "h2ik",
+						"value": "101922757",
+						"type": "STRING",
+						"operator": "EQUAL"
+					},
+					{
+						"name": "h2ik",
+						"value": "108036123",
+						"type": "STRING",
+						"operator": "EQUAL"
+					}
+				]
 			},
 			{
 				"name": "ACC_FDB",
+				"datasetName": "1M_benchmark",
 				"views": [
 					{
-						"AVK_FDB_T_AM_EVO": {
-						}
+						"name": "AVK_FDB_T_AM_EVO"
 					},
 					{
-						"AVK_FDB_T_Arzt_Diagnose": {
-						}
+						"name": "AVK_FDB_T_Arzt_Diagnose"
 					},
 					{
-						"AVK_FDB_T_Arzt_Fall": {
-						}
+						"name": "AVK_FDB_T_Arzt_Fall"
 					},
 					{
-						"AVK_FDB_T_Arzt_GOP": {
-						}
+						"name": "AVK_FDB_T_Arzt_GOP"
 					},
 					{
-						"AVK_FDB_T_Arzt_OPS": {
-						}
+						"name": "AVK_FDB_T_Arzt_OPS"
 					},
 					{
-						"AVK_FDB_T_AU_Fall": {
-						}
+						"name": "AVK_FDB_T_AU_Fall"
 					},
 					{
-						"AVK_FDB_T_HeMi_EVO": {
-						}
+						"name": "AVK_FDB_T_HeMi_EVO"
 					},
 					{
-						"AVK_FDB_T_HiMi_EVO": {
-						}
+						"name": "AVK_FDB_T_HiMi_EVO"
 					},
 					{
-						"AVK_FDB_T_HKP_EVO": {
-						}
+						"name": "AVK_FDB_T_HKP_EVO"
 					},
 					{
-						"AVK_FDB_T_KH_Diagnose": {
-							"join": [
-								{
-									"table": "AVK_FDB_T_KH_FALL",
-									"column": [
-										"verweildauer",
-										"aufnahmedatum",
-										"aufnahmegrund",
-										"entlassungsgrund",
-										"behandlungstyp"
-									],
-									"type": "inner",
-									"on": ["pid", "kh_fall_id"],
-									"where": {}
-								}
-							]
-						}
+						"name": "AVK_FDB_T_KH_Diagnose",
+						"join": [
+							{
+								"table": "AVK_FDB_T_KH_FALL",
+								"column": [
+									"verweildauer",
+									"aufnahmedatum",
+									"aufnahmegrund",
+									"entlassungsgrund",
+									"behandlungstyp"
+								],
+								"type": "INNER",
+								"on": [
+									"pid",
+									"kh_fall_id"
+								],
+								"where": [
+								]
+							}
+						]
 					},
 					{
-						"AVK_FDB_T_KH_Fall": {
-						}
+						"name": "AVK_FDB_T_KH_Fall"
 					},
 					{
-						"AVK_FDB_T_KH_OPS": {
-							"join": [
-								{
-									"table": "AVK_FDB_T_KH_FALL",
-									"column": [
-										"verweildauer",
-										"aufnahmedatum",
-										"aufnahmegrund",
-										"entlassungsgrund",
-										"behandlungstyp"
-									],
-									"type": "inner",
-									"on": ["pid", "kh_fall_id"],
-									"where": {}
-								}
-							]
-						}
+						"name": "AVK_FDB_T_KH_OPS",
+						"join": [
+							{
+								"table": "AVK_FDB_T_KH_FALL",
+								"column": [
+									"verweildauer",
+									"aufnahmedatum",
+									"aufnahmegrund",
+									"entlassungsgrund",
+									"behandlungstyp"
+								],
+								"type": "INNER",
+								"on": [
+									"pid",
+									"kh_fall_id"
+								],
+								"where": [
+								]
+							}
+						]
 					},
 					{
-						"AVK_FDB_T_Leistungskosten": {
-						}
+						"name": "AVK_FDB_T_Leistungskosten"
 					},
 					{
-						"AVK_FDB_T_VERS_INFO": {
-						}
+						"name": "AVK_FDB_T_VERS_INFO"
 					},
 					{
-						"AVK_FDB_T_Vers_Region": {
-						}
+						"name": "AVK_FDB_T_Vers_Region"
 					},
 					{
-						"AVK_FDB_T_Vers_SozDem": {
-						}
+						"name": "AVK_FDB_T_Vers_SozDem"
 					},
 					{
-						"AVK_FDB_T_Vers_Stamm": {
-						}
+						"name": "AVK_FDB_T_Vers_Stamm"
 					},
 					{
-						"AVK_FDB_T_Vers_Tage": {
-						}
+						"name": "AVK_FDB_T_Vers_Tage"
 					},
 					{
-						"AVK_FDB_T_VERS_TAGE_QUARTAL": {
-						}
+						"name": "AVK_FDB_T_VERS_TAGE_QUARTAL"
 					},
 					{
-						"AVK_FDB_T_ZA_Fall": {
-						}
+						"name": "AVK_FDB_T_ZA_Fall"
 					},
 					{
-						"AVK_FDB_T_ZA_LEISTDATEN": {
-						}
+						"name": "AVK_FDB_T_ZA_LEISTDATEN"
 					},
 					{
-						"AV_FDB_T_TEILNAHME": {
-						}
+						"name": "AV_FDB_T_TEILNAHME"
 					}
 				],
-				"where": {
-					"flag_destatis": [
-						{
-							"value": 1,
-							"type": "NUMERIC",
-							"operator": "="
-						}
-					]
-				}
+				"where": [
+					{
+						"column": "flag_destatis",
+						"value": "1",
+						"type": "NUMERIC",
+						"operator": "EQUAL"
+					}
+				]
 			}
 		]
 	},
-	"mappings": [
-		{
-			"source": "map.csv",
-			"targets": [
-				{ "data": "file1", "header": ""},
-				{ "data": "file2", "header": ""}
-			],
-			"sourceKeyColumn": "egk_nr",
-			"targetKeyColumn": "pid"
-		}
-	],
 	"decoding": [
-		{ "name": "Bosch", "h2ik": "108036123" },
-		{ "name": "Salzgitter", "h2ik": "101922757" }
-	],
-	"validation": [
 		{
-			"rule": "TYPE", 
-			"type": "FLOAT",
-			"exclude": "[^\\dEe.+-]" 
+			"name": "Bosch",
+			"h2iks": [
+				"108036123"
+			]
 		},
 		{
-			"rule": "TYPE",
-			"type": "ANY",
-			"exclude": "[^\\p{Alnum}\\s();,./\\\\\u00e4\u00f6\u00fc\u00df\u00a7\u20ac\\[\\]_-]"
-		},
-		{
-			"rule": "TYPE",
-			"type": "CHARACTER",
-			"exclude": "\u00f6",
-			"replace": "\u00f6"
-		},
-		{
-			"rule": "NAME",
-			"column": "FG",
-			"exclude": "[^\\d]"
+			"name": "Salzgitter",
+			"h2iks": [
+				"101922757"
+			]
 		}
 	],
-	"separation": [
-		{
-			"dataset" : "Salzgitter",
-			"h2iks" : ["101931440", "102137985", "101922757"]
-		},
-		{
-			"dataset" : "Bosch",
-			"h2iks" : ["108036123"]
-		}
-	],
-	"append" : [
+	"append": [
 		{
 			"mode": "STATIC",
 			"targets": "out/test/static",
 			"match": "stat",
 			"targetColumn": "H2IK",
 			"value": "999999999",
-			"order": "FIRST" 
+			"order": "FIRST"
 		},
 		{
 			"mode": "DYNAMIC",

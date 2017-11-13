@@ -13,9 +13,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.ingef.eva.configuration.export.ExportConfig;
 import de.ingef.eva.database.Column;
 import de.ingef.eva.database.DatabaseHost;
 import de.ingef.eva.query.Query;
@@ -26,7 +26,7 @@ import de.ingef.eva.utility.Alias;
 public class SqlJsonInterpreterTest {
 
 	private static DatabaseHost host;
-	
+		
 	@BeforeClass
 	public static void setUpOnce() {
 		host = new SchemaDatabaseHostLoader().loadFromFile("src/test/resources/configuration/schema.json");
@@ -34,10 +34,10 @@ public class SqlJsonInterpreterTest {
 
 	@Test
 	public void testInterpret() throws JsonProcessingException, IOException {
-		JsonInterpreter sqlInterpreter = new SqlJsonInterpreter(new SimpleQueryCreator(host, ";ROW_START"), host, null);
+		SqlJsonInterpreter sqlInterpreter = new SqlJsonInterpreter(new SimpleQueryCreator(host), host);
 		
-		JsonNode root = new ObjectMapper().readTree(new File("src/test/resources/configuration/sql.config.json"));
-		Collection<Query> jobs = sqlInterpreter.interpret(root.path("databases"));
+		ExportConfig root = new ObjectMapper().readValue(new File("src/test/resources/configuration/sql.config.json"), ExportConfig.class);
+		Collection<Query> jobs = sqlInterpreter.interpret(root);
 		
 		assertEquals(2, jobs.size());
 		/**
@@ -59,12 +59,11 @@ public class SqlJsonInterpreterTest {
 		//select clause
 		String part = job.substring(0, job.indexOf("from"));
 		assertTrue("No select", part.startsWith("select"));
-		String[] arr = part.split(",");
-		assertEquals(4, arr.length);
-		assertEquals("';ROW_START'", arr[0].replace("select", "").trim());
-		assertEquals("database1.tablename.columnname1", arr[1].trim());
-		assertEquals("database1.tablename.columnname2", arr[2].trim());
-		assertEquals("database1.tablename2.columnname3", arr[3].trim());
+		String[] arr = part.substring("select".length()).split(",");
+		assertEquals(3, arr.length);
+		assertEquals("database1.tablename.columnname1", arr[0].trim());
+		assertEquals("database1.tablename.columnname2", arr[1].trim());
+		assertEquals("database1.tablename2.columnname3", arr[2].trim());
 				
 		//from clause
 		part = job.substring(job.indexOf("from"), job.indexOf("inner"));
@@ -124,12 +123,12 @@ public class SqlJsonInterpreterTest {
 	
 	@Test
 	public void testLatestQuery() throws JsonProcessingException, IOException {
-		QueryCreator qc = new SimpleQueryCreator(host, ";ROW_START");
+		QueryCreator qc = new SimpleQueryCreator(host);
 		qc.setAliasFactory(new Alias(10));
-		JsonInterpreter sqlInterpreter = new SqlJsonInterpreter(qc, host, null);
-		JsonNode root = new ObjectMapper().readTree(new File("src/test/resources/configuration/sql.select.latest.config.json"));
+		SqlJsonInterpreter sqlInterpreter = new SqlJsonInterpreter(qc, host);
+		ExportConfig root = new ObjectMapper().readValue(new File("src/test/resources/configuration/sql.select.latest.config.json"), ExportConfig.class);
 		
-		Collection<Query> query = sqlInterpreter.interpret(root.path("databases"));
+		Collection<Query> query = sqlInterpreter.interpret(root);
 		assertEquals(1, query.size());
 		
 		Query q = query.iterator().next();
@@ -158,9 +157,8 @@ public class SqlJsonInterpreterTest {
 		//select clause
 		String part = sql.substring(sql.indexOf("select") + 6, sql.indexOf("from"));
 		String[] columnFields = part.split(",");
-		assertEquals("';ROW_START'", columnFields[0].trim());
-		assertEquals("a.columnname1", columnFields[1].trim());
-		assertEquals("a.columnname2", columnFields[2].trim());
+		assertEquals("a.columnname1", columnFields[0].trim());
+		assertEquals("a.columnname2", columnFields[1].trim());
 		
 		//from clause
 		part = sql.substring(sql.indexOf("from")+ 4, sql.indexOf("inner"));

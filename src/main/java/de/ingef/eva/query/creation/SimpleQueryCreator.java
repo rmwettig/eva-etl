@@ -30,8 +30,6 @@ public class SimpleQueryCreator implements QueryCreator {
 	private Set<String> _joinRightTables;
 	private OrGroup _currentGroup;
 
-	private String _rowStartTerm;
-	
 	private class Where {
 		private String _column;
 		private String _value;
@@ -93,13 +91,12 @@ public class SimpleQueryCreator implements QueryCreator {
 		}
 	}
 		
-	public SimpleQueryCreator(DatabaseHost schema, String rowStartTerm) {
+	public SimpleQueryCreator(DatabaseHost schema) {
 		_tables = new LinkedHashMap<String, Collection<String>>();
 		_joins = new ArrayList<Join>();
 		_where = new LinkedHashMap<String, Collection<OrGroup>>();
 		_joinRightTables = new HashSet<String>();
 		_tableAlias = new HashMap<String, String>();
-		_rowStartTerm = rowStartTerm.isEmpty() ? "" : "'" + rowStartTerm + "'";
 		_schema = schema;
 	}
 
@@ -228,10 +225,6 @@ public class SimpleQueryCreator implements QueryCreator {
 		String aliasedFormat = "%s.%s";
 		StringBuilder selectClause = new StringBuilder();
 		selectClause.append("select\n\t");
-		if(_rowStartTerm != null && !_rowStartTerm.isEmpty()) {
-			selectClause.append(_rowStartTerm);
-			selectClause.append(",\n\t");
-		}
 		StringBuilder fromClause = new StringBuilder();
 		fromClause.append("from\n\t");
 		List<Column> qColumns = new ArrayList<>();

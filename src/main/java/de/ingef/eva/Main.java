@@ -12,9 +12,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.apache.commons.cli.CommandLine;
@@ -29,11 +26,9 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import de.ingef.eva.async.AsyncMapper;
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.configuration.ConfigurationDatabaseHostLoader;
-import de.ingef.eva.configuration.Mapping;
-import de.ingef.eva.configuration.Target;
+import de.ingef.eva.configuration.decoding.DecodingConfig;
 import de.ingef.eva.constant.Templates;
 import de.ingef.eva.data.DataTable;
 import de.ingef.eva.data.TeradataColumnType;
@@ -47,7 +42,6 @@ import de.ingef.eva.datasource.DataProcessor;
 import de.ingef.eva.datasource.DataSource;
 import de.ingef.eva.datasource.sql.SqlDataSource;
 import de.ingef.eva.error.InvalidConfigurationException;
-import de.ingef.eva.etl.ColumnValueFilter;
 import de.ingef.eva.etl.ETLPipeline;
 import de.ingef.eva.etl.Filter;
 import de.ingef.eva.etl.FilterFactory;
@@ -74,9 +68,6 @@ public class Main {
 				export(cmd);
 			} else if(cmd.hasOption("fetchschema")) {
 				fetchschema(cmd);
-			} else if(cmd.hasOption("map")) {
-				Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("map"));
-				mapFiles(configuration);
 			} else if(cmd.hasOption("charlsonscores")) {
 				charlsonscores(cmd);
 			} else if (cmd.hasOption("makedecode")) {
@@ -192,41 +183,6 @@ public class Main {
 			e1.printStackTrace();
 		}
 	}
-
-
-	private static void mapFiles(Configuration configuration) {
-		final ExecutorService threadPool = Executors.newFixedThreadPool(configuration.getThreadCount());
-		final Collection<Mapping> mappings = configuration.getMappings();
-		
-		if (mappings.size() == 0) {
-			log.error("No mapping configuration found.");
-			
-			return;
-		}
-		for(Mapping m : mappings) {
-			final String mapFile = m.getMappingFileName();
-			final Map<String,String> egk2pid = Helper.createMappingFromFile(mapFile);
-			
-			if(egk2pid == null) {
-				log.error("Could not create mapping from file {}.", mapFile);
-				
-				return;
-			}
-			
-			final String sourceKeyName = m.getSourceColumn();
-			final String targetKeyName = m.getTargetColumn();
-			for(Target t : m.getTargets()) {
-				int columnIndex = Helper.findColumnIndexfromHeaderFile(t.getHeaderFile(), ";", sourceKeyName);
-				threadPool.execute(new AsyncMapper(egk2pid, t.getDataFile(), columnIndex, targetKeyName));
-			}
-		}
-		threadPool.shutdown();
-		try {
-			threadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
 	
 	private static Options createCliOptions() {
 		Options options = new Options();
@@ -243,11 +199,11 @@ public class Main {
 	}
 	
 	private static void createPidMappings(Configuration configuration) {
-		Map<String,List<String>> name2h2ik = configuration.getNameToH2ik();
-		for(String name : name2h2ik.keySet()) {
-			String h2iks = name2h2ik.get(name).stream().map(h -> "'" + h + "'").collect(Collectors.joining(", "));
-			DataSource unfilteredPids = new SqlDataSource(String.format(Templates.Decoding.PID_DECODE_QUERY, h2iks, h2iks), name, configuration);
-			DataSource excludedPids = new SqlDataSource(String.format(Templates.Decoding.INVALID_PIDS_QUERY, h2iks, h2iks), name, configuration);
+		List<DecodingConfig> decodingConfigs = configuration.getDecode();
+		for(DecodingConfig dc : decodingConfigs) {
+			String h2iks = dc.getH2iks().stream().map(h -> "'" + h + "'").collect(Collectors.joining(", "));
+			DataSource unfilteredPids = new SqlDataSource(String.format(Templates.Decoding.PID_DECODE_QUERY, h2iks, h2iks), dc.getName(), configuration);
+			DataSource excludedPids = new SqlDataSource(String.format(Templates.Decoding.INVALID_PIDS_QUERY, h2iks, h2iks), dc.getName(), configuration);
 			DataProcessor cleanPidProcessor = new ProcessPidDecode(configuration);
 			cleanPidProcessor.process(unfilteredPids.fetchData(), excludedPids.fetchData());
 		}

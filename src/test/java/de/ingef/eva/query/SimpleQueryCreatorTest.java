@@ -44,7 +44,7 @@ public class SimpleQueryCreatorTest {
 	
 	@Test
 	public void testQueryWithOutJoin() {
-		SimpleQueryCreator creator = new SimpleQueryCreator(schema, ";ROW_START");
+		SimpleQueryCreator creator = new SimpleQueryCreator(schema);
 		/**
 		 * select DB.table.column
 		 * from DB.table
@@ -66,9 +66,8 @@ public class SimpleQueryCreatorTest {
 		
 		assertTrue(q.startsWith("select"));
 		String[] arr = q.substring(q.indexOf("select")+ "select".length(), q.indexOf("from")).split(",");
-		assertEquals(2, arr.length);
-		assertEquals("';ROW_START'", arr[0].trim());
-		assertEquals("DB.table.column", arr[1].trim());		
+		assertEquals(1, arr.length);
+		assertEquals("DB.table.column", arr[0].trim());		
 		
 		assertTrue(q.contains("from"));
 		arr = q.substring(q.indexOf("from")+ "from".length(), q.indexOf("where")).split(",");
@@ -88,7 +87,7 @@ public class SimpleQueryCreatorTest {
 	
 	@Test
 	public void testQueryWithJoin() {
-		SimpleQueryCreator creator = new SimpleQueryCreator(schema, "999999999");
+		SimpleQueryCreator creator = new SimpleQueryCreator(schema);
 		/**
 		 * select DB.table.column,DB.table2.column
 		 * from DB.table
@@ -118,10 +117,9 @@ public class SimpleQueryCreatorTest {
 		assertTrue("No select", q.startsWith("select"));
 		
 		String[] arr = q.substring(q.indexOf("select")+ "select".length(), q.indexOf("from")).split(",");
-		assertEquals(3, arr.length);
-		assertEquals("'999999999'", arr[0].trim());
-		assertEquals("DB.table.column", arr[1].trim());
-		assertEquals("DB.table2.column", arr[2].trim());
+		assertEquals(2, arr.length);
+		assertEquals("DB.table.column", arr[0].trim());
+		assertEquals("DB.table2.column", arr[1].trim());
 		
 		assertTrue("No from", q.contains("from"));
 		arr = q.substring(q.indexOf("from")+ "from".length(), q.indexOf("inner")).split(",");

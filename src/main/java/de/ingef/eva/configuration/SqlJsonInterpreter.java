@@ -3,136 +3,87 @@ package de.ingef.eva.configuration;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Iterator;
-import org.apache.logging.log4j.Logger;
-import com.fasterxml.jackson.databind.JsonNode;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import de.ingef.eva.configuration.export.ExportConfig;
+import de.ingef.eva.configuration.export.JoinConfig;
+import de.ingef.eva.configuration.export.JoinType;
+import de.ingef.eva.configuration.export.SourceConfig;
+import de.ingef.eva.configuration.export.ViewConfig;
+import de.ingef.eva.configuration.export.WhereConfig;
+import de.ingef.eva.configuration.export.WhereOperator;
+import de.ingef.eva.configuration.export.WhereType;
 import de.ingef.eva.database.Column;
 import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
 import de.ingef.eva.database.Table;
 import de.ingef.eva.query.Query;
 import de.ingef.eva.query.creation.QueryCreator;
+import de.ingef.eva.utility.Helper;
+import lombok.extern.log4j.Log4j2;
 
-public class SqlJsonInterpreter implements JsonInterpreter {
-
-	private Logger _logger;
+@Log4j2
+public class SqlJsonInterpreter {
 	private DatabaseHost _schema;
 	private QueryCreator _queryCreator;
 	private Collection<Query> _jobs;
 
-	public SqlJsonInterpreter(QueryCreator queryCreator, DatabaseHost schema, Logger logger) {
+	public SqlJsonInterpreter(QueryCreator queryCreator, DatabaseHost schema) {
 		_queryCreator = queryCreator;
 		_schema = schema;
-		_logger = logger;
 		_jobs = new ArrayList<Query>(20);
 	}
 
 	/**
 	 * Evaluates the object associated to the 'databases' field
 	 * 
-	 * @param node
-	 *            Json object representing all queried databases
+	 * @param exportConfig
+	 *            object with settings for query creation
 	 * @return an empty collection if no query could be built
 	 */
-	@Override
-	public Collection<Query> interpret(JsonNode node) {
-
-		if (node.isMissingNode()) {
-			if (_logger != null)
-				_logger.error("'databases' node is empty.");
+	public Collection<Query> interpret(ExportConfig exportConfig) {
+		if(exportConfig == null) {
+			log.error("No dump configuration present!");
 			return _jobs;
 		}
 		
-		int[] years = calculateYearSlices(node);
-
-		JsonNode sourcesNode = node.path("sources");
-		if (sourcesNode.isMissingNode() || !sourcesNode.isArray()) {
-			if (_logger != null)
-				_logger.error("Did not found 'sources' key or is not an array.");
+		int[] years = calculateYearSlices(exportConfig);
+		
+		List<SourceConfig> sources = exportConfig.getSources();
+		if (sources.isEmpty()) {
+			log.error("Did not found 'sources' key or is not an array.");
 			return _jobs;
 		}
 
-		for (JsonNode source : sourcesNode) {
-			String dbName = findDatabaseName(source);
-			if (dbName.isEmpty())
+		for(SourceConfig source : sources) {
+			if(source.getDb() == null || source.getDb().isEmpty())
 				continue;
-			String dataset = findDatasetName(source);
-			_queryCreator.setDatabase(dbName);
-			if (!findViews(source, _schema.findDatabaseByName(dbName), years, dataset))
-				continue;
+			_queryCreator.setDatabase(source.getDb());
+			findViews(source, _schema.findDatabaseByName(source.getDb()), years, source.getDatasetName());
 		}
+
 		return _jobs;
 	}
-
-	private String findDatasetName(JsonNode source) {
-		return source.path("dataset").asText("");
-	}
-
-	private int[] calculateYearSlices(JsonNode node) {
-		int[] years = null;
-		JsonNode previousYears = node.path("numberOfPreviousYears");
-		
-		if(!previousYears.isMissingNode()) {
+	
+	private int[] calculateYearSlices(ExportConfig exportConfig) {
+		int numberOfPreviousYears = exportConfig.getNumberOfPreviousYears();
+		if(numberOfPreviousYears > 0) {
 			//take only the recent year
 			int endYear = Calendar.getInstance().get(Calendar.YEAR);
-			int startYear = endYear - previousYears.asInt();
-			years = de.ingef.eva.utility.Helper.extractYears(startYear, endYear);
-		} else {
-			int startYear = extractStartYear(node);
-			
-			if (startYear == -1) {
-				if (_logger != null)
-					_logger.error("Did not found 'startYear' key.");
-				return years;
-			}
-			int endYear = extractEndYear(node);
-			years = de.ingef.eva.utility.Helper.extractYears(startYear, endYear);
+			int startYear = endYear - numberOfPreviousYears;
+			return Helper.extractYears(startYear, endYear);
 		}
-		return years;
-	}
-
-	private int extractEndYear(JsonNode dbs) {
-		JsonNode node;
-		int defaultEndYear = Calendar.getInstance().get(Calendar.YEAR);
-		node = dbs.path("endYear");
-		if (node.isMissingNode())
-			if (_logger != null)
-				_logger.warn("Did not found '{}' key.\nUsing default: '{}'", "endYear", defaultEndYear);
-		int endYear = node.asInt(defaultEndYear);
-		return endYear;
-	}
-
-	private int extractStartYear(JsonNode dbs) {
-		JsonNode startYearNode = dbs.path("startYear");
-		if (startYearNode.isMissingNode())
-			return -1;
-		int startYear = startYearNode.asInt();
-		return startYear;
-	}
-
-	/**
-	 * Finds the name of the database source
-	 * 
-	 * @param source
-	 *            database source entry
-	 * @return empty string if no name is specified
-	 */
-	private String findDatabaseName(JsonNode source) {
-
-		if (source.isMissingNode()) {
-			if (_logger != null)
-				_logger.error("Did not found source name.");
-			return "";
-		} else {
-			JsonNode nameNode = source.path("name");
-			if (nameNode.isMissingNode()) {
-				if (_logger != null)
-					_logger.error("Source name is empty.");
-				return "";
-			} else
-				return nameNode.asText();
+		
+		int startYear = exportConfig.getStartYear();
+		if (startYear == 0) {
+			log.error("Did not found 'startYear' key.");
+			return new int[1];
 		}
+		int endYear = exportConfig.getEndYear() == 0 ? Calendar.getInstance().get(Calendar.YEAR) : exportConfig.getEndYear();
+				
+		return Helper.extractYears(startYear, endYear);
 	}
 
 	/**
@@ -144,18 +95,10 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 	 * @param dataset TODO
 	 * @return false if 'views' entry is missing
 	 */
-	private boolean findViews(JsonNode source, Database schemaDatabase, int[] years, String dataset) {
-		JsonNode views = source.path("views");
-		if (views.isMissingNode() || !views.isArray()) {
-			if (_logger != null)
-				_logger.error("Did not found 'views' entry or is not an array");
-			return false;
-		}
-
-		for (JsonNode view : views) {
-			Iterator<String> tableNames = view.fieldNames();
-			// there is only a single key per object
-			String tableName = tableNames.next();
+	private boolean findViews(SourceConfig source, Database schemaDatabase, int[] years, String dataset) {
+		List<ViewConfig> views = source.getViews();
+		for (ViewConfig view : views) {
+			String tableName = view.getName();
 			// do not return here as one view might fail but others work
 			Table t = schemaDatabase.findTableByName(tableName);
 			if (t != null) {
@@ -164,9 +107,7 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 				else
 					processView(source, view, tableName, schemaDatabase, dataset);
 			} else {
-				if (_logger != null)
-					_logger.warn("Did not found an table entry for '{}' in database '{}'", tableName,
-							schemaDatabase.getName());
+				log.warn("Did not found an table entry for '{}' in database '{}'", tableName, schemaDatabase.getName());
 			}
 
 		}
@@ -186,11 +127,10 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 	 * @param dataset TODO
 	 * @return false if view could not be processed
 	 */
-	private boolean processViewByYear(JsonNode source, JsonNode view, String tableName, String yearColumn,
-			Database schemaDatabase, int[] years, String dataset) {
+	private boolean processViewByYear(SourceConfig source, ViewConfig view, String tableName, String yearColumn, Database schemaDatabase, int[] years, String dataset) {
 		for (int year : years) {
 			_queryCreator.startOrGroup();
-			_queryCreator.addWhere(tableName, yearColumn, Integer.toString(year), "=", "NUMERIC");
+			_queryCreator.addWhere(tableName, yearColumn, Integer.toString(year), WhereOperator.EQUAL.getSymbol(), WhereType.NUMERIC.name());
 			_queryCreator.endOrGroup(tableName);
 			if (!processView(source, view, tableName, schemaDatabase, Integer.toString(year), dataset))
 				return false;
@@ -198,28 +138,24 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 		return true;
 	}
 
-	private boolean processView(JsonNode source, JsonNode view, String tableName, Database schemaDatabase,
-			String partLabel, String dataset) {
+	private boolean processView(SourceConfig source, ViewConfig view, String tableName, Database schemaDatabase, String partLabel, String dataset) {
 		_queryCreator.addTable(tableName);
-		JsonNode selectParameters = view.path(tableName);
-		JsonNode latestNode = selectParameters.path("latest");
-		if(!latestNode.isMissingNode()) {
-			Query q = evaluateLatestField(tableName, schemaDatabase.getName(), latestNode, schemaDatabase.findTableByName(tableName).getAllColumns());
-			if(q != null) _jobs.add(q);
+		
+		if(view.isLatest()) {
+			Query q = evaluateLatestField(tableName, schemaDatabase.getName(), view, schemaDatabase.findTableByName(tableName).getAllColumns());
+			if(q != null)
+				_jobs.add(q);
 			
 			return true;
 		}
-		if (!evaluateColumnEntry(selectParameters, tableName, schemaDatabase.findTableByName(tableName).getAllColumns())) {
-			if (_logger != null)
-				_logger.error(
-						"Did not found any columns.\nCheck 'column' field or database schema file for table '{}'.",
-						tableName);
+		if (!evaluateColumnEntry(view, tableName, schemaDatabase.findTableByName(tableName).getAllColumns())) {
+			log.error("Did not found any columns.\nCheck 'column' field or database schema file for table '{}'.", tableName);
 			return false;
 		}
-		evaluateWhereEntry(selectParameters, tableName);
+		evaluateWhereEntry(view.getWhere(), tableName);
 		// extract global conditions from source node
-		evaluateWhereEntry(source, tableName);
-		evaluateJoinEntry(selectParameters, tableName, schemaDatabase);
+		evaluateWhereEntry(source.getWhere(), tableName);
+		evaluateJoinEntry(view, tableName, schemaDatabase);
 		Query query = _queryCreator.buildQuery();
 		String qName = schemaDatabase.getName() + "_" + tableName;
 		qName += (partLabel.isEmpty()) ? partLabel : "." + partLabel;
@@ -243,7 +179,7 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 	 * @param schemaDatabase
 	 * @return null if no columns are selected
 	 */
-	private boolean processView(JsonNode source, JsonNode view, String tableName, Database schemaDatabase, String dataset) {
+	private boolean processView(SourceConfig source, ViewConfig view, String tableName, Database schemaDatabase, String dataset) {
 		return processView(source, view, tableName, schemaDatabase, "", dataset);
 	}
 
@@ -260,125 +196,109 @@ public class SqlJsonInterpreter implements JsonInterpreter {
 	 * @return false if neither a 'columns' entry is given nor columns exist in
 	 *         the schema
 	 */
-	private boolean evaluateColumnEntry(JsonNode selectParameters, String tableName, Collection<Column> schemaColumns) {
-		JsonNode columns = selectParameters.path("columns");
-		if (columns.isMissingNode()) {
-			if (schemaColumns != null) {
-				for (Column c : schemaColumns)
-					_queryCreator.addColumn(tableName, c.getName());
-			} else
+	private boolean evaluateColumnEntry(ViewConfig selectParameters, String tableName, Collection<Column> schemaColumns) {
+		List<String> columns = selectParameters.getColumns();
+		if (columns == null || columns.isEmpty()) {
+			if(schemaColumns == null)
 				return false;
+			for (Column c : schemaColumns)
+				_queryCreator.addColumn(tableName, c.getName());
 		} else {
-			for (JsonNode column : columns) {
-				_queryCreator.addColumn(tableName, column.asText());
+			for (String column : columns) {
+				_queryCreator.addColumn(tableName, column);
 			}
 		}
 		return true;
 	}
 
-	private void evaluateWhereEntry(JsonNode selectParameters, String tableName) {
-		JsonNode wheres = selectParameters.path("where");
+	private void evaluateWhereEntry(List<WhereConfig> wheres, String tableName) {
 		// where entry is optional so skip everything if absent
-		if (wheres.isMissingNode())
+		if (wheres == null || wheres.isEmpty())
 			return;
-
-		Iterator<String> columns = wheres.fieldNames();
-		while (columns.hasNext()) {
-			String column = columns.next();
-			JsonNode columnConditions = wheres.path(column);
-			_queryCreator.startOrGroup();
-			for (JsonNode condition : columnConditions) {
-				JsonNode valueNode = condition.path("value");
-				if (valueNode.isMissingNode()) {
-					if (_logger != null)
-						_logger.error("Did not found 'value' entry for condition on table '{}.{}'", tableName, column);
-					continue;
-				}
-
-				JsonNode operatorNode = condition.path("operator");
-				if (operatorNode.isMissingNode()) {
-					if (_logger != null)
-						_logger.error("Did not found 'operator' entry for condition on table '{}.{}'", tableName,
-								column);
-					continue;
-				}
-
-				JsonNode typeNode = condition.path("type");
-				if (typeNode.isMissingNode()) {
-					if (_logger != null)
-						_logger.error("Did not found 'type' entry for condition on table '{}.{}'", tableName, column);
-					continue;
-				}
-				_queryCreator.addWhere(tableName, column, valueNode.asText(), operatorNode.asText(), typeNode.asText());
-			}
-			_queryCreator.endOrGroup(tableName);
-		}
-	}
-
-	private void evaluateJoinEntry(JsonNode selectParameters, String leftTable, Database schemaDatabase) {
-		JsonNode joinNode = selectParameters.path("join");
-
-		// optional node
-		if (joinNode.isMissingNode())
-			return;
-
-		for (JsonNode joinEntry : joinNode) {
-			JsonNode tableNode = joinEntry.path("table");
-			if (tableNode.isMissingNode()) {
-				if (_logger != null)
-					_logger.error("Did not found 'table' entry for join entry on table '{}'", leftTable);
-				continue;
-			}
-			String table = tableNode.asText();
-			JsonNode joinTypeNode = joinEntry.path("type");
-			if (joinTypeNode.isMissingNode()) {
-				if (_logger != null)
-					_logger.error("Did not found 'type' entry for join entry on table '{}'", leftTable);
-				continue;
-			}
-
-			// this extracts and adds columns that should be also displayed
-			// from the joined table
-			JsonNode columnNode = joinEntry.path("column");
-			if (!columnNode.isMissingNode()) {
-				for (JsonNode column : columnNode) {
-					if (column.asText().equalsIgnoreCase("*")) {
-						for (Column schemaColumn : schemaDatabase.findTableByName(table).getAllColumns()) {
-							_queryCreator.addColumn(table, schemaColumn.getName());
-						}
-					} else
-						_queryCreator.addColumn(table, column.asText());
-				}
-			}
-
-			JsonNode onColumnNode = joinEntry.path("on");
-			if (onColumnNode.isMissingNode()) {
-				if (_logger != null)
-					_logger.error("Did not found 'on' entry for join entry on table '{}'", table);
-				continue;
-			}
-			for(JsonNode onColumn : onColumnNode)
-				_queryCreator.addJoin(leftTable, table, onColumn.asText(), joinTypeNode.asText());
-			evaluateWhereEntry(joinEntry, table);
-		}
-
-	}
-	
-	private Query evaluateLatestField(String currentTable, String database, JsonNode latestNode, Collection<Column> schemaColumns) {
-		JsonNode idNode = latestNode.path("on");
-		JsonNode timestampNode = latestNode.path("timestamp");
 		
-		if(idNode.isMissingNode() || timestampNode.isMissingNode()) return null;
+		Map<String, List<WhereConfig>> restrictedColumns = createWhereMap(wheres);
+		restrictedColumns
+			.forEach((column, constraints) -> {
+				_queryCreator.startOrGroup();
+				constraints
+					.stream()
+					.forEach(where ->
+						_queryCreator.addWhere(tableName, column, where.getValue(), where.getOperator().getSymbol(), where.getType().name()));
+				_queryCreator.endOrGroup(tableName);
+			});
+	}
+
+	private Map<String, List<WhereConfig>> createWhereMap(List<WhereConfig> wheres) {
+		Map<String, List<WhereConfig>> map = new HashMap<>(wheres.size());
+		wheres
+			.stream()
+			.forEach(w -> {
+				if(map.containsKey(w.getColumn())) {
+					map.get(w.getColumn()).add(w);
+				} else {
+					List<WhereConfig> constraints = new ArrayList<>(10);
+					constraints.add(w);
+					map.put(w.getColumn(), constraints);
+				}
+			});
+		return map;
+	}
+
+	private void evaluateJoinEntry(ViewConfig selectParameters, String leftTable, Database schemaDatabase) {
+		List<JoinConfig> joinConfigs = selectParameters.getJoin();
+		
+		// optional node
+		if (joinConfigs == null || joinConfigs.isEmpty())
+			return;
+
+		joinConfigs
+			.stream()
+			.forEach(join -> {
+				//add selected column from join
+				addJoinedColumns(schemaDatabase, join);
+				//add columns used for on condition
+				addOnColumns(leftTable, join);
+				//take additional conditions for the join into account
+				evaluateWhereEntry(join.getWhere(), join.getTable());
+			});	
+		}
+
+	private void addOnColumns(String leftTable, JoinConfig join) {
+		join.getOn()
+			.stream()
+			.forEach(column -> _queryCreator.addJoin(leftTable, join.getTable(), column, join.getType().getName()));
+	}
+
+	private void addJoinedColumns(Database schemaDatabase, JoinConfig join) {
+		String table = join.getTable();
+		join.getColumn()
+			.stream()
+			.forEach(column -> {
+				if(!column.equalsIgnoreCase("*")) {
+					_queryCreator.addColumn(table, column);
+				} else {
+					List<Column> schemaColumns = schemaDatabase.findTableByName(table).getAllColumns();
+					for (Column schemaColumn : schemaColumns) {
+						_queryCreator.addColumn(table, schemaColumn.getName());
+					}
+				}
+			});
+	}
+		
+	private Query evaluateLatestField(String currentTable, String database, ViewConfig latestView, Collection<Column> schemaColumns) {
+		String id = latestView.getIdColumn();
+		String timestamp = latestView.getTimestamp();
+		if(id == null || id.isEmpty() || timestamp == null || timestamp.isEmpty())
+			return null;
+		
 		String rightTable = "(select %s, max(%s) as %s from %s.%s group by %s)";
-		String id = idNode.asText();
-		String timestamp = timestampNode.asText();
 		rightTable = String.format(rightTable, id, timestamp, timestamp, database, currentTable, id);
 		
 		for(Column c : schemaColumns)
 			_queryCreator.addColumn(currentTable, c.getName());
-		_queryCreator.addJoin(currentTable, rightTable, id, "inner");
+		_queryCreator.addJoin(currentTable, rightTable, id, JoinType.INNER.getName());
 		_queryCreator.startOrGroup();
-		_queryCreator.addWhere(rightTable, timestamp, "", "=", "COLUMN");
+		_queryCreator.addWhere(rightTable, timestamp, "", WhereOperator.EQUAL.getSymbol(), WhereType.COLUMN.name());
 		_queryCreator.endOrGroup(currentTable);
 		
 		Query q = _queryCreator.buildQuery();

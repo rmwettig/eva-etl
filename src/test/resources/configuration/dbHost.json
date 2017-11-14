@@ -1,17 +1,17 @@
 {
-	"databases": {
+	"export": {
 		"sources": [
 			{
-				"name":"database1",
+				"db":"database1",
 				"views" : [
-					{"table1":{}}
+					{"name": "table1"}
 				]
 			},
 			{
-				"name":"database2",
+				"db":"database2",
 				"views" : [
-					{"table2":{}},
-					{"table3":{}}
+					{"name": "table2"},
+					{"name": "table3"}
 				]
 			}
 		]

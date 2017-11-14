@@ -106,8 +106,8 @@ public class Main {
 	private static void fetchschema(CommandLine cmd)
 			throws JsonProcessingException, IOException, InvalidConfigurationException {
 		String path = cmd.getOptionValue("fetchschema");
-		DatabaseHost schema = new ConfigurationDatabaseHostLoader().loadFromFile(path);
 		Configuration configuration = Configuration.loadFromJson(path);
+		DatabaseHost schema = new ConfigurationDatabaseHostLoader().createDatabaseHost(configuration);
 		createHeaderLookup(configuration, schema);
 		log.info("Teradata column lookup created.");
 	}
@@ -121,7 +121,7 @@ public class Main {
 		QuerySource qs = new JsonQuerySource(config);
 		Collection<Query> queries = qs.createQueries();
 		List<Filter> filters = new FilterFactory().create(config.getFilters());
-		List<Transformer> transformers = new TransformerFactory().create(config.getAppend());
+		List<Transformer> transformers = new TransformerFactory().create(config.getTransformers());
 		new ETLPipeline().run(config, queries, filters, transformers);
 		sw.stop();
 		log.info("Dumping done in {}.", sw.createReadableDelta());

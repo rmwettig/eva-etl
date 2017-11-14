@@ -73,7 +73,7 @@ public class Configuration {
 	/**
 	 * Configuration for appending new columns
 	 */
-	private List<AppendConfiguration> append;
+	private List<AppendConfiguration> transformers;
 	
 	/**
 	 * Filter settings for cleaning phase

@@ -120,8 +120,8 @@ public class Main {
 		exitIfInvalidCredentials(config);
 		QuerySource qs = new JsonQuerySource(config);
 		Collection<Query> queries = qs.createQueries();
-		List<Filter> filters = new FilterFactory().create(config.getFilterConfiguration());
-		List<Transformer> transformers = new TransformerFactory().create(config.getAppenderConfiguration());
+		List<Filter> filters = new FilterFactory().create(config.getFilters());
+		List<Transformer> transformers = new TransformerFactory().create(config.getAppend());
 		new ETLPipeline().run(config, queries, filters, transformers);
 		sw.stop();
 		log.info("Dumping done in {}.", sw.createReadableDelta());

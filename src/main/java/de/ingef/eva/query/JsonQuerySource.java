@@ -28,7 +28,7 @@ public class JsonQuerySource implements QuerySource {
 		QueryCreator queryCreator = new SimpleQueryCreator(schema);
 		queryCreator.setAliasFactory(new Alias(120));
 		SqlJsonInterpreter jsonInterpreter = new SqlJsonInterpreter(queryCreator, schema);
-		return jsonInterpreter.interpret(configuration.getDatabases());
+		return jsonInterpreter.interpret(configuration.getExport());
 	}
 
 }

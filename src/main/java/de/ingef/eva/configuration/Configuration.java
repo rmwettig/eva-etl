@@ -65,7 +65,7 @@ public class Configuration {
 	/**
 	 * View export definition
 	 */
-	private ExportConfig databases;
+	private ExportConfig export;
 	/**
 	 * Configuration for decode file creation
 	 */
@@ -73,12 +73,12 @@ public class Configuration {
 	/**
 	 * Configuration for appending new columns
 	 */
-	private List<AppendConfiguration> appenderConfiguration;
+	private List<AppendConfiguration> append;
 	
 	/**
 	 * Filter settings for cleaning phase
 	 */
-	private List<FilterConfig> filterConfiguration;
+	private List<FilterConfig> filters;
 	
 	/**
 	 * Automatically filled.

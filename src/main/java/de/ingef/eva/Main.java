@@ -49,7 +49,7 @@ import de.ingef.eva.etl.Merger;
 import de.ingef.eva.etl.Transformer;
 import de.ingef.eva.etl.TransformerFactory;
 import de.ingef.eva.mapping.ProcessPidDecode;
-import de.ingef.eva.measures.CalculateCharlsonScores;
+import de.ingef.eva.measures.cci.CalculateCharlsonScores;
 import de.ingef.eva.query.JsonQuerySource;
 import de.ingef.eva.query.Query;
 import de.ingef.eva.query.QuerySource;
@@ -100,7 +100,8 @@ public class Main {
 	private static void charlsonscores(CommandLine cmd)
 			throws JsonProcessingException, IOException, InvalidConfigurationException {
 		Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("charlsonscores"));
-		CalculateCharlsonScores.calculate(configuration, null);
+		exitIfInvalidCredentials(configuration);
+		CalculateCharlsonScores.calculate(configuration);
 	}
 
 	private static void fetchschema(CommandLine cmd)

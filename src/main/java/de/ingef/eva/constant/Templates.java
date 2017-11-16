@@ -25,4 +25,62 @@ public final class Templates {
 		public static final String FDB_STATISTICS_BY_TABLE = "select a.bezugsjahr, a.quarter, count(*) from (select a.*, case when substr(cast(a.bezugsjahr as char(8)), 5) >='0101' and substr(cast(a.bezugsjahr as char(8)), 5) <= '0331' then 1 when substr(cast(a.bezugsjahr as char(8)), 5) >='0401' and substr(cast(a.bezugsjahr as char(8)), 5) <= '0630' then 2 when substr(cast(a.bezugsjahr as char(8)), 5) >='0701' and substr(cast(a.bezugsjahr as char(8)), 5) <= '0930' then 3 when substr(cast(a.bezugsjahr as char(8)), 5) >='1001' and substr(cast(a.bezugsjahr as char(8)), 5) <= '1231' then 4 end as quarter from acc_fdb.AVK_FDB_T_${tableSuffix} a) a group by a.bezugsjahr, a.quarter order by a.bezugsjahr, a.quarter asc;";
 		public static final String FDB_OUTPATIENT_DATA_BY_KV_QUERY = "select a.bezugsjahr, a.behandl_quartal, a.kv, b.kv_name, count(*) from acc_fdb.AVK_FDB_T_Arzt_Fall a inner join acc_adb.av_lu_kv b on a.kv = b.kv and a.kv <> '' group by a.bezugsjahr, a.behandl_quartal, a.kv, b.kv_name order by a.bezugsjahr, a.behandl_quartal asc";
 	}
+	
+	public final class CCI {
+		public static final String CCI_PATTERN_TABLE = "etl_icdpatterns";
+		
+		public static final String CREATE_CCI_ICD_PATTERN_TABLE = "create table %s." + CCI_PATTERN_TABLE + " " +
+				"(icd_code varchar(30), "+
+				"disease_class varchar(200), " +
+				"cci_weight INT);";
+		public static final String SELECT_ADB_ARZT_DIAG_WEIGHTS = "select a.pid, a.behandl_quartal, a.bezugsjahr, a.icd_code, b.disease_class, b.cci_weight, a.h2ik "+
+				"from acc_adb.avk_adb_t_arzt_diagnose a "+
+				"join %s." + CCI_PATTERN_TABLE + " b "+
+				"on a.icd_code like b.icd_code "+
+				"where a.diagnosesicherheit='G' and "+
+				"a.h2ik in %s and "+
+				"((a.bezugsjahr = %d and a.behandl_quartal >= %d) or "+
+				"(a.bezugsjahr = %d and a.behandl_quartal <= %d));"; 
+		public static final String SELECT_ADB_KH_DIAG_WEIGHTS = "select a.pid, "+
+				"case "+
+				"when extract(month from a.entlassungsdatum) in ('01', '02', '03') then 1 "+
+				"when extract(month from a.entlassungsdatum) in ('04', '05', '06') then 2 "+
+				"when extract(month from a.entlassungsdatum) in ('07', '08', '09') then 3 "+
+				"when extract(month from a.entlassungsdatum) in ('10', '11', '12') then 4 "+
+				"end as behandl_quartal, "+
+				" a.bezugsjahr, a.icd_code, b.disease_class, b.cci_weight, a.h2ik "+
+				"from acc_adb.avk_adb_t_kh_diagnose a "+
+				"join %s." + CCI_PATTERN_TABLE + " b "+
+				"on a.icd_code like b.icd_code "+
+				"where a.h2ik in %s and "+
+				"((a.bezugsjahr = %d and behandl_quartal >= %d) or "+
+				"(a.bezugsjahr = %d and behandl_quartal <= %d));";
+		
+		public static final String SELECT_FDB_ARZT_DIAG_WEIGHTS = "select a.pid, a.behandl_quartal, a.bezugsjahr, a.icd_code, b.disease_class, b.cci_weight "+
+				"from acc_fdb.avk_fdb_t_arzt_diagnose a "+
+				"join %s." + CCI_PATTERN_TABLE + " b "+
+				"on a.icd_code like b.icd_code "+
+				"where flag_%s=1 and "+
+				"((a.bezugsjahr = %d and a.behandl_quartal >= %d) or "+
+				"(a.bezugsjahr = %d and a.behandl_quartal <= %d))";
+		
+		public static final String SELECT_FDB_KH_DIAG_WEIGHTS = "select a.pid, "+
+				"case "+
+				"when extract(month from a.entlassungsdatum) in ('01', '02', '03') then 1 "+
+				"when extract(month from a.entlassungsdatum) in ('04', '05', '06') then 2 "+
+				"when extract(month from a.entlassungsdatum) in ('07', '08', '09') then 3 "+
+				"when extract(month from a.entlassungsdatum) in ('10', '11', '12') then 4 "+
+				"end as behandl_quartal, "+
+				"a.bezugsjahr, a.icd_code, b.disease_class, b.cci_weight"+
+				"from acc_fdb.avk_fdb_t_kh_diagnose a "+
+				"join %s." + CCI_PATTERN_TABLE + " b "+
+				"on a.icd_code like b.icd_code "+
+				"where flag_%s = 1 and "+
+				"((a.bezugsjahr = %d and behandl_quartal >= %d) or "+
+				"(a.bezugsjahr = %d and behandl_quartal <= %d));";
+		
+		public static final String INSERT_CCI_ICD_PATTERNS = "insert into %s." + CCI_PATTERN_TABLE + " values ('%s', '%s', %d);";
+		public static final String DELETE_CCI_ICD_PATTERNS = "drop table %s." + CCI_PATTERN_TABLE + ";";
+
+	}
 }

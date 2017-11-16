@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.ingef.eva.configuration.append.AppendConfiguration;
+import de.ingef.eva.configuration.cci.CCIConfig;
 import de.ingef.eva.configuration.decoding.DecodingConfig;
 import de.ingef.eva.configuration.export.ExportConfig;
 import de.ingef.eva.error.InvalidConfigurationException;
@@ -79,6 +80,8 @@ public class Configuration {
 	 * Filter settings for cleaning phase
 	 */
 	private List<FilterConfig> filters;
+	
+	private CCIConfig cci;
 	
 	/**
 	 * Automatically filled.

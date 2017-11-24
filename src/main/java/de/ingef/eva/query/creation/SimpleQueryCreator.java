@@ -169,23 +169,7 @@ public class SimpleQueryCreator implements QueryCreator {
 		if (_currentGroup != null)
 			_currentGroup.addTerm(whereClause);
 	}
-	
-	/**
-	 * Creates a where clause term that compares two columns
-	 * @param leftTable main table specified in 'from' clause
-	 * @param leftColumn main table column to be compared
-	 * @param rightTable subquery table
-	 * @param rightColumn subquery table column
-	 * @param operator comparison operator
-	 */
-	@Override
-	public void addWhere(String leftTable, String leftColumn, String rightTable, String rightColumn, String operator, String type) {
-		String withAlias = "%s.%s";
-		String noAlias = "%s" + withAlias;
- 
 		
-	}
-	
 	@Override
 	public void startOrGroup() {
 		_currentGroup = new OrGroup();

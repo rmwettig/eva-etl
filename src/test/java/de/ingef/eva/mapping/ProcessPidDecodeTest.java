@@ -20,7 +20,6 @@ import de.ingef.eva.data.RowElement;
 import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.error.DataTableOperationException;
-import de.ingef.eva.error.InvalidConfigurationException;
 
 
 public class ProcessPidDecodeTest {
@@ -136,7 +135,7 @@ public class ProcessPidDecodeTest {
 	}
 	
 	@Test
-	public void removeRowsWithEntriesAlreadySeen() throws DataTableOperationException, JsonProcessingException, IOException, InvalidConfigurationException {
+	public void removeRowsWithEntriesAlreadySeen() throws DataTableOperationException, JsonProcessingException, IOException {
 		Configuration config = Configuration.loadFromJson("src/test/resources/configuration/decode/config.json"); 
 		DataTable cleaned = new ProcessPidDecode(config).process(unfilteredPids, unwantedPids);
 		assertTrue(cleaned.open());

@@ -10,7 +10,6 @@ import de.ingef.eva.query.creation.QueryCreator;
 import de.ingef.eva.query.creation.SimpleQueryCreator;
 import de.ingef.eva.utility.Alias;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
 
 /**
  * Creates sql query strings
@@ -18,7 +17,6 @@ import lombok.extern.log4j.Log4j2;
  *
  */
 @RequiredArgsConstructor
-@Log4j2
 public class JsonQuerySource implements QuerySource {
 	private final Configuration configuration;
 	

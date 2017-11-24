@@ -14,6 +14,7 @@ import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.datasource.inmemory.InMemoryDataTable;
 import de.ingef.eva.error.DataTableOperationException;
+import de.ingef.eva.measures.statistics.StatisticsDataProcessor;
 
 public class StatisticsDataProcessorTest {
 

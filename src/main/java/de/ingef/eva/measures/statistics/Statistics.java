@@ -1,4 +1,4 @@
-package de.ingef.eva.measures;
+package de.ingef.eva.measures.statistics;
 
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.data.DataTable;

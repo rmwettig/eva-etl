@@ -93,7 +93,7 @@ public class Merger {
 	public void run(Configuration config) {		
 		try {
 			ExecutorService threadPool = Helper.createThreadPool(config.getThreadCount(), true);
-			List<Path> datasetLeaves = readDatasetDirectories(config.getOutputDirectory());
+			List<Path> datasetLeaves = readDatasetDirectories(config.getCacheDirectory());
 			List<Dataset> datasets = findDatasets(datasetLeaves);
 			createMergeTasks(config.getOutputDirectory(), datasets, threadPool);
 			threadPool.shutdown();
@@ -156,7 +156,7 @@ public class Merger {
 	}
 
 	private Path createMergeDirectories(String rootDirectory, Dataset ds) throws IOException {
-		Path output = Paths.get(rootDirectory, OutputDirectory.PRODUCTION, ds.getDb(), ds.getDatasetName());
+		Path output = Paths.get(rootDirectory, ds.getDb(), ds.getDatasetName());
 		if(!Files.exists(output))
 			Files.createDirectories(output);
 		return output;
@@ -169,7 +169,7 @@ public class Merger {
 	 * @throws IOException
 	 */
 	private List<Path> readDatasetDirectories(String outputDirectory) throws IOException {
-		Path root = Paths.get(outputDirectory, OutputDirectory.RAW);
+		Path root = Paths.get(outputDirectory);
 		DatasetLeafDirectory leafFinder = new DatasetLeafDirectory();
 		Files.walkFileTree(root, leafFinder);
 		return leafFinder.getLeafDirectories();
@@ -203,8 +203,8 @@ public class Merger {
 				List<Path> files = new ArrayList<>();
 				files.add(datasetDirectory.resolve(fileName));
 				Dataset ds = new Dataset(
+						datasetDirectory.getName(1).toString(),
 						datasetDirectory.getName(2).toString(),
-						datasetDirectory.getName(3).toString(),
 						commonName,
 						files);
 				commonName2dataset.put(commonName, ds);

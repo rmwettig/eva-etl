@@ -1,4 +1,4 @@
-package de.ingef.eva.dataprocessor;
+package de.ingef.eva.measures.statistics;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;

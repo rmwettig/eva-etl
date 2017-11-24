@@ -1,4 +1,4 @@
-package de.ingef.eva.dataprocessor;
+package de.ingef.eva.measures.statistics;
 
 import static j2html.TagCreator.caption;
 import static j2html.TagCreator.head;

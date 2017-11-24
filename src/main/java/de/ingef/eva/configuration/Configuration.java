@@ -12,7 +12,6 @@ import de.ingef.eva.configuration.append.AppendConfiguration;
 import de.ingef.eva.configuration.cci.CCIConfig;
 import de.ingef.eva.configuration.decoding.DecodingConfig;
 import de.ingef.eva.configuration.export.ExportConfig;
-import de.ingef.eva.error.InvalidConfigurationException;
 import de.ingef.eva.etl.FilterConfig;
 import lombok.Getter;
 
@@ -89,7 +88,7 @@ public class Configuration {
 	@JsonIgnore
 	private String fullConnectionUrl;
 	
-	public static Configuration loadFromJson(String path) throws JsonProcessingException, IOException, InvalidConfigurationException {
+	public static Configuration loadFromJson(String path) throws JsonProcessingException, IOException {
 		Configuration config =  new ObjectMapper().readValue(new File(path), Configuration.class);
 				
 		config.fullConnectionUrl = config.getUrl() + config.getHost() + "/" + config.getParameters();

@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.configuration.cci.CCISource;
-import de.ingef.eva.constant.OutputDirectory;
 import de.ingef.eva.constant.Templates;
 import de.ingef.eva.utility.CsvWriter;
 import de.ingef.eva.utility.Helper;
@@ -124,7 +123,7 @@ public final class CalculateCharlsonScores {
 					() -> {
 						try {
 							String dbName = query.getDb().split("_")[1];
-							Path filePath = Paths.get(config.getOutputDirectory(), OutputDirectory.RAW, dbName, query.getDataset());
+							Path filePath = Paths.get(config.getCacheDirectory(), dbName, query.getDataset());
 							if(Files.notExists(filePath)) {
 								Files.createDirectories(filePath);
 							}

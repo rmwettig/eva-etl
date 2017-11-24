@@ -35,13 +35,9 @@ import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
 import de.ingef.eva.database.Table;
-import de.ingef.eva.dataprocessor.DetailStatisticsDataProcessor;
-import de.ingef.eva.dataprocessor.HTMLTableWriter;
-import de.ingef.eva.dataprocessor.StatisticsDataProcessor;
 import de.ingef.eva.datasource.DataProcessor;
 import de.ingef.eva.datasource.DataSource;
 import de.ingef.eva.datasource.sql.SqlDataSource;
-import de.ingef.eva.error.InvalidConfigurationException;
 import de.ingef.eva.etl.ETLPipeline;
 import de.ingef.eva.etl.Filter;
 import de.ingef.eva.etl.FilterFactory;
@@ -50,6 +46,9 @@ import de.ingef.eva.etl.Transformer;
 import de.ingef.eva.etl.TransformerFactory;
 import de.ingef.eva.mapping.ProcessPidDecode;
 import de.ingef.eva.measures.cci.CalculateCharlsonScores;
+import de.ingef.eva.measures.statistics.DetailStatisticsDataProcessor;
+import de.ingef.eva.measures.statistics.HTMLTableWriter;
+import de.ingef.eva.measures.statistics.StatisticsDataProcessor;
 import de.ingef.eva.query.JsonQuerySource;
 import de.ingef.eva.query.Query;
 import de.ingef.eva.query.QuerySource;
@@ -80,15 +79,14 @@ public class Main {
 				merge(cmd);
 			} else
 				new HelpFormatter().printHelp("java -jar eva-data.jar", options);
-		} catch (ParseException | IOException | InvalidConfigurationException e) {
+		} catch (ParseException | IOException e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {
 			log.error("Cleaning was interrupted.\n\tReason: {}. StackTrace:", e.getMessage(), e);
 		}
 	}
 
-	private static void merge(CommandLine cmd)
-			throws JsonProcessingException, IOException, InvalidConfigurationException, InterruptedException {
+	private static void merge(CommandLine cmd) throws JsonProcessingException, IOException, InterruptedException {
 		Stopwatch sw = new Stopwatch();
 		sw.start();
 		Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("merge"));
@@ -97,15 +95,13 @@ public class Main {
 		log.info("Merging done in {}.", sw.createReadableDelta());
 	}
 
-	private static void charlsonscores(CommandLine cmd)
-			throws JsonProcessingException, IOException, InvalidConfigurationException {
+	private static void charlsonscores(CommandLine cmd) throws JsonProcessingException, IOException {
 		Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("charlsonscores"));
 		exitIfInvalidCredentials(configuration);
 		CalculateCharlsonScores.calculate(configuration);
 	}
 
-	private static void fetchschema(CommandLine cmd)
-			throws JsonProcessingException, IOException, InvalidConfigurationException {
+	private static void fetchschema(CommandLine cmd) throws JsonProcessingException, IOException {
 		String path = cmd.getOptionValue("fetchschema");
 		Configuration configuration = Configuration.loadFromJson(path);
 		DatabaseHost schema = new ConfigurationDatabaseHostLoader().createDatabaseHost(configuration);
@@ -113,8 +109,7 @@ public class Main {
 		log.info("Teradata column lookup created.");
 	}
 
-	private static void export(CommandLine cmd)
-			throws JsonProcessingException, IOException, InvalidConfigurationException {
+	private static void export(CommandLine cmd) throws JsonProcessingException, IOException {
 		Stopwatch sw = new Stopwatch();
 		sw.start();
 		Configuration config = Configuration.loadFromJson(cmd.getOptionValue("dump"));

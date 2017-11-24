@@ -188,14 +188,12 @@ public class Main {
 	private static Options createCliOptions() {
 		Options options = new Options();
 		options.addOption(Option.builder("fetchschema").hasArg().argName("config.json").desc("create the database schema as a file").build());
-		options.addOption(Option.builder("map").hasArg().argName("config.json").desc("map files to different ids").build());
 		options.addOption(Option.builder("charlsonscores").hasArg().argName("config.json").desc("calculate Charlson scores").build());
 		options.addOption(Option.builder("makedecode").hasArg().argName("config.json").desc("create PID mappings").build());
 		options.addOption(Option.builder("stats").hasArg().argName("config.json").desc("create database content statistics").build());
 		options.addOption(Option.builder("dump").hasArg().argName("config.json").desc("run FastExport scripts").build());
 		options.addOption(Option.builder("merge").hasArg().argName("config.json").desc("merge clean data slices").build());
-		options.addOption(Option.builder("validate").hasArgs().argName("config.json> ADB FDB").desc("performs row length validation of generated files. Datasets can be specified.").build());
-		options.addOption(Option.builder("separate").hasArg().argName("config.json").desc("creates distinct ADB datasets").build());
+
 		return options;
 	}
 	

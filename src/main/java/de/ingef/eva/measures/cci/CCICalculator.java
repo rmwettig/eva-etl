@@ -50,7 +50,8 @@ public class CCICalculator {
 		for(int quarterIndex = 0; quarterIndex < 4; quarterIndex++) {
 			scores.add(calculateQuarterScore(data, q.getYear(), q.getQuarter()));
 			//do not increase quarter after the last quarter was processed
-			if(quarterIndex < 3) q.increment();
+			if(quarterIndex < 3)
+				q = q.increment();
 			//abort calculation if next quarter is in future
 			if(q.getYear() > currentYear) break;
 		}

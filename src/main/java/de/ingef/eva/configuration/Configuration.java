@@ -12,6 +12,7 @@ import de.ingef.eva.configuration.append.AppendConfiguration;
 import de.ingef.eva.configuration.cci.CCIConfig;
 import de.ingef.eva.configuration.decoding.DecodingConfig;
 import de.ingef.eva.configuration.export.ExportConfig;
+import de.ingef.eva.configuration.statistics.StatisticsConfig;
 import de.ingef.eva.etl.FilterConfig;
 import lombok.Getter;
 
@@ -81,6 +82,8 @@ public class Configuration {
 	private List<FilterConfig> filters;
 	
 	private CCIConfig cci;
+	
+	private List<StatisticsConfig> statistics;
 	
 	/**
 	 * Automatically filled.

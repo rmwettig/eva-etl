@@ -14,16 +14,213 @@ public final class Templates {
 	}
 	
 	public final class Statistics {		
-		public static final String ADB_STATISTICS_FOR_HEMI_HIMI = "SELECT Bezugsjahr, CASE WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN ('01','02','03') THEN 1 WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN ('04','05','06') THEN 2 WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN ('07','08','09') THEN 3 WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN ('10','11','12') THEN 4 END AS Quartal, COUNT(DISTINCT EFN_ID) AS Anz_HeMi_VO FROM ACC_ADB.AVK_ADB_T_${tableSuffix} WHERE h2ik IN (${h2ik}) and Bezugsjahr IN (2010,2011,2012,2013,2014,2015,2016,2017) GROUP BY Bezugsjahr, Quartal ORDER BY Bezugsjahr, Quartal;";
-		public static final String ADB_STATISTICS_FOR_KH_FALL = "SELECT Bezugsjahr, Q, SUM(Anz_KH_FAELLE) AS Anz_KH_FAELLE FROM ( SELECT Bezugsjahr, CASE WHEN EXTRACT(MONTH FROM Entlassungsdatum) IN (1,2,3) THEN 1 WHEN EXTRACT(MONTH FROM Entlassungsdatum) IN (4,5,6) THEN 2 WHEN EXTRACT(MONTH FROM Entlassungsdatum) IN (7,8,9) THEN 3 WHEN EXTRACT(MONTH FROM Entlassungsdatum) IN (10,11,12) THEN 4 END AS Q, COUNT(DISTINCT kh_fall_id) AS Anz_KH_FAELLE FROM ACC_ADB.AVK_ADB_T_KH_FALL t1 WHERE h2ik IN (${h2ik}) and Bezugsjahr IN (2010, 2011, 2012,2013,2014,2015,2016,2017) GROUP BY Bezugsjahr, Q ) AS VO GROUP BY Bezugsjahr, Q ORDER BY Bezugsjahr, Q;";
-		public static final String ADB_STATISTICS_FOR_ARZT_FALL = "SELECT Bezugsjahr, Behandl_Quartal, COUNT(DISTINCT EFN_ID) AS Anz_EFN FROM ACC_ADB.AVK_ADB_T_ARZT_FALL AF WHERE h2ik in (${h2ik}) and Bezugsjahr IN (2010,2011,2012,2013,2014,2015,2016,2017) AND Vertrags_ID='KV' GROUP BY 1,2 ORDER BY 1,2;";
-		public static final String ADB_STATISTICS_FOR_AU_FALL = "SELECT Bezugsjahr, Quartal, SUM(ANZ_AU) AS Anz_AU_Faelle FROM ( SELECT Bezugsjahr, CASE WHEN EXTRACT(MONTH FROM AU_BEGINN) IN ('01','02','03') THEN 1 WHEN EXTRACT(MONTH FROM AU_BEGINN) IN ('04','05','06') THEN 2 WHEN EXTRACT(MONTH FROM AU_BEGINN) IN ('07','08','09') THEN 3 WHEN EXTRACT(MONTH FROM AU_BEGINN) IN ('10','11','12') THEN 4 END as Quartal, COUNT(DISTINCT PID||LANR) AS Anz_AU FROM ACC_ADB.AVK_ADB_T_AU_Fall WHERE h2ik IN (${h2ik}) and Bezugsjahr IN (2010,2011,2012,2013,2014,2015,2016,2017) GROUP BY Bezugsjahr, Quartal ) AS AU GROUP BY Bezugsjahr, Quartal ORDER BY Bezugsjahr, Quartal;";
-		public static final String ADB_STATISTICS_FOR_AM_EVO = "SELECT Bezugsjahr, Q, SUM(ANZ_VO) AS Anz_AM_VO FROM(SELECT Bezugsjahr, Verordnungsdatum, CASE WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN (1,2,3) THEN 1 WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN (4,5,6) THEN 2 WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN (7,8,9) THEN 3 WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN (10,11,12) THEN 4 END AS Q, COUNT(DISTINCT PID||PZN||LANR) AS Anz_VO FROM ACC_ADB.AVK_ADB_T_AM_EVO WHERE h2ik IN (${h2ik}) and Bezugsjahr IN (2010,2011, 2012,2013,2014,2015,2016,2017) GROUP BY Bezugsjahr, Verordnungsdatum, Q) AS VO GROUP BY Bezugsjahr, Q ORDER BY Bezugsjahr, Q;";
+		public static final String ADB_STATISTICS_FOR_HEMI_HIMI = "SELECT Bezugsjahr, " +
+					"CASE WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN ('01','02','03') THEN 1 " +
+					"WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN ('04','05','06') THEN 2 " +
+					"WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN ('07','08','09') THEN 3 " + 
+					"WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN ('10','11','12') THEN 4 END AS Quartal, " +
+					"COUNT(DISTINCT EFN_ID) AS Anz_HeMi_VO " +
+				"FROM ACC_ADB.AVK_ADB_T_${tableSuffix} " +
+				"WHERE h2ik IN (${h2iks}) and " + 
+					"Bezugsjahr IN (${years}) " +
+				"GROUP BY Bezugsjahr, Quartal " +
+				"ORDER BY Bezugsjahr, Quartal;";
+		public static final String ADB_STATISTICS_FOR_KH_FALL = "SELECT Bezugsjahr, " + 
+					"Q, " +
+					"SUM(Anz_KH_FAELLE) AS Anz_KH_FAELLE " + 
+				"FROM ( " +
+					"SELECT Bezugsjahr, " +
+						"CASE WHEN EXTRACT(MONTH FROM Entlassungsdatum) IN (1,2,3) THEN 1 " +
+						"WHEN EXTRACT(MONTH FROM Entlassungsdatum) IN (4,5,6) THEN 2 " +
+						"WHEN EXTRACT(MONTH FROM Entlassungsdatum) IN (7,8,9) THEN 3 " +
+						"WHEN EXTRACT(MONTH FROM Entlassungsdatum) IN (10,11,12) THEN 4 " +
+						"END AS Q, " +
+						"COUNT(DISTINCT kh_fall_id) AS Anz_KH_FAELLE " +
+					"FROM ACC_ADB.AVK_ADB_T_KH_FALL t1 " + 
+					"WHERE h2ik IN (${h2iks}) and " +
+						"Bezugsjahr IN (${years}) " + 
+					"GROUP BY Bezugsjahr, Q ) AS VO " +
+				"GROUP BY Bezugsjahr, Q " +
+				"ORDER BY Bezugsjahr, Q;";
+		public static final String ADB_STATISTICS_FOR_ARZT_FALL = "SELECT Bezugsjahr, " +
+					"Behandl_Quartal, " +
+					"COUNT(DISTINCT EFN_ID) AS Anz_EFN " +
+				"FROM ACC_ADB.AVK_ADB_T_ARZT_FALL AF " + 
+				"WHERE h2ik in (${h2iks}) and " +
+					"Bezugsjahr IN (${years}) AND " +
+					"Vertrags_ID='KV' " +
+				"GROUP BY 1,2" +
+				"ORDER BY 1,2;";
+		public static final String ADB_STATISTICS_FOR_AU_FALL = "SELECT Bezugsjahr, "
+				+ "Quartal, "
+				+ "SUM(ANZ_AU) AS Anz_AU_Faelle "
+				+ "FROM ( "
+					+ "SELECT Bezugsjahr, "
+						+ "CASE WHEN EXTRACT(MONTH FROM AU_BEGINN) IN ('01','02','03') THEN 1 "
+						+ "WHEN EXTRACT(MONTH FROM AU_BEGINN) IN ('04','05','06') THEN 2 "
+						+ "WHEN EXTRACT(MONTH FROM AU_BEGINN) IN ('07','08','09') THEN 3 "
+						+ "WHEN EXTRACT(MONTH FROM AU_BEGINN) IN ('10','11','12') THEN 4 END as Quartal, "
+						+ "COUNT(DISTINCT PID||LANR) AS Anz_AU "
+					+ "FROM ACC_ADB.AVK_ADB_T_AU_Fall "
+					+ "WHERE h2ik IN (${h2iks}) and "
+						+ "Bezugsjahr IN (${years}) "
+					+ "GROUP BY Bezugsjahr, Quartal ) AS AU "
+				+ "GROUP BY Bezugsjahr, Quartal "
+				+ "ORDER BY Bezugsjahr, Quartal;";
+		public static final String ADB_STATISTICS_FOR_AM_EVO = "SELECT Bezugsjahr, "
+				+ "Q, "
+				+ "SUM(ANZ_VO) AS Anz_AM_VO "
+				+ "FROM ("
+					+ "SELECT Bezugsjahr, "
+						+ "Verordnungsdatum, "
+						+ "CASE WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN (1,2,3) THEN 1 "
+						+ "WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN (4,5,6) THEN 2 "
+						+ "WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN (7,8,9) THEN 3 "
+						+ "WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN (10,11,12) THEN 4 END AS Q, "
+						+ "COUNT(DISTINCT PID||PZN||LANR) AS Anz_VO "
+					+ "FROM ACC_ADB.AVK_ADB_T_AM_EVO "
+					+ "WHERE h2ik IN (${h2iks}) and "
+						+ "Bezugsjahr IN (${years}) "
+					+ "GROUP BY Bezugsjahr, "
+						+ "Verordnungsdatum, Q) AS VO "
+				+ "GROUP BY Bezugsjahr, Q "
+				+ "ORDER BY Bezugsjahr, Q;";
 		
-		public static final String ADB_OUTPATIENT_DATA_BY_KV_QUERY = "select coalesce(a.bezugsjahr, 0) as bezugsjahr, coalesce(a.behandl_quartal, 0) as quartal, lukv.kv, lukv.kv_name, coalesce(a.anz_efn, 0) as anz_efn from (select af.bezugsjahr, af.behandl_quartal, af.kv, count(distinct af.efn_id) as anz_efn from acc_adb.avk_adb_t_arzt_fall af, (select top 1 a.bezugsjahr, a.behandl_quartal, a.bezugsjahr - 1 as prevYear from acc_adb.avk_adb_t_arzt_fall a where a.h2ik IN (${h2ik}) and a.vertrags_id = 'KV' order by a.bezugsjahr desc , a.behandl_quartal desc) latest where af.h2ik IN (${h2ik}) and (af.bezugsjahr = latest.bezugsjahr and af.behandl_quartal = latest.behandl_quartal or af.bezugsjahr = latest.prevYear and af.behandl_quartal = latest.behandl_quartal) and af.vertrags_id='kv' group by 1,2,3 ) a right join acc_adb.av_lu_kv lukv on lukv.kv = a.kv where lukv.km6_id <> '' and (lukv.hinweis is null or lukv.hinweis like '%ab%') order by 3;";
+		public static final String ADB_OUTPATIENT_DATA_BY_KV_QUERY = "select coalesce(a.bezugsjahr, 0) as bezugsjahr, "
+				+ "coalesce(a.behandl_quartal, 0) as quartal, "
+				+ "lukv.kv, "
+				+ "lukv.kv_name, "
+				+ "coalesce(a.anz_efn, 0) as anz_efn "
+				+ "from ("
+					+ "select af.bezugsjahr, "
+						+ "af.behandl_quartal, "
+						+ "af.kv, "
+						+ "count(distinct af.efn_id) as anz_efn "
+					+ "from acc_adb.avk_adb_t_arzt_fall af, "
+						+ "(select top 1 a.bezugsjahr, "
+						+ "a.behandl_quartal, "
+						+ "a.bezugsjahr - 1 as prevYear "
+						+ "from acc_adb.avk_adb_t_arzt_fall a "
+						+ "where a.h2ik IN (${h2iks}) and "
+							+ "a.vertrags_id = 'KV' "
+						+ "order by a.bezugsjahr desc, "
+							+ "a.behandl_quartal desc) latest "
+						+ "where af.h2ik IN (${h2iks}) and "
+							+ "(af.bezugsjahr = latest.bezugsjahr and af.behandl_quartal = latest.behandl_quartal or "
+							+ "af.bezugsjahr = latest.prevYear and af.behandl_quartal = latest.behandl_quartal) and "
+							+ "af.vertrags_id='kv' "
+						+ "group by 1,2,3 ) a "
+				+ "right join acc_adb.av_lu_kv lukv "
+				+ "on lukv.kv = a.kv "
+				+ "where lukv.km6_id <> '' and "
+					+ "(lukv.hinweis is null or lukv.hinweis like '%ab%') "
+				+ "order by 3;";
 		
-		public static final String FDB_STATISTICS_BY_TABLE = "select a.bezugsjahr, a.quarter, count(*) from (select a.*, case when substr(cast(a.bezugsjahr as char(8)), 5) >='0101' and substr(cast(a.bezugsjahr as char(8)), 5) <= '0331' then 1 when substr(cast(a.bezugsjahr as char(8)), 5) >='0401' and substr(cast(a.bezugsjahr as char(8)), 5) <= '0630' then 2 when substr(cast(a.bezugsjahr as char(8)), 5) >='0701' and substr(cast(a.bezugsjahr as char(8)), 5) <= '0930' then 3 when substr(cast(a.bezugsjahr as char(8)), 5) >='1001' and substr(cast(a.bezugsjahr as char(8)), 5) <= '1231' then 4 end as quarter from acc_fdb.AVK_FDB_T_${tableSuffix} a) a group by a.bezugsjahr, a.quarter order by a.bezugsjahr, a.quarter asc;";
-		public static final String FDB_OUTPATIENT_DATA_BY_KV_QUERY = "select a.bezugsjahr, a.behandl_quartal, a.kv, b.kv_name, count(*) from acc_fdb.AVK_FDB_T_Arzt_Fall a inner join acc_adb.av_lu_kv b on a.kv = b.kv and a.kv <> '' group by a.bezugsjahr, a.behandl_quartal, a.kv, b.kv_name order by a.bezugsjahr, a.behandl_quartal asc";
+		public static final String FDB_STATISTICS_FOR_HEMI_HIMI = "SELECT Bezugsjahr, " +
+				"CASE WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN ('01','02','03') THEN 1 " +
+				"WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN ('04','05','06') THEN 2 " +
+				"WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN ('07','08','09') THEN 3 " + 
+				"WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN ('10','11','12') THEN 4 END AS Quartal, " +
+				"COUNT(DISTINCT EFN_ID) AS Anz_HeMi_VO " +
+			"FROM ACC_FDB.AVK_FDB_T_${tableSuffix} " +
+			"WHERE flag_${flag} = 1 and " + 
+				"Bezugsjahr IN (${years}) " +
+			"GROUP BY Bezugsjahr, Quartal " +
+			"ORDER BY Bezugsjahr, Quartal;";
+		
+		public static final String FDB_STATISTICS_FOR_KH_FALL = "SELECT Bezugsjahr, " + 
+				"Q, " +
+				"SUM(Anz_KH_FAELLE) AS Anz_KH_FAELLE " + 
+			"FROM ( " +
+				"SELECT Bezugsjahr, " +
+					"CASE WHEN EXTRACT(MONTH FROM Entlassungsdatum) IN (1,2,3) THEN 1 " +
+					"WHEN EXTRACT(MONTH FROM Entlassungsdatum) IN (4,5,6) THEN 2 " +
+					"WHEN EXTRACT(MONTH FROM Entlassungsdatum) IN (7,8,9) THEN 3 " +
+					"WHEN EXTRACT(MONTH FROM Entlassungsdatum) IN (10,11,12) THEN 4 " +
+					"END AS Q, " +
+					"COUNT(DISTINCT kh_fall_id) AS Anz_KH_FAELLE " +
+				"FROM ACC_FDB.AVK_FDB_T_KH_FALL t1 " + 
+				"WHERE flag_${flag} = 1 and " +
+					"Bezugsjahr IN (${years}) " + 
+				"GROUP BY Bezugsjahr, Q ) AS VO " +
+			"GROUP BY Bezugsjahr, Q " +
+			"ORDER BY Bezugsjahr, Q;";
+		
+		public static final String FDB_STATISTICS_FOR_ARZT_FALL = "SELECT Bezugsjahr, " +
+				"Behandl_Quartal, " +
+				"COUNT(DISTINCT EFN_ID) AS Anz_EFN " +
+			"FROM ACC_FDB.AVK_FDB_T_ARZT_FALL AF " + 
+			"WHERE flag_${flag} = 1 and " +
+				"Bezugsjahr IN (${years}) AND " +
+				"Vertrags_ID='KV' " +
+			"GROUP BY 1,2" +
+			"ORDER BY 1,2;";
+		
+		public static final String FDB_STATISTICS_FOR_AU_FALL = "SELECT Bezugsjahr, "
+				+ "Quartal, "
+				+ "SUM(ANZ_AU) AS Anz_AU_Faelle "
+				+ "FROM ( "
+					+ "SELECT Bezugsjahr, "
+						+ "CASE WHEN EXTRACT(MONTH FROM AU_BEGINN) IN ('01','02','03') THEN 1 "
+						+ "WHEN EXTRACT(MONTH FROM AU_BEGINN) IN ('04','05','06') THEN 2 "
+						+ "WHEN EXTRACT(MONTH FROM AU_BEGINN) IN ('07','08','09') THEN 3 "
+						+ "WHEN EXTRACT(MONTH FROM AU_BEGINN) IN ('10','11','12') THEN 4 END as Quartal, "
+						+ "COUNT(DISTINCT PID||LANR) AS Anz_AU "
+					+ "FROM ACC_FDB.AVK_FDB_T_AU_Fall "
+					+ "WHERE flag_${flag} = 1 and "
+						+ "Bezugsjahr IN (${years}) "
+					+ "GROUP BY Bezugsjahr, Quartal ) AS AU "
+				+ "GROUP BY Bezugsjahr, Quartal "
+				+ "ORDER BY Bezugsjahr, Quartal;";
+		
+		public static final String FDB_STATISTICS_FOR_AM_EVO = "SELECT Bezugsjahr, "
+				+ "Q, "
+				+ "SUM(ANZ_VO) AS Anz_AM_VO "
+				+ "FROM ("
+					+ "SELECT Bezugsjahr, "
+						+ "Verordnungsdatum, "
+						+ "CASE WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN (1,2,3) THEN 1 "
+						+ "WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN (4,5,6) THEN 2 "
+						+ "WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN (7,8,9) THEN 3 "
+						+ "WHEN EXTRACT(MONTH FROM Verordnungsdatum) IN (10,11,12) THEN 4 END AS Q, "
+						+ "COUNT(DISTINCT PID||PZN||LANR) AS Anz_VO "
+					+ "FROM ACC_FDB.AVK_FDB_T_AM_EVO "
+					+ "WHERE flag_${flag} = 1 and "
+						+ "Bezugsjahr IN (${years}) "
+					+ "GROUP BY Bezugsjahr, "
+						+ "Verordnungsdatum, Q) AS VO "
+				+ "GROUP BY Bezugsjahr, Q "
+				+ "ORDER BY Bezugsjahr, Q;";
+		
+		public static final String FDB_OUTPATIENT_DATA_BY_KV_QUERY = "select coalesce(a.bezugsjahr, 0) as bezugsjahr, "
+				+ "coalesce(a.behandl_quartal, 0) as quartal, "
+				+ "lukv.kv, "
+				+ "lukv.kv_name, "
+				+ "coalesce(a.anz_efn, 0) as anz_efn "
+				+ "from ("
+					+ "select af.bezugsjahr, "
+						+ "af.behandl_quartal, "
+						+ "af.kv, "
+						+ "count(distinct af.efn_id) as anz_efn "
+					+ "from acc_fdb.avk_fdb_t_arzt_fall af, "
+						+ "(select top 1 a.bezugsjahr, "
+						+ "a.behandl_quartal, "
+						+ "a.bezugsjahr - 1 as prevYear "
+						+ "from acc_fdb.avk_fdb_t_arzt_fall a "
+						+ "where a.flag_${flag} = 1 and "
+							+ "a.vertrags_id = 'KV' "
+						+ "order by a.bezugsjahr desc, "
+							+ "a.behandl_quartal desc) latest "
+						+ "where af.flag_${flag} = 1 and "
+							+ "(af.bezugsjahr = latest.bezugsjahr and af.behandl_quartal = latest.behandl_quartal or "
+							+ "af.bezugsjahr = latest.prevYear and af.behandl_quartal = latest.behandl_quartal) and "
+							+ "af.vertrags_id='kv' "
+						+ "group by 1,2,3 ) a "
+				+ "right join acc_adb.av_lu_kv lukv "
+				+ "on lukv.kv = a.kv "
+				+ "where lukv.km6_id <> '' and "
+					+ "(lukv.hinweis is null or lukv.hinweis like '%ab%') "
+				+ "order by 3;";
 	}
 	
 	public final class CCI {

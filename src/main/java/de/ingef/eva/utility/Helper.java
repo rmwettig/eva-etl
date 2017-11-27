@@ -1,6 +1,8 @@
 package de.ingef.eva.utility;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -9,21 +11,22 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public final class Helper {
-	
-	public static void createFolders(String path) {
-		File f = new File(path);
-		if(!f.exists())
-			f.mkdirs();
+		
+	public static void createFolders(Path path) throws IOException {
+		if(Files.notExists(path))
+			Files.createDirectories(path);
 	}
-					
+	
 	/**
 	 * Calculates years which lie between start and end
 	 * @param start
 	 * @param end
 	 * @return
 	 */
+	@Deprecated
 	public static int[] extractYears(int start, int end) {
 		// include start and end year
 		int delta = end - start + 1;
@@ -33,6 +36,13 @@ public final class Helper {
 		}
 		
 		return years;
+	}
+	
+	public static List<Integer> interpolateYears(int start, int end) {
+		return IntStream
+				.range(start, end + 1)
+				.boxed()
+				.collect(Collectors.toList());
 	}
 	
 	public static boolean areCredentialsCorrect(String user, String password, String url) {

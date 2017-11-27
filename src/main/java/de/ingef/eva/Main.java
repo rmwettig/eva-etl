@@ -7,11 +7,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.cli.CommandLine;
@@ -30,7 +27,6 @@ import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.configuration.ConfigurationDatabaseHostLoader;
 import de.ingef.eva.configuration.decoding.DecodingConfig;
 import de.ingef.eva.constant.Templates;
-import de.ingef.eva.data.DataTable;
 import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
@@ -46,9 +42,7 @@ import de.ingef.eva.etl.Transformer;
 import de.ingef.eva.etl.TransformerFactory;
 import de.ingef.eva.mapping.ProcessPidDecode;
 import de.ingef.eva.measures.cci.CalculateCharlsonScores;
-import de.ingef.eva.measures.statistics.DetailStatisticsDataProcessor;
-import de.ingef.eva.measures.statistics.HTMLTableWriter;
-import de.ingef.eva.measures.statistics.StatisticsDataProcessor;
+import de.ingef.eva.measures.statistics.Statistics;
 import de.ingef.eva.query.JsonQuerySource;
 import de.ingef.eva.query.Query;
 import de.ingef.eva.query.QuerySource;
@@ -205,51 +199,6 @@ public class Main {
 	}
 	
 	private static void createDatabaseStatistics(Configuration configuration) {
-		createADBStatistics(configuration);
-	}
-
-	private static void createADBStatistics(Configuration configuration) {
-		String[] tables = new String[]{"AU_Fall", "KH_Fall", "HeMi_EVO", "HiMi_EVO", "Arzt_Fall", "AM_EVO"};
-		Map<String,List<String>> healthInsurances = new HashMap<>(2);
-		healthInsurances.put("Bosch", Arrays.asList("108036123"));
-		healthInsurances.put("Salzgitter", Arrays.asList("101922757", "101931440", "102137985"));
-		for(String hi : healthInsurances.keySet()) {
-			int i = 0;
-			DataTable overview;
-			//+1 because of detail stats
-			DataTable[] stats = new DataTable[tables.length + 1];
-			String iks = Helper.joinIks(healthInsurances.get(hi));
-			for(String table : tables) {
-				String query;
-				switch(table) {
-				case "AU_Fall":
-					query = Templates.Statistics.ADB_STATISTICS_FOR_AU_FALL.replace("${tableSuffix}", table);
-					break;
-				case "KH_Fall":
-					query = Templates.Statistics.ADB_STATISTICS_FOR_KH_FALL.replace("${tableSuffix}", table);
-					break;
-				case "HeMi_EVO":
-				case "HiMi_EVO":
-					query = Templates.Statistics.ADB_STATISTICS_FOR_HEMI_HIMI.replace("${tableSuffix}", table);
-					break;
-				case "Arzt_Fall":
-					query = Templates.Statistics.ADB_STATISTICS_FOR_ARZT_FALL.replace("${tableSuffix}", table);
-					break;
-				case "AM_EVO":
-					query = Templates.Statistics.ADB_STATISTICS_FOR_AM_EVO.replace("${tableSuffix}", table);
-					break;
-				default:
-					continue;
-				}
-				query = query.replace("${h2ik}", iks);
-				//TODO consolidate api. statsDataProcessor can take multiple data sources but htmlWriter processes only oneq
-				DataTable dataTable = new SqlDataSource(query, table, configuration).fetchData();
-				stats[i++] = new StatisticsDataProcessor().process(dataTable);
-			}
-			stats[i] = new DetailStatisticsDataProcessor().process(
-					new SqlDataSource(Templates.Statistics.ADB_OUTPATIENT_DATA_BY_KV_QUERY.replaceAll("\\$\\{h2ik\\}", iks), "ArztFall_details", configuration).fetchData()
-			);
-			new HTMLTableWriter(configuration.getOutputDirectory(), hi + "_stats.html", "Datenstand der Datenbereiche zum elektronischen Datenaustausch der GKV").process(stats);			
-		}
+		new Statistics().createStatistics(configuration);
 	}
 }

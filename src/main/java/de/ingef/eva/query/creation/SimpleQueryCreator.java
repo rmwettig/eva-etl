@@ -201,6 +201,7 @@ public class SimpleQueryCreator implements QueryCreator {
 		_joins.clear();
 		_where.clear();
 		_tableAlias.clear();
+		_joinRightTables.clear();
 		if(_alias != null) _alias.reset();
 	}
 

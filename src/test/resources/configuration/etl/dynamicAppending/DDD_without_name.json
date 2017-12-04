@@ -1,0 +1,44 @@
+{
+	"mode": "DDD",
+	"targetTable": "am_evo",
+	"keyColumn": "pzn",
+	"sources": [
+		{
+			"file": "src/test/resources/data/dynamicAppending/DDD_without_name.csv",
+			"keyColumnIndex": 0,
+			"columns": [
+				{
+					"column": "DDDPK",
+					"index": 1
+				},
+				{
+					"column": "APPFORM",
+					"index": 2
+				},
+				{
+					"column": "ADMISSION_DATE",
+					"index": 3
+				},
+				{
+					"column": "RETIREMENT_DATE",
+					"index": 4
+				}
+			]
+		},
+		{
+			"file": "src/test/resources/data/dynamicAppending/secondary.csv",
+			"keyColumnIndex": 0,
+			"columns": [
+				{
+					"column": "GENERIC",
+					"index": 2
+				},
+				{
+					"column": "DDDPK",
+					"index": 1
+				}
+			]
+		}
+	]
+}
+}

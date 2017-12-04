@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import de.ingef.eva.configuration.append.AppendConfiguration;
+import de.ingef.eva.configuration.append.AppendSourceConfig;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -23,19 +24,19 @@ public class TransformerFactory {
 					config.getValueName(),
 					config.getValue(),
 					config.getOrder());
-		case DYNAMIC:
-			return createDynamicColumnAppenderTransformer(config);
+		case DDD:
+			return createDDDTransformer(config);
 		default:
 			return new Transformer.NOPTransformer();
 		}
 	}
 
-	private Transformer createDynamicColumnAppenderTransformer(AppendConfiguration config) {
-		String source = config.getSource();
+	private Transformer createDDDTransformer(AppendConfiguration config) {
+		List<AppendSourceConfig> sources = config.getSources();
 		String keyColumn = config.getKeyColumn();
 		//check mandatory fields
-		if(source == null || source.isEmpty() || keyColumn == null || keyColumn.isEmpty()) {
-			log.warn("Append source or keyColumn fields are missing or are empty. Using NOPTransformer.");
+		if(sources == null || sources.isEmpty() || keyColumn == null || keyColumn.isEmpty()) {
+			log.warn("Append sources or keyColumn fields are missing or are empty. Using NOPTransformer.");
 			return new Transformer.NOPTransformer();
 		}
 		String db = config.getTargetDb();
@@ -45,16 +46,15 @@ public class TransformerFactory {
 			log.warn("Append db or target table field is null or empty. Using NOPTransformer");
 			return new Transformer.NOPTransformer();
 		}
-		
 		try {
-			return DynamicColumnAppenderTransformer.of(
-					config.getTargetDb(),
-					config.getTargetTable(),
-					config.getKeyColumn(),
-					config.getSource()
+			return DDDTransformer.of(
+					db,
+					table,
+					keyColumn,
+					sources
 			);
 		} catch (IOException e) {
-			log.warn("Could not create DynamicColumnAppenderTransformer. Using NOPTransformer. {}", e);
+			log.warn("Could not create DDDTransformer. Using NOPTransformer. {}", e);
 			return new Transformer.NOPTransformer();
 		}
 	}

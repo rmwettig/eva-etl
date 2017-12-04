@@ -1,8 +1,10 @@
 package de.ingef.eva.data;
 
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
+@ToString(of= {"type", "content"})
 public class SimpleRowElement implements RowElement {
 	
 	private String name;

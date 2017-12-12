@@ -97,19 +97,22 @@ public class HTMLTableWriter {
 		return table;
 	}
 	
-	private ContainerTag createOverviewBody(Map<Quarter,List<QuarterCount>> rows) {
+	private ContainerTag createOverviewBody(Map<Quarter, List<QuarterCount>> rows) {
 		ContainerTag tableBody = tbody();
-		rows
-			.forEach((quarter, data) -> {
-				String quarterLabel = quarter.getYear() + "Q" + quarter.getQuarter();
-				ContainerTag row = tr().with(td().withText(quarterLabel));
-				List<ContainerTag> tableCells = data
-					.stream()
-					.map(this::convertQuarterCountToTableData)
-					.collect(Collectors.toList());
-				tableCells.stream().forEachOrdered(cell -> row.with(cell));
-				tableBody.with(row);
-			});
+		int rowIndexCounter = 0;
+		for(Map.Entry<Quarter, List<QuarterCount>> entry : rows.entrySet()) {
+			Quarter quarter = entry.getKey();
+			String quarterLabel = quarter.getYear() + "Q" + quarter.getQuarter();
+			ContainerTag row = tr().with(td().withText(quarterLabel));
+			int rowIndex = rowIndexCounter++;
+			List<ContainerTag> tableCells = entry.getValue()
+				.stream()
+				.map(quarterCount -> convertQuarterCountToTableData(quarterCount, rowIndex))
+				.collect(Collectors.toList());
+			tableCells.stream().forEachOrdered(cell -> row.with(cell));
+			tableBody.with(row);
+		}
+		
 		return tableBody;
 	}
 	
@@ -123,14 +126,15 @@ public class HTMLTableWriter {
 		return tableBody;
 	}
 	
-	private ContainerTag convertQuarterCountToTableData(QuarterCount quarterCount) {
+	private ContainerTag convertQuarterCountToTableData(QuarterCount quarterCount, int rowIndex) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(NUMBER_FORMATTER.format(quarterCount.getCount()));
 		ContainerTag cell = td();
 		double ratio = quarterCount.getChangeRatio();
 		if(ratio > 0)
 			sb.append(" (" + NUMBER_FORMATTER.format(ratio) + ")");
-		if(ratio > 1.5 || ratio < 0.5)
+		//do not highlight first four quarters as these have no preceding quarters to compare with
+		if(rowIndex > 3 && (ratio > 1.5 || ratio < 0.5))
 			cell.withClass("alertRatio");
 		
 		return cell.withText(sb.toString());

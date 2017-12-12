@@ -1,6 +1,8 @@
 package de.ingef.eva.measures.statistics;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -12,11 +14,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import de.ingef.eva.configuration.Configuration;
-import de.ingef.eva.configuration.statistics.StatisticsConfig;
+import de.ingef.eva.configuration.statistics.StatisticDatasetConfig;
 import de.ingef.eva.constant.Templates;
 import de.ingef.eva.measures.cci.Quarter;
 import de.ingef.eva.utility.Helper;
@@ -79,55 +83,53 @@ public class Statistics {
 	private static class Result {
 		private final List<StatisticsEntry> overview;
 		private final List<StatisticsEntry> details;
+		private final List<MorbiRsaEntry> morbi;
+		private final List<String> morbiHeader;
 	}
 	
 	public void createStatistics(Configuration config) {
 		try (Connection conn = DriverManager.getConnection(config.getFullConnectionUrl(), config.getUser(), config.getPassword())) {
 			StatisticsCalculator calculator = new StatisticsCalculator();
 			RegionalStatisticCalculator regionalCalculator = new RegionalStatisticCalculator();
-			List<StatisticsConfig> statisticsConfigs = config.getStatistics();
+			List<StatisticDatasetConfig> statisticsConfigs = config.getStatistics().getDatasets();
 			String outputDirectory = config.getOutputDirectory();
-			for(StatisticsConfig statisticsConfig : statisticsConfigs) {
-				if(statisticsConfig.getDb().toLowerCase().contains("fdb")) {
-					Result result = calculateFDBStatistics(statisticsConfig, calculator, regionalCalculator, conn);
-					createHtmlFile(outputDirectory, statisticsConfig, result);
-				} else if (statisticsConfig.getDb().toLowerCase().contains("adb")) {
-					Result result = calculateADBStatistics(statisticsConfig, calculator, regionalCalculator, conn);
-					createHtmlFile(outputDirectory, statisticsConfig, result);
+			List<String> morbiHeader = extractMorbiColumnHeader(config.getStatistics().getMorbiStatisticFile());
+			Map<String, List<MorbiRsaEntry>> insurance2MorbiStatistics = readMorbiStatistic(config.getStatistics().getMorbiStatisticFile());
+			for(StatisticDatasetConfig statisticsConfig : statisticsConfigs) {
+				String configDb = statisticsConfig.getDb().toLowerCase();
+				String configDataset = statisticsConfig.getDataset().toLowerCase();
+				if(configDb.contains("fdb")) {
+					List<StatisticsEntry> overviewStatistic = calculateFDBOverviewStatistics(statisticsConfig, calculator, conn);
+					Quarter referenceQuarter = findReferenceQuarter(overviewStatistic);
+					List<StatisticsEntry> regionalDetails = calculateFDBDetailsStatistics(statisticsConfig, regionalCalculator, referenceQuarter, conn);
+					createOutput(outputDirectory, statisticsConfig, new Result(overviewStatistic, regionalDetails, findMorbiStatisticForDataset(configDb, configDataset, insurance2MorbiStatistics), morbiHeader));
+				} else if (configDb.contains("adb")) {
+					List<StatisticsEntry> overviewStatistic = calculateADBOverviewStatistics(statisticsConfig, calculator, conn);
+					Quarter referenceQuarter = findReferenceQuarter(overviewStatistic);
+					List<StatisticsEntry> regionalDetails = calculateADBDetailsStatistics(statisticsConfig, regionalCalculator, referenceQuarter, conn);
+					createOutput(outputDirectory, statisticsConfig, new Result(overviewStatistic, regionalDetails, findMorbiStatisticForDataset(configDb, configDataset, insurance2MorbiStatistics), morbiHeader));
 				}
 			}
 			System.out.println("Done.");
 		} catch (SQLException e) {
 			log.error("Could not calculate statistics. ", e);
+		} catch (IOException e) {
+			log.error("Could not read morbi statistic. ", e);
 		}
 	}
-	
-	private Result calculateADBStatistics(StatisticsConfig settings, StatisticsCalculator calculator, RegionalStatisticCalculator regionalCalculator, Connection connection) {
-		List<StatisticsEntry> overviewStatistic = calculateADBOverviewStatistics(settings, calculator, connection);
-		Quarter referenceQuarter = findReferenceQuarter(overviewStatistic);
-		List<StatisticsEntry> regionalDetails = calculateADBDetailsStatistics(settings, regionalCalculator, referenceQuarter, connection);
-		return new Result(overviewStatistic, regionalDetails);
-	}
-
-	private Result calculateFDBStatistics(StatisticsConfig settings, StatisticsCalculator calculator, RegionalStatisticCalculator regionalCalculator, Connection connection) {
-		List<StatisticsEntry> overviewStatistic = calculateFDBOverviewStatistics(settings, calculator, connection);
-		Quarter referenceQuarter = findReferenceQuarter(overviewStatistic);
-		List<StatisticsEntry> regionalDetails = calculateFDBDetailsStatistics(settings, regionalCalculator, referenceQuarter, connection);
-		return new Result(overviewStatistic, regionalDetails);
-	}
-	
-	private void createHtmlFile(String outputDirectory, StatisticsConfig settings, Result result) {
+		
+	private void createOutput(String outputDirectory, StatisticDatasetConfig settings, Result result) {
 		Path file = Paths.get(outputDirectory, settings.getDb(), settings.getDataset());
 		try {
 			Helper.createFolders(file);
 		} catch (IOException e) {
 			log.error("Could not create path: '{}'. ", file.toString(), e);
 		}
-		file = file.resolve("statistic.html");
-		new HTMLTableWriter().createStatisticHTMLFile(file, result.getOverview(), result.getDetails());
+		file = file.resolve("statistic.pdf");
+		new StatisticPdfOutput().createStatisticOutput(file, result.getOverview(), result.getDetails(), result.getMorbi(), result.getMorbiHeader());
 	}
 
-	private List<StatisticsEntry> calculateADBOverviewStatistics(StatisticsConfig settings, StatisticsCalculator calculator, Connection connection) {
+	private List<StatisticsEntry> calculateADBOverviewStatistics(StatisticDatasetConfig settings, StatisticsCalculator calculator, Connection connection) {
 		List<StatisticsEntry> statisticsColumns = new ArrayList<>(settings.getViews().size());
 		System.out.println("Calculating ADB statistics...");
 		for(DataSlice slice : settings.getViews()) {
@@ -142,7 +144,7 @@ public class Statistics {
 		return statisticsColumns;
 	}
 	
-	private List<StatisticsEntry> calculateFDBOverviewStatistics(StatisticsConfig settings, StatisticsCalculator calculator, Connection connection) {
+	private List<StatisticsEntry> calculateFDBOverviewStatistics(StatisticDatasetConfig settings, StatisticsCalculator calculator, Connection connection) {
 		List<StatisticsEntry> statisticsColumns = new ArrayList<>(settings.getViews().size());
 		System.out.println("Calculating FDB statistics...");
 		for(DataSlice slice : settings.getViews()) {
@@ -157,7 +159,7 @@ public class Statistics {
 		return statisticsColumns;
 	}
 	
-	private List<StatisticsEntry> calculateADBDetailsStatistics(StatisticsConfig settings, RegionalStatisticCalculator regionalCalculator, Quarter referenceQuarter, Connection conn) {
+	private List<StatisticsEntry> calculateADBDetailsStatistics(StatisticDatasetConfig settings, RegionalStatisticCalculator regionalCalculator, Quarter referenceQuarter, Connection conn) {
 		System.out.println("Calculating ADB details...");
 		String query = Templates.Statistics.ADB_OUTPATIENT_DATA_BY_KV_QUERY.replaceAll("\\$\\{h2iks\\}", Helper.joinIks(settings.getH2iks()));
 		DetailsStatisticsCollector collector = new DetailsStatisticsCollector();
@@ -196,7 +198,7 @@ public class Statistics {
 		return regionalStatistic;
 	}
 	
-	private List<StatisticsEntry> calculateFDBDetailsStatistics(StatisticsConfig settings, RegionalStatisticCalculator regionalCalculator, Quarter referenceQuarter, Connection conn) {
+	private List<StatisticsEntry> calculateFDBDetailsStatistics(StatisticDatasetConfig settings, RegionalStatisticCalculator regionalCalculator, Quarter referenceQuarter, Connection conn) {
 		System.out.println("Calculating FDB details...");
 		String query = Templates.Statistics.FDB_OUTPATIENT_DATA_BY_KV_QUERY.replaceAll("\\$\\{flag\\}", settings.getFlag());
 		DetailsStatisticsCollector collector = new DetailsStatisticsCollector();
@@ -318,6 +320,37 @@ public class Statistics {
 			);
 
 		return maxQuarter.get();
+	}
+	
+	private List<String> extractMorbiColumnHeader(Path morbiStatisticFile) throws IOException {
+		BufferedReader reader = Files.newBufferedReader(morbiStatisticFile);		
+		String[] header = reader.readLine().split(";");
+		reader.close();
+		//insurance name is not important so just drop it
+		return IntStream
+			.range(1, header.length)
+			.mapToObj(column -> header[column])
+			.collect(Collectors.toList());
+	}
+	
+	private Map<String, List<MorbiRsaEntry>> readMorbiStatistic(Path morbiStatisticFile) throws IOException {
+		BufferedReader reader = Files.newBufferedReader(morbiStatisticFile);
+		return reader
+				.lines()
+				.skip(1)
+				.filter(line -> line != null && !line.isEmpty())
+				.map(line -> line.split(";"))
+				.map(columns -> new MorbiRsaEntry(columns[0], Integer.parseInt(columns[1]), Integer.parseInt(columns[2]), Integer.parseInt(columns[3]), columns[4], columns[5]))
+				.collect(Collectors.groupingBy(MorbiRsaEntry::getInsurance));
+	}
+	
+	private List<MorbiRsaEntry> findMorbiStatisticForDataset(String db, String dataset, Map<String, List<MorbiRsaEntry>> statistic) {
+		return statistic
+				.entrySet()
+				.stream()
+				.filter(entry -> entry.getKey().toLowerCase().contains(dataset) || entry.getKey().toLowerCase().contains(db))
+				.flatMap(entry -> entry.getValue().stream())
+				.collect(Collectors.toList());
 	}
 }
 

@@ -6,7 +6,7 @@ import de.ingef.eva.measures.statistics.DataSlice;
 import lombok.Getter;
 
 @Getter
-public class StatisticsConfig {
+public class StatisticDatasetConfig {
 	private String db;
 	private String dataset;
 	private List<DataSlice> views;

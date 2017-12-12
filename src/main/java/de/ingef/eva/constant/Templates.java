@@ -221,6 +221,11 @@ public final class Templates {
 				+ "where lukv.km6_id <> '' and "
 					+ "(lukv.hinweis is null or lukv.hinweis like '%ab%') "
 				+ "order by 3;";
+		
+		public static final String HINT_CAPTION = "Hinweis";
+		public static final String HINT_CONTENT = "Die Tabellen zeigen den aktuellen Datenbestand des jeweiligen Datenbereiches je Quartal. "
+				+ "Die relativen Zahlen in den Klammern hinter den Absolutwerten beschreiben dabei das Verh\u00e4ltnis zum Vorjahresquartal. "
+				+ "Für die nach KV aufgeschl\u00fcsselten Daten befindet sich dieser Wert in der Spalte 'Anteil VJQ'.";
 	}
 	
 	public final class CCI {

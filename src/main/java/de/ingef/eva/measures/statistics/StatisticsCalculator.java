@@ -8,6 +8,7 @@ import de.ingef.eva.measures.cci.Quarter;
 import de.ingef.eva.utility.QuarterCount;
 
 public class StatisticsCalculator {
+	
 	public StatisticsEntry calculateOverviewStatistics(DataSlice slice, List<QuarterCount> absoluteNumbers, int lowerYearBound, int inclusiveUpperYearBound) {
 		List<QuarterCount> paddedAbsoluteNumbers = padDataToYearBounds(absoluteNumbers, lowerYearBound, inclusiveUpperYearBound);
 		return new StatisticsEntry(slice.getLabel(), slice.getLabel(), calculateRatios(paddedAbsoluteNumbers));

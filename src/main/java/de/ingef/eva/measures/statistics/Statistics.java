@@ -131,7 +131,7 @@ public class Statistics {
 		List<StatisticsEntry> statisticsColumns = new ArrayList<>(settings.getViews().size());
 		System.out.println("Calculating ADB statistics...");
 		for(DataSlice slice : settings.getViews()) {
-			System.out.println("\tfor '" + slice.getLabel() + "'");
+			System.out.println("\tfor '" + slice.getTable() + "'");
 			String query = selectADBQueryTemplate(slice);
 			query = insertADBVariables(query, settings.getH2iks(), Helper.interpolateYears(settings.getStartYear(), settings.getEndYear()));
 			OverviewStatisticsCollector collector = new OverviewStatisticsCollector();
@@ -146,7 +146,7 @@ public class Statistics {
 		List<StatisticsEntry> statisticsColumns = new ArrayList<>(settings.getViews().size());
 		System.out.println("Calculating FDB statistics...");
 		for(DataSlice slice : settings.getViews()) {
-			System.out.println("\tfor '" + slice.getLabel() + "'");
+			System.out.println("\tfor '" + slice.getTable() + "'");
 			String query = selectFDBQueryTemplate(slice);
 			query = insertFDBVariables(query, settings.getFlag(), Helper.interpolateYears(settings.getStartYear(), settings.getEndYear()));
 			OverviewStatisticsCollector collector = new OverviewStatisticsCollector();
@@ -254,7 +254,7 @@ public class Statistics {
 			return Templates.Statistics.ADB_STATISTICS_FOR_AM_EVO;
 		case HEMI_EVO:
 		case HIMI_EVO:
-			return Templates.Statistics.ADB_STATISTICS_FOR_HEMI_HIMI.replace("${tableSuffix}", slice.getLabel());
+			return Templates.Statistics.ADB_STATISTICS_FOR_HEMI_HIMI.replace("${tableSuffix}", slice.getTable());
 		case ARZT_FALL:
 			return Templates.Statistics.ADB_STATISTICS_FOR_ARZT_FALL;
 		case KH_FALL:
@@ -272,7 +272,7 @@ public class Statistics {
 			return Templates.Statistics.FDB_STATISTICS_FOR_AM_EVO;
 		case HEMI_EVO:
 		case HIMI_EVO:
-			return Templates.Statistics.FDB_STATISTICS_FOR_HEMI_HIMI.replace("${tableSuffix}", slice.getLabel());
+			return Templates.Statistics.FDB_STATISTICS_FOR_HEMI_HIMI.replace("${tableSuffix}", slice.getTable());
 		case ARZT_FALL:
 			return Templates.Statistics.FDB_STATISTICS_FOR_ARZT_FALL;
 		case KH_FALL:
@@ -316,6 +316,7 @@ public class Statistics {
 							Comparator.comparing(Quarter::getYear).thenComparing(Quarter::getQuarter)
 					)
 			);
+
 		return maxQuarter.get();
 	}
 }

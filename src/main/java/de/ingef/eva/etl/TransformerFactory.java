@@ -23,7 +23,8 @@ public class TransformerFactory {
 					config.getTargetTable(),
 					config.getValueName(),
 					config.getValue(),
-					config.getOrder());
+					config.getOrder(),
+					config.getExcludeTables());
 		case DDD:
 			return createDDDTransformer(config);
 		default:

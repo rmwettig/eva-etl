@@ -17,4 +17,5 @@ public class AppendConfiguration {
 	 */
 	private String keyColumn;
 	private List<AppendSourceConfig> sources;
+	private List<String> excludeTables;
 }

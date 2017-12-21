@@ -21,10 +21,11 @@ public class StaticColumnAppenderTransformer extends Transformer {
 	private final String valueName;
 	private final String value;
 	private final AppendOrder order;
-		
+	private final List<String> excludeTables;
+	
 	@Override
 	public Row transform(Row row) {
-		if((targetDb != null && !row.getDb().contains(targetDb)) || (targetTable != null && !row.getTable().contains(targetTable)))
+		if(skip(row))
 			return row;
 		
 		List<RowElement> columns = row.getColumns();
@@ -50,6 +51,18 @@ public class StaticColumnAppenderTransformer extends Transformer {
 		}
 		
 		return new Row(row.getDb(), row.getTable(), transformed, transformedIndices);
+	}
+
+	private boolean skip(Row row) {
+		String rowTable = row.getTable().toLowerCase();
+		if(excludeTables != null && !excludeTables.isEmpty())
+			return excludeTables.stream().map(table -> table.toLowerCase()).anyMatch(tablePart -> rowTable.contains(tablePart));
+		if(targetDb != null && !row.getDb().toLowerCase().contains(targetDb.toLowerCase()))
+			return true;
+		if(targetTable != null && !rowTable.contains(targetTable.toLowerCase()))
+			return true;
+		
+		return false;
 	}
 
 	private boolean hasColumnAlready(Map<String,Integer> columns) {

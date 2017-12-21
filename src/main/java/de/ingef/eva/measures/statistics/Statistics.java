@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -92,7 +91,7 @@ public class Statistics {
 			StatisticsCalculator calculator = new StatisticsCalculator();
 			RegionalStatisticCalculator regionalCalculator = new RegionalStatisticCalculator();
 			List<StatisticDatasetConfig> statisticsConfigs = config.getStatistics().getDatasets();
-			String outputDirectory = config.getOutputDirectory();
+			Path outputDirectory = config.getStatistics().getOutputDirectory();
 			List<String> morbiHeader = extractMorbiColumnHeader(config.getStatistics().getMorbiStatisticFile());
 			Map<String, List<MorbiRsaEntry>> insurance2MorbiStatistics = readMorbiStatistic(config.getStatistics().getMorbiStatisticFile());
 			for(StatisticDatasetConfig statisticsConfig : statisticsConfigs) {
@@ -118,8 +117,8 @@ public class Statistics {
 		}
 	}
 		
-	private void createOutput(String outputDirectory, StatisticDatasetConfig settings, Result result) {
-		Path file = Paths.get(outputDirectory, settings.getDb(), settings.getDataset());
+	private void createOutput(Path outputDirectory, StatisticDatasetConfig settings, Result result) {
+		Path file = outputDirectory.resolve(settings.getDb()).resolve(settings.getDataset());
 		try {
 			Helper.createFolders(file);
 		} catch (IOException e) {

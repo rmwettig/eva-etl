@@ -1,299 +1,715 @@
 {
-	"host": "192.168.146.1",
-	"url": "jdbc:teradata://",
-	"parameters": "TYPE=FASTEXPORT,CHARSET=UTF8",
-	"user": "",
-	"password": "",
-	"outputDirectory": "out",
-	"cacheDirectory": "tmp",
-	"threadCount": "2",
-	"schemaFile": "headerlookup.json",
-	"databases": {
-		"startYear": "2010",
-		"endYear": "2016",
-		"sources": [
-			{
-				"db": "ACC_ADB",
-				"datasetName": "Bosch_Salzgitter",
-				"views": [
-					{
-						"name": "AVK_ADB_T_AM_EVO"
-					},
-					{
-						"name": "AVK_ADB_T_Arzt_Diagnose"
-					},
-					{
-						"name": "AVK_ADB_T_Arzt_Fall"
-					},
-					{
-						"name": "AVK_ADB_T_Arzt_GOP"
-					},
-					{
-						"name": "AVK_ADB_T_Arzt_OPS"
-					},
-					{
-						"name": "AVK_ADB_T_AU_Fall"
-					},
-					{
-						"name": "AVK_ADB_T_DMP_Doku"
-					},
-					{
-						"name": "AVK_ADB_T_HeMi_EVO"
-					},
-					{
-						"name": "AVK_ADB_T_HiMi_EVO"
-					},
-					{
-						"name": "AVK_ADB_T_HKP_EVO"
-					},
-					{
-						"name": "AVK_ADB_T_KH_Diagnose",
-						"join": [
-							{
-								"table": "AVK_ADB_T_KH_FALL",
-								"column": [
-									"verweildauer",
-									"aufnahmedatum",
-									"aufnahmegrund",
-									"entlassungsgrund",
-									"behandlungstyp"
-								],
-								"type": "INNER",
-								"on": [
-									"pid",
-									"kh_fall_id"
-								],
-								"where": [
-								]
-							}
-						]
-					},
-					{
-						"name": "AVK_ADB_T_KH_Fall"
-					},
-					{
-						"name": "AVK_ADB_T_KH_OPS",
-						"join": [
-							{
-								"table": "AVK_ADB_T_KH_FALL",
-								"column": [
-									"verweildauer",
-									"aufnahmedatum",
-									"aufnahmegrund",
-									"entlassungsgrund",
-									"behandlungstyp"
-								],
-								"type": "INNER",
-								"on": [
-									"pid",
-									"kh_fall_id"
-								],
-								"where": [
-								]
-							}
-						]
-					},
-					{
-						"name": "AVK_ADB_T_Leistungskosten"
-					},
-					{
-						"name": "AVK_ADB_T_VERS_INFO"
-					},
-					{
-						"name": "AVK_ADB_T_Vers_Region"
-					},
-					{
-						"name": "AVK_ADB_T_Vers_SozDem"
-					},
-					{
-						"name": "AVK_ADB_T_Vers_Stamm"
-					},
-					{
-						"name": "AVK_ADB_T_Vers_Tage"
-					},
-					{
-						"name": "AVK_ADB_T_VERS_TAGE_QUARTAL"
-					},
-					{
-						"name": "AVK_ADB_T_ZA_Fall"
-					},
-					{
-						"name": "AVK_ADB_T_ZA_LEISTDATEN"
-					}
-				],
-				"where": [
-					{
-						"name": "h2ik",
-						"value": "101922757",
-						"type": "STRING",
-						"operator": "EQUAL"
-					},
-					{
-						"name": "h2ik",
-						"value": "108036123",
-						"type": "STRING",
-						"operator": "EQUAL"
-					}
-				]
-			},
-			{
-				"name": "ACC_FDB",
-				"datasetName": "1M_benchmark",
-				"views": [
-					{
-						"name": "AVK_FDB_T_AM_EVO"
-					},
-					{
-						"name": "AVK_FDB_T_Arzt_Diagnose"
-					},
-					{
-						"name": "AVK_FDB_T_Arzt_Fall"
-					},
-					{
-						"name": "AVK_FDB_T_Arzt_GOP"
-					},
-					{
-						"name": "AVK_FDB_T_Arzt_OPS"
-					},
-					{
-						"name": "AVK_FDB_T_AU_Fall"
-					},
-					{
-						"name": "AVK_FDB_T_HeMi_EVO"
-					},
-					{
-						"name": "AVK_FDB_T_HiMi_EVO"
-					},
-					{
-						"name": "AVK_FDB_T_HKP_EVO"
-					},
-					{
-						"name": "AVK_FDB_T_KH_Diagnose",
-						"join": [
-							{
-								"table": "AVK_FDB_T_KH_FALL",
-								"column": [
-									"verweildauer",
-									"aufnahmedatum",
-									"aufnahmegrund",
-									"entlassungsgrund",
-									"behandlungstyp"
-								],
-								"type": "INNER",
-								"on": [
-									"pid",
-									"kh_fall_id"
-								],
-								"where": [
-								]
-							}
-						]
-					},
-					{
-						"name": "AVK_FDB_T_KH_Fall"
-					},
-					{
-						"name": "AVK_FDB_T_KH_OPS",
-						"join": [
-							{
-								"table": "AVK_FDB_T_KH_FALL",
-								"column": [
-									"verweildauer",
-									"aufnahmedatum",
-									"aufnahmegrund",
-									"entlassungsgrund",
-									"behandlungstyp"
-								],
-								"type": "INNER",
-								"on": [
-									"pid",
-									"kh_fall_id"
-								],
-								"where": [
-								]
-							}
-						]
-					},
-					{
-						"name": "AVK_FDB_T_Leistungskosten"
-					},
-					{
-						"name": "AVK_FDB_T_VERS_INFO"
-					},
-					{
-						"name": "AVK_FDB_T_Vers_Region"
-					},
-					{
-						"name": "AVK_FDB_T_Vers_SozDem"
-					},
-					{
-						"name": "AVK_FDB_T_Vers_Stamm"
-					},
-					{
-						"name": "AVK_FDB_T_Vers_Tage"
-					},
-					{
-						"name": "AVK_FDB_T_VERS_TAGE_QUARTAL"
-					},
-					{
-						"name": "AVK_FDB_T_ZA_Fall"
-					},
-					{
-						"name": "AVK_FDB_T_ZA_LEISTDATEN"
-					},
-					{
-						"name": "AV_FDB_T_TEILNAHME"
-					}
-				],
-				"where": [
-					{
-						"column": "flag_destatis",
-						"value": "1",
-						"type": "NUMERIC",
-						"operator": "EQUAL"
-					}
-				]
-			}
-		]
-	},
-	"decoding": [
-		{
-			"name": "Bosch",
-			"h2iks": [
-				"108036123"
-			]
-		},
-		{
-			"name": "Salzgitter",
-			"h2iks": [
-				"101922757"
-			]
-		}
-	],
-	"append": [
-		{
-			"mode": "STATIC",
-			"targets": "out/test/static",
-			"match": "stat",
-			"targetColumn": "H2IK",
-			"value": "999999999",
-			"order": "FIRST"
-		},
-		{
-			"mode": "DYNAMIC",
-			"targets": "out/test/dynamic",
-			"match": "dyn",
-			"source": "out/test/map.csv",
-			"keyColumn": "egk_nr",
-			"order": "LAST"
-		}
-	],
-	"filters": [
-		{
-			"filterName": "2-digit FG",
-			"description": "enforce valid FG value if not empty",
-			"columnName": "fg",
-			"regex": "^$|[0-9]{2}"
-		}
-	]
+  "host": "192.168.146.1",
+  "url": "jdbc:teradata://",
+  "parameters": "TYPE=FASTEXPORT,CHARSET=UTF8",
+  "user": "",
+  "password": "",
+  "outputDirectory": "out",
+  "cacheDirectory": "cache",
+  "threadCount": "120",
+  "schemaFile": "headerlookup.json",
+  "export": {
+    "startYear": 2010,
+    "endYear": 2017,
+    "sources": [
+    {
+        "db": "ACC_ADB",
+        "datasetName": "Salzgitter_bkk_public",
+        "views": [
+          {
+            "name": "AVK_ADB_T_AM_EVO"
+          },
+          {
+            "name": "AVK_ADB_T_Arzt_Diagnose"
+          },
+          {
+            "name": "AVK_ADB_T_Arzt_Fall"
+          },
+          {
+            "name": "AVK_ADB_T_Arzt_GOP"
+          },
+          {
+            "name": "AVK_ADB_T_Arzt_OPS"
+          },
+          {
+            "name": "AVK_ADB_T_AU_Fall"
+          },
+          {
+            "name": "AVK_ADB_T_DMP_Doku"
+          },
+          {
+            "name": "AVK_ADB_T_HeMi_EVO"
+          },
+          {
+            "name": "AVK_ADB_T_HiMi_EVO"
+          },
+          {
+            "name": "AVK_ADB_T_HKP_EVO"
+          },
+          {
+            "name": "AVK_ADB_T_KH_Diagnose",
+            "join": [
+              {
+                "table": "AVK_ADB_T_KH_FALL",
+                "column": [
+                  "verweildauer",
+                  "aufnahmedatum",
+                  "aufnahmegrund",
+                  "entlassungsgrund",
+                  "behandlungstyp"
+                ],
+                "type": "INNER",
+                "on": [
+                  "pid",
+                  "kh_fall_id"
+                ],
+                "where": []
+              }
+            ]
+          },
+          {
+            "name": "AVK_ADB_T_KH_Fall"
+          },
+          {
+            "name": "AVK_ADB_T_KH_OPS",
+            "join": [
+              {
+                "table": "AVK_ADB_T_KH_FALL",
+                "column": [
+                  "verweildauer",
+                  "aufnahmedatum",
+                  "aufnahmegrund",
+                  "entlassungsgrund",
+                  "behandlungstyp"
+                ],
+                "type": "INNER",
+                "on": [
+                  "pid",
+                  "kh_fall_id"
+                ],
+                "where": []
+              }
+            ]
+          },
+          {
+            "name": "AVK_ADB_T_Leistungskosten"
+          },
+          {
+            "name": "AVK_ADB_T_VERS_INFO"
+          },
+          {
+            "name": "AVK_ADB_T_Vers_Region"
+          },
+          {
+            "name": "AVK_ADB_T_Vers_Stamm",
+            "join": [
+              {
+                "table": "AVK_ADB_T_Vers_Tage",
+                "column": [
+                  "erster_tag",
+                  "letzter_tag"
+                ],
+                "type": "INNER",
+                "on": [
+                  "pid",
+                  "bezugsjahr",
+                  "h2ik"
+                ]
+              }
+            ]
+          },
+          {
+            "name": "AVK_ADB_T_Vers_SozDem"
+          },
+          {
+            "name": "AVK_ADB_T_Vers_Tage"
+          },
+          {
+            "name": "AVK_ADB_T_VERS_TAGE_QUARTAL"
+          },
+          {
+            "name": "AVK_ADB_T_ZA_Fall"
+          },
+          {
+            "name": "AVK_ADB_T_ZA_LEISTDATEN"
+          }
+        ],
+        "where": [
+          {
+            "column": "h2ik",
+            "value": "101931440",
+            "type": "STRING",
+            "operator": "EQUAL"
+          }
+        ]
+      },
+      {
+        "db": "ACC_ADB",
+        "datasetName": "Salzgitter",
+        "views": [
+          {
+            "name": "AVK_ADB_T_AM_EVO"
+          },
+          {
+            "name": "AVK_ADB_T_Arzt_Diagnose"
+          },
+          {
+            "name": "AVK_ADB_T_Arzt_Fall"
+          },
+          {
+            "name": "AVK_ADB_T_Arzt_GOP"
+          },
+          {
+            "name": "AVK_ADB_T_Arzt_OPS"
+          },
+          {
+            "name": "AVK_ADB_T_AU_Fall"
+          },
+          {
+            "name": "AVK_ADB_T_DMP_Doku"
+          },
+          {
+            "name": "AVK_ADB_T_HeMi_EVO"
+          },
+          {
+            "name": "AVK_ADB_T_HiMi_EVO"
+          },
+          {
+            "name": "AVK_ADB_T_HKP_EVO"
+          },
+          {
+            "name": "AVK_ADB_T_KH_Diagnose",
+            "join": [
+              {
+                "table": "AVK_ADB_T_KH_FALL",
+                "column": [
+                  "verweildauer",
+                  "aufnahmedatum",
+                  "aufnahmegrund",
+                  "entlassungsgrund",
+                  "behandlungstyp"
+                ],
+                "type": "INNER",
+                "on": [
+                  "pid",
+                  "kh_fall_id"
+                ],
+                "where": []
+              }
+            ]
+          },
+          {
+            "name": "AVK_ADB_T_KH_Fall"
+          },
+          {
+            "name": "AVK_ADB_T_KH_OPS",
+            "join": [
+              {
+                "table": "AVK_ADB_T_KH_FALL",
+                "column": [
+                  "verweildauer",
+                  "aufnahmedatum",
+                  "aufnahmegrund",
+                  "entlassungsgrund",
+                  "behandlungstyp"
+                ],
+                "type": "INNER",
+                "on": [
+                  "pid",
+                  "kh_fall_id"
+                ],
+                "where": []
+              }
+            ]
+          },
+          {
+            "name": "AVK_ADB_T_Leistungskosten"
+          },
+          {
+            "name": "AVK_ADB_T_VERS_INFO"
+          },
+          {
+            "name": "AVK_ADB_T_Vers_Region"
+          },
+          {
+            "name": "AVK_ADB_T_Vers_Stamm",
+            "join": [
+              {
+                "table": "AVK_ADB_T_Vers_Tage",
+                "column": [
+                  "erster_tag",
+                  "letzter_tag"
+                ],
+                "type": "INNER",
+                "on": [
+                  "pid",
+                  "bezugsjahr",
+                  "h2ik"
+                ]
+              }
+            ]
+          },
+          {
+            "name": "AVK_ADB_T_Vers_SozDem"
+          },
+          {
+            "name": "AVK_ADB_T_Vers_Tage"
+          },
+          {
+            "name": "AVK_ADB_T_VERS_TAGE_QUARTAL"
+          },
+          {
+            "name": "AVK_ADB_T_ZA_Fall"
+          },
+          {
+            "name": "AVK_ADB_T_ZA_LEISTDATEN"
+          }
+        ],
+        "where": [
+          {
+            "column": "h2ik",
+            "value": "101931440",
+            "type": "STRING",
+            "operator": "EQUAL"
+          },
+          {
+            "column": "h2ik",
+            "value": "102137985",
+            "type": "STRING",
+            "operator": "EQUAL"
+          },
+          {
+            "column": "h2ik",
+            "value": "101922757",
+            "type": "STRING",
+            "operator": "EQUAL"
+          }
+        ]
+      },
+      {
+        "db": "ACC_ADB",
+        "datasetName": "Mhplus",
+        "views": [
+          {
+            "name": "AVK_ADB_T_AM_EVO"
+          },
+          {
+            "name": "AVK_ADB_T_Arzt_Diagnose"
+          },
+          {
+            "name": "AVK_ADB_T_Arzt_Fall"
+          },
+          {
+            "name": "AVK_ADB_T_Arzt_GOP"
+          },
+          {
+            "name": "AVK_ADB_T_Arzt_OPS"
+          },
+          {
+            "name": "AVK_ADB_T_AU_Fall"
+          },
+          {
+            "name": "AVK_ADB_T_DMP_Doku"
+          },
+          {
+            "name": "AVK_ADB_T_HeMi_EVO"
+          },
+          {
+            "name": "AVK_ADB_T_HiMi_EVO"
+          },
+          {
+            "name": "AVK_ADB_T_HKP_EVO"
+          },
+          {
+            "name": "AVK_ADB_T_KH_Diagnose",
+            "join": [
+              {
+                "table": "AVK_ADB_T_KH_FALL",
+                "column": [
+                  "verweildauer",
+                  "aufnahmedatum",
+                  "aufnahmegrund",
+                  "entlassungsgrund",
+                  "behandlungstyp"
+                ],
+                "type": "INNER",
+                "on": [
+                  "pid",
+                  "kh_fall_id"
+                ],
+                "where": []
+              }
+            ]
+          },
+          {
+            "name": "AVK_ADB_T_KH_Fall"
+          },
+          {
+            "name": "AVK_ADB_T_KH_OPS",
+            "join": [
+              {
+                "table": "AVK_ADB_T_KH_FALL",
+                "column": [
+                  "verweildauer",
+                  "aufnahmedatum",
+                  "aufnahmegrund",
+                  "entlassungsgrund",
+                  "behandlungstyp"
+                ],
+                "type": "INNER",
+                "on": [
+                  "pid",
+                  "kh_fall_id"
+                ],
+                "where": []
+              }
+            ]
+          },
+          {
+            "name": "AVK_ADB_T_Leistungskosten"
+          },
+          {
+            "name": "AVK_ADB_T_VERS_INFO"
+          },
+          {
+            "name": "AVK_ADB_T_Vers_Region"
+          },
+          {
+            "name": "AVK_ADB_T_Vers_Stamm",
+            "join": [
+              {
+                "table": "AVK_ADB_T_Vers_Tage",
+                "column": [
+                  "erster_tag",
+                  "letzter_tag"
+                ],
+                "type": "INNER",
+                "on": [
+                  "pid",
+                  "bezugsjahr",
+                  "h2ik"
+                ]
+              }
+            ]
+          },
+          {
+            "name": "AVK_ADB_T_Vers_SozDem"
+          },
+          {
+            "name": "AVK_ADB_T_Vers_Tage"
+          },
+          {
+            "name": "AVK_ADB_T_VERS_TAGE_QUARTAL"
+          },
+          {
+            "name": "AVK_ADB_T_ZA_Fall"
+          },
+          {
+            "name": "AVK_ADB_T_ZA_LEISTDATEN"
+          }
+        ],
+        "where": [
+          {
+            "column": "h2ik",
+            "value": "108035612",
+            "type": "STRING",
+            "operator": "EQUAL"
+          }
+        ]
+      },
+      {
+        "db": "ACC_ADB",
+        "datasetName": "Bosch",
+        "views": [
+          {
+            "name": "AVK_ADB_HZV_VERS"
+          },
+          {
+            "name": "AVK_ADB_T_AM_EVO"
+          },
+          {
+            "name": "AVK_ADB_T_Arzt_Diagnose"
+          },
+          {
+            "name": "AVK_ADB_T_Arzt_Fall"
+          },
+          {
+            "name": "AVK_ADB_T_Arzt_GOP"
+          },
+          {
+            "name": "AVK_ADB_T_Arzt_OPS"
+          },
+          {
+            "name": "AVK_ADB_T_AU_Fall"
+          },
+          {
+            "name": "AVK_ADB_T_DMP_Doku"
+          },
+          {
+            "name": "AVK_ADB_T_HeMi_EVO"
+          },
+          {
+            "name": "AVK_ADB_T_HiMi_EVO"
+          },
+          {
+            "name": "AVK_ADB_T_HKP_EVO"
+          },
+          {
+            "name": "AVK_ADB_T_KH_Diagnose",
+            "join": [
+              {
+                "table": "AVK_ADB_T_KH_FALL",
+                "column": [
+                  "verweildauer",
+                  "aufnahmedatum",
+                  "aufnahmegrund",
+                  "entlassungsgrund",
+                  "behandlungstyp"
+                ],
+                "type": "INNER",
+                "on": [
+                  "pid",
+                  "kh_fall_id"
+                ],
+                "where": []
+              }
+            ]
+          },
+          {
+            "name": "AVK_ADB_T_KH_Fall"
+          },
+          {
+            "name": "AVK_ADB_T_KH_OPS",
+            "join": [
+              {
+                "table": "AVK_ADB_T_KH_FALL",
+                "column": [
+                  "verweildauer",
+                  "aufnahmedatum",
+                  "aufnahmegrund",
+                  "entlassungsgrund",
+                  "behandlungstyp"
+                ],
+                "type": "INNER",
+                "on": [
+                  "pid",
+                  "kh_fall_id"
+                ],
+                "where": []
+              }
+            ]
+          },
+          {
+            "name": "AVK_ADB_T_Leistungskosten"
+          },
+          {
+            "name": "AVK_ADB_T_VERS_INFO"
+          },
+          {
+            "name": "AVK_ADB_T_Vers_Region"
+          },
+          {
+            "name": "AVK_ADB_T_Vers_Stamm",
+            "join": [
+              {
+                "table": "AVK_ADB_T_Vers_Tage",
+                "column": [
+                  "erster_tag",
+                  "letzter_tag"
+                ],
+                "type": "INNER",
+                "on": [
+                  "pid",
+                  "bezugsjahr",
+                  "h2ik"
+                ]
+              }
+            ]
+          },
+          {
+            "name": "AVK_ADB_T_Vers_SozDem"
+          },
+          {
+            "name": "AVK_ADB_T_Vers_Tage"
+          },
+          {
+            "name": "AVK_ADB_T_VERS_TAGE_QUARTAL"
+          },
+          {
+            "name": "AVK_ADB_T_ZA_Fall"
+          },
+          {
+            "name": "AVK_ADB_T_ZA_LEISTDATEN"
+          }
+        ],
+        "where": [
+          {
+            "column": "h2ik",
+            "value": "108036123",
+            "type": "STRING",
+            "operator": "EQUAL"
+          }
+        ]
+      },
+      {
+        "db": "ACC_FDB",
+        "datasetName": "1M_benchmark",
+        "views": [
+          {
+            "name": "AV_FDB_T_TEILNAHME"
+          },
+          {
+            "name": "AVK_FDB_T_AM_EVO"
+          },
+          {
+            "name": "AVK_FDB_T_Arzt_Diagnose"
+          },
+          {
+            "name": "AVK_FDB_T_Arzt_Fall"
+          },
+          {
+            "name": "AVK_FDB_T_Arzt_GOP"
+          },
+          {
+            "name": "AVK_FDB_T_Arzt_OPS"
+          },
+          {
+            "name": "AVK_FDB_T_AU_Fall"
+          },
+          {
+            "name": "AVK_FDB_T_HeMi_EVO"
+          },
+          {
+            "name": "AVK_FDB_T_HiMi_EVO"
+          },
+          {
+            "name": "AVK_FDB_T_HKP_EVO"
+          },
+          {
+            "name": "AVK_FDB_T_KH_Diagnose",
+            "join": [
+              {
+                "table": "AVK_FDB_T_KH_FALL",
+                "column": [
+                  "verweildauer",
+                  "aufnahmedatum",
+                  "aufnahmegrund",
+                  "entlassungsgrund",
+                  "behandlungstyp"
+                ],
+                "type": "INNER",
+                "on": [
+                  "pid",
+                  "kh_fall_id"
+                ]
+              }
+            ]
+          },
+          {
+            "name": "AVK_FDB_T_KH_Fall"
+          },
+          {
+            "name": "AVK_FDB_T_KH_OPS",
+            "join": [
+              {
+                "table": "AVK_FDB_T_KH_FALL",
+                "column": [
+                  "verweildauer",
+                  "aufnahmedatum",
+                  "aufnahmegrund",
+                  "entlassungsgrund",
+                  "behandlungstyp"
+                ],
+                "type": "INNER",
+                "on": [
+                  "pid",
+                  "kh_fall_id"
+                ]
+              }
+            ]
+          },
+          {
+            "name": "AVK_FDB_T_Leistungskosten"
+          },
+          {
+            "name": "AVK_FDB_T_VERS_INFO"
+          },
+          {
+            "name": "AVK_FDB_T_Vers_Region"
+          },
+          {
+            "name": "AVK_FDB_T_Vers_SozDem"
+          },
+          {
+            "name": "AVK_FDB_T_Vers_Stamm"
+          },
+          {
+            "name": "AVK_FDB_T_Vers_Tage"
+          },
+          {
+            "name": "AVK_FDB_T_VERS_TAGE_QUARTAL"
+          },
+          {
+            "name": "AVK_FDB_T_ZA_Fall"
+          },
+          {
+            "name": "AVK_FDB_T_ZA_LEISTDATEN"
+          }
+        ],
+        "where": [
+          {
+            "column": "flag_destatis",
+            "value": "1",
+            "type": "NUMERIC",
+            "operator": "EQUAL"
+          }
+        ]
+      }
+    ]
+  },
+  "decode": [
+    {
+      "name": "Bosch",
+      "h2iks": [
+        "108036123"
+      ]
+    },
+    {
+      "name": "Salzgitter",
+      "h2iks": [
+        "101922757",
+        "101931440",
+        "102137985"
+      ]
+    },
+    {
+      "name": "Mhplus",
+      "h2iks": [
+        "108035612"
+      ]
+    },
+    {
+      "name": "Salzgitter_bkk_public",
+      "h2iks": [
+        "101931440"
+      ]
+    }
+  ],
+  "transformers": [
+    {
+      "mode": "STATIC",
+      "targetDb": "ACC_FDB",
+      "valueName": "h2ik",
+      "value": "999999999",
+      "order": "FIRST"
+    }
+  ],
+  "filters": [
+    {
+      "filterName": "2-digit FG",
+      "description": "enforce valid FG value if not empty",
+      "columnName": "fg",
+      "regex": "^$|[0-9]{2}"
+    }
+  ]
 }

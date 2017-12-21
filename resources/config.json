@@ -701,7 +701,8 @@
       "targetDb": "ACC_FDB",
       "valueName": "h2ik",
       "value": "999999999",
-      "order": "FIRST"
+      "order": "FIRST",
+      "excludeTables": ["vers_info"]
     }
   ],
   "filters": [

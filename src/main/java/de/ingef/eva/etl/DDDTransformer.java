@@ -55,7 +55,7 @@ public class DDDTransformer extends Transformer {
 		if(isTablePresent && isDbPresent)
 			return db.equalsIgnoreCase(rowDb) && table.equalsIgnoreCase(rowTable);
 		if(isTablePresent && !isDbPresent)
-			return table.equalsIgnoreCase(rowTable);
+			return table.toLowerCase().contains(rowTable.toLowerCase());
 		if(!isTablePresent && isDbPresent)
 			return db.equalsIgnoreCase(rowDb);
 		

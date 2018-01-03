@@ -37,8 +37,8 @@ public class DDDTransformer extends Transformer {
 	private final Map<String,Map<String,RowElement>> pzn2Column2Value;
 	private final List<RowElement> additionalColumnNames;
 	private final Map<String,DateRange> pzn2ValidityDates;
-	private static final String PACKAGE_COUNT_COLUMN_NAME = "Anzahl_Packungen";
-	private static final String PRESCRIPTION_DATE_COLUMN_NAME = "Verordnungsdatum";
+	private static final String PACKAGE_COUNT_COLUMN_NAME = "Anzahl_Packungen".toLowerCase();
+	private static final String PRESCRIPTION_DATE_COLUMN_NAME = "Verordnungsdatum".toLowerCase();
 	private static final String IS_CLASSIFIED_COLUMN_NAME = "IS_CLASSIFIED";
 	private static final DateTimeFormatter WIDO_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
 	private static final int EXPECTED_PZN_LENGTH = 8;
@@ -55,19 +55,19 @@ public class DDDTransformer extends Transformer {
 		boolean isDbPresent = db != null && !db.isEmpty();
 		
 		if(isTablePresent && isDbPresent)
-			return db.equalsIgnoreCase(rowDb) && table.equalsIgnoreCase(rowTable);
+			return rowDb.toLowerCase().contains(db.toLowerCase()) && rowTable.toLowerCase().contains(table.toLowerCase());
 		if(isTablePresent && !isDbPresent)
-			return table.toLowerCase().contains(rowTable.toLowerCase());
+			return rowTable.toLowerCase().contains(table.toLowerCase());
 		if(!isTablePresent && isDbPresent)
-			return db.equalsIgnoreCase(rowDb);
+			return rowDb.toLowerCase().contains(db.toLowerCase());
 		
 		return false; 
 	}
 	
 	private Row process(Row row) {
-		if(!row.getColumnName2Index().containsKey(keyColumn))
+		if(!row.getColumnName2Index().containsKey(keyColumn.toLowerCase()))
 			return row;
-		int keyIndex = row.getColumnName2Index().get(keyColumn);
+		int keyIndex = row.getColumnName2Index().get(keyColumn.toLowerCase());
 		String keyValue = row.getColumns().get(keyIndex).getContent();
 		List<RowElement> columns = transformColumns(row.getColumns(), keyValue);
 		Map<String, Integer> columnIndices = transformColumnIndices(row.getColumnName2Index());

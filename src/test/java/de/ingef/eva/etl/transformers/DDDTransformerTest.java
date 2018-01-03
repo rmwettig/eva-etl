@@ -42,8 +42,8 @@ public class DDDTransformerTest {
 		Map<String,Integer> columnNames2Index = new HashMap<>(3);
 		columnNames2Index.put("pzn", 0);
 		columnNames2Index.put("atc", 1);
-		columnNames2Index.put("Anzahl_Packungen", 2);
-		columnNames2Index.put("Verordnungsdatum", 3);
+		columnNames2Index.put("Anzahl_Packungen".toLowerCase(), 2);
+		columnNames2Index.put("Verordnungsdatum".toLowerCase(), 3);
 		Row row = new Row(config.getTargetDb(), config.getTargetTable(), columns, columnNames2Index);
 		
 		Row transformedRow = transformer.transform(row);
@@ -61,11 +61,11 @@ public class DDDTransformerTest {
 		assertTrue(transformedIndices.containsKey("atc"));
 		assertEquals(1, (int)transformedIndices.get("atc"));
 		
-		assertTrue(transformedIndices.containsKey("Anzahl_Packungen"));
-		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen"));
+		assertTrue(transformedIndices.containsKey("Anzahl_Packungen".toLowerCase()));
+		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen".toLowerCase()));
 		
-		assertTrue(transformedIndices.containsKey("Verordnungsdatum"));
-		assertEquals(3, (int)transformedIndices.get("Verordnungsdatum"));
+		assertTrue(transformedIndices.containsKey("Verordnungsdatum".toLowerCase()));
+		assertEquals(3, (int)transformedIndices.get("Verordnungsdatum".toLowerCase()));
 		
 		assertTrue(transformedIndices.containsKey(WidoColumn.DDDPK.getLabel()));
 		assertEquals(4, (int)transformedIndices.get(WidoColumn.DDDPK.getLabel()));
@@ -123,8 +123,8 @@ public class DDDTransformerTest {
 		Map<String,Integer> columnNames2Index = new HashMap<>(4);
 		columnNames2Index.put("pzn", 0);
 		columnNames2Index.put("atc", 1);
-		columnNames2Index.put("Anzahl_Packungen", 2);
-		columnNames2Index.put("Verordnungsdatum", 3);
+		columnNames2Index.put("Anzahl_Packungen".toLowerCase(), 2);
+		columnNames2Index.put("Verordnungsdatum".toLowerCase(), 3);
 		Row row = new Row(config.getTargetDb(), config.getTargetTable(), columns, columnNames2Index);
 		
 		Row transformedRow = transformer.transform(row);
@@ -142,11 +142,11 @@ public class DDDTransformerTest {
 		assertTrue(transformedIndices.containsKey("atc"));
 		assertEquals(1, (int)transformedIndices.get("atc"));
 		
-		assertTrue(transformedIndices.containsKey("Anzahl_Packungen"));
-		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen"));
+		assertTrue(transformedIndices.containsKey("Anzahl_Packungen".toLowerCase()));
+		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen".toLowerCase()));
 		
-		assertTrue(transformedIndices.containsKey("Verordnungsdatum"));
-		assertEquals(3, (int)transformedIndices.get("Verordnungsdatum"));
+		assertTrue(transformedIndices.containsKey("Verordnungsdatum".toLowerCase()));
+		assertEquals(3, (int)transformedIndices.get("Verordnungsdatum".toLowerCase()));
 		
 		assertTrue(transformedIndices.containsKey(WidoColumn.DDDPK.getLabel()));
 		assertEquals(4, (int)transformedIndices.get(WidoColumn.DDDPK.getLabel()));
@@ -204,8 +204,8 @@ public class DDDTransformerTest {
 		Map<String,Integer> columnNames2Index = new HashMap<>(3);
 		columnNames2Index.put("pzn", 0);
 		columnNames2Index.put("atc", 1);
-		columnNames2Index.put("Anzahl_Packungen", 2);
-		columnNames2Index.put("Verordnungsdatum", 3);
+		columnNames2Index.put("Anzahl_Packungen".toLowerCase(), 2);
+		columnNames2Index.put("Verordnungsdatum".toLowerCase(), 3);
 		Row row = new Row(config.getTargetDb(), config.getTargetTable(), columns, columnNames2Index);
 		
 		Row transformedRow = transformer.transform(row);
@@ -223,11 +223,11 @@ public class DDDTransformerTest {
 		assertTrue(transformedIndices.containsKey("atc"));
 		assertEquals(1, (int)transformedIndices.get("atc"));
 		
-		assertTrue(transformedIndices.containsKey("Anzahl_Packungen"));
-		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen"));
+		assertTrue(transformedIndices.containsKey("Anzahl_Packungen".toLowerCase()));
+		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen".toLowerCase()));
 		
-		assertTrue(transformedIndices.containsKey("Verordnungsdatum"));
-		assertEquals(3, (int)transformedIndices.get("Verordnungsdatum"));
+		assertTrue(transformedIndices.containsKey("Verordnungsdatum".toLowerCase()));
+		assertEquals(3, (int)transformedIndices.get("Verordnungsdatum".toLowerCase()));
 		
 		assertTrue(transformedIndices.containsKey(WidoColumn.DDDPK.getLabel()));
 		assertEquals(4, (int)transformedIndices.get(WidoColumn.DDDPK.getLabel()));
@@ -285,8 +285,8 @@ public class DDDTransformerTest {
 		Map<String,Integer> columnNames2Index = new HashMap<>(3);
 		columnNames2Index.put("pzn", 0);
 		columnNames2Index.put("atc", 1);
-		columnNames2Index.put("Anzahl_Packungen", 2);
-		columnNames2Index.put("Verordnungsdatum", 3);
+		columnNames2Index.put("Anzahl_Packungen".toLowerCase(), 2);
+		columnNames2Index.put("Verordnungsdatum".toLowerCase(), 3);
 		Row row = new Row(config.getTargetDb(), config.getTargetTable(), columns, columnNames2Index);
 		
 		Row transformedRow = transformer.transform(row);
@@ -304,11 +304,11 @@ public class DDDTransformerTest {
 		assertTrue(transformedIndices.containsKey("atc"));
 		assertEquals(1, (int)transformedIndices.get("atc"));
 		
-		assertTrue(transformedIndices.containsKey("Anzahl_Packungen"));
-		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen"));
+		assertTrue(transformedIndices.containsKey("Anzahl_Packungen".toLowerCase()));
+		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen".toLowerCase()));
 		
-		assertTrue(transformedIndices.containsKey("Verordnungsdatum"));
-		assertEquals(3, (int)transformedIndices.get("Verordnungsdatum"));
+		assertTrue(transformedIndices.containsKey("Verordnungsdatum".toLowerCase()));
+		assertEquals(3, (int)transformedIndices.get("Verordnungsdatum".toLowerCase()));
 		
 		assertTrue(transformedIndices.containsKey(WidoColumn.DDDPK.getLabel()));
 		assertEquals(4, (int)transformedIndices.get(WidoColumn.DDDPK.getLabel()));
@@ -365,7 +365,8 @@ public class DDDTransformerTest {
 		Map<String,Integer> columnNames2Index = new HashMap<>(3);
 		columnNames2Index.put("pzn", 0);
 		columnNames2Index.put("atc", 1);
-		columnNames2Index.put("Anzahl_Packungen", 2);
+		columnNames2Index.put("Anzahl_Packungen".toLowerCase(), 2);
+
 		Row row = new Row("some db", config.getTargetTable(), columns, columnNames2Index);
 		
 		Row transformedRow = transformer.transform(row);
@@ -383,8 +384,8 @@ public class DDDTransformerTest {
 		assertTrue(transformedIndices.containsKey("atc"));
 		assertEquals(1, (int)transformedIndices.get("atc"));
 		
-		assertTrue(transformedIndices.containsKey("Anzahl_Packungen"));
-		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen"));
+		assertTrue(transformedIndices.containsKey("Anzahl_Packungen".toLowerCase()));
+		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen".toLowerCase()));
 		
 		List<RowElement> transformedColumns = transformedRow.getColumns();
 		assertNotNull(transformedColumns);
@@ -416,7 +417,8 @@ public class DDDTransformerTest {
 		Map<String,Integer> columnNames2Index = new HashMap<>(3);
 		columnNames2Index.put("pzn", 0);
 		columnNames2Index.put("atc", 1);
-		columnNames2Index.put("Anzahl_Packungen", 2);
+		columnNames2Index.put("Anzahl_Packungen".toLowerCase(), 2);
+
 		Row row = new Row(config.getTargetDb(), "some table", columns, columnNames2Index);
 		
 		Row transformedRow = transformer.transform(row);
@@ -434,8 +436,8 @@ public class DDDTransformerTest {
 		assertTrue(transformedIndices.containsKey("atc"));
 		assertEquals(1, (int)transformedIndices.get("atc"));
 		
-		assertTrue(transformedIndices.containsKey("Anzahl_Packungen"));
-		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen"));
+		assertTrue(transformedIndices.containsKey("Anzahl_Packungen".toLowerCase()));
+		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen".toLowerCase()));
 		
 		List<RowElement> transformedColumns = transformedRow.getColumns();
 		assertNotNull(transformedColumns);
@@ -468,8 +470,8 @@ public class DDDTransformerTest {
 		Map<String,Integer> columnNames2Index = new HashMap<>(3);
 		columnNames2Index.put("pzn", 0);
 		columnNames2Index.put("atc", 1);
-		columnNames2Index.put("Anzahl_Packungen", 2);
-		columnNames2Index.put("Verordnungsdatum", 3);
+		columnNames2Index.put("Anzahl_Packungen".toLowerCase(), 2);
+		columnNames2Index.put("Verordnungsdatum".toLowerCase(), 3);
 		Row row = new Row(config.getTargetDb(), config.getTargetTable(), columns, columnNames2Index);
 		
 		Row transformedRow = transformer.transform(row);
@@ -487,11 +489,11 @@ public class DDDTransformerTest {
 		assertTrue(transformedIndices.containsKey("atc"));
 		assertEquals(1, (int)transformedIndices.get("atc"));
 		
-		assertTrue(transformedIndices.containsKey("Anzahl_Packungen"));
-		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen"));
+		assertTrue(transformedIndices.containsKey("Anzahl_Packungen".toLowerCase()));
+		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen".toLowerCase()));
 		
-		assertTrue(transformedIndices.containsKey("Verordnungsdatum"));
-		assertEquals(3, (int)transformedIndices.get("Verordnungsdatum"));
+		assertTrue(transformedIndices.containsKey("Verordnungsdatum".toLowerCase()));
+		assertEquals(3, (int)transformedIndices.get("Verordnungsdatum".toLowerCase()));
 		
 		assertTrue(transformedIndices.containsKey(WidoColumn.DDDPK.getLabel()));
 		assertEquals(4, (int)transformedIndices.get(WidoColumn.DDDPK.getLabel()));
@@ -549,8 +551,9 @@ public class DDDTransformerTest {
 		Map<String,Integer> columnNames2Index = new HashMap<>(3);
 		columnNames2Index.put("pzn", 0);
 		columnNames2Index.put("atc", 1);
-		columnNames2Index.put("Anzahl_Packungen", 2);
-		columnNames2Index.put("Verordnungsdatum", 3);
+		columnNames2Index.put("Anzahl_Packungen".toLowerCase(), 2);
+		columnNames2Index.put("Verordnungsdatum".toLowerCase(), 3);
+		
 		Row row = new Row(config.getTargetDb(), config.getTargetTable(), columns, columnNames2Index);
 		
 		Row transformedRow = transformer.transform(row);
@@ -568,11 +571,11 @@ public class DDDTransformerTest {
 		assertTrue(transformedIndices.containsKey("atc"));
 		assertEquals(1, (int)transformedIndices.get("atc"));
 		
-		assertTrue(transformedIndices.containsKey("Anzahl_Packungen"));
-		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen"));
+		assertTrue(transformedIndices.containsKey("Anzahl_Packungen".toLowerCase()));
+		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen".toLowerCase()));
 		
-		assertTrue(transformedIndices.containsKey("Verordnungsdatum"));
-		assertEquals(3, (int)transformedIndices.get("Verordnungsdatum"));
+		assertTrue(transformedIndices.containsKey("Verordnungsdatum".toLowerCase()));
+		assertEquals(3, (int)transformedIndices.get("Verordnungsdatum".toLowerCase()));
 		
 		assertTrue(transformedIndices.containsKey(WidoColumn.DDDPK.getLabel()));
 		assertEquals(4, (int)transformedIndices.get(WidoColumn.DDDPK.getLabel()));
@@ -630,8 +633,9 @@ public class DDDTransformerTest {
 		Map<String,Integer> columnNames2Index = new HashMap<>(3);
 		columnNames2Index.put("pzn", 0);
 		columnNames2Index.put("atc", 1);
-		columnNames2Index.put("Anzahl_Packungen", 2);
-		columnNames2Index.put("Verordnungsdatum", 3);
+		columnNames2Index.put("Anzahl_Packungen".toLowerCase(), 2);
+		columnNames2Index.put("Verordnungsdatum".toLowerCase(), 3);
+		
 		Row row = new Row(config.getTargetDb(), config.getTargetTable(), columns, columnNames2Index);
 		
 		Row transformedRow = transformer.transform(row);
@@ -649,11 +653,11 @@ public class DDDTransformerTest {
 		assertTrue(transformedIndices.containsKey("atc"));
 		assertEquals(1, (int)transformedIndices.get("atc"));
 		
-		assertTrue(transformedIndices.containsKey("Anzahl_Packungen"));
-		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen"));
+		assertTrue(transformedIndices.containsKey("Anzahl_Packungen".toLowerCase()));
+		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen".toLowerCase()));
 		
-		assertTrue(transformedIndices.containsKey("Verordnungsdatum"));
-		assertEquals(3, (int)transformedIndices.get("Verordnungsdatum"));
+		assertTrue(transformedIndices.containsKey("Verordnungsdatum".toLowerCase()));
+		assertEquals(3, (int)transformedIndices.get("Verordnungsdatum".toLowerCase()));
 		
 		assertTrue(transformedIndices.containsKey(WidoColumn.DDDPK.getLabel()));
 		assertEquals(4, (int)transformedIndices.get(WidoColumn.DDDPK.getLabel()));
@@ -711,8 +715,9 @@ public class DDDTransformerTest {
 		Map<String,Integer> columnNames2Index = new HashMap<>(4);
 		columnNames2Index.put("pzn", 0);
 		columnNames2Index.put("atc", 1);
-		columnNames2Index.put("Anzahl_Packungen", 2);
-		columnNames2Index.put("Verordnungsdatum", 3);
+		columnNames2Index.put("Anzahl_Packungen".toLowerCase(), 2);
+		columnNames2Index.put("Verordnungsdatum".toLowerCase(), 3);
+		
 		Row row = new Row(config.getTargetDb(), config.getTargetTable(), columns, columnNames2Index);
 		
 		Row transformedRow = transformer.transform(row);
@@ -730,11 +735,11 @@ public class DDDTransformerTest {
 		assertTrue(transformedIndices.containsKey("atc"));
 		assertEquals(1, (int)transformedIndices.get("atc"));
 		
-		assertTrue(transformedIndices.containsKey("Anzahl_Packungen"));
-		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen"));
+		assertTrue(transformedIndices.containsKey("Anzahl_Packungen".toLowerCase()));
+		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen".toLowerCase()));
 		
-		assertTrue(transformedIndices.containsKey("Verordnungsdatum"));
-		assertEquals(3, (int)transformedIndices.get("Verordnungsdatum"));
+		assertTrue(transformedIndices.containsKey("Verordnungsdatum".toLowerCase()));
+		assertEquals(3, (int)transformedIndices.get("Verordnungsdatum".toLowerCase()));
 		
 		assertTrue(transformedIndices.containsKey(WidoColumn.DDDPK.getLabel()));
 		assertEquals(4, (int)transformedIndices.get(WidoColumn.DDDPK.getLabel()));
@@ -806,8 +811,9 @@ public class DDDTransformerTest {
 		Map<String,Integer> columnNames2Index = new HashMap<>(4);
 		columnNames2Index.put("pzn", 0);
 		columnNames2Index.put("atc", 1);
-		columnNames2Index.put("Anzahl_Packungen", 2);
-		columnNames2Index.put("Verordnungsdatum", 3);
+		columnNames2Index.put("Anzahl_Packungen".toLowerCase(), 2);
+		columnNames2Index.put("Verordnungsdatum".toLowerCase(), 3);
+		
 		Row row = new Row(config.getTargetDb(), config.getTargetTable(), columns, columnNames2Index);
 		
 		Row transformedRow = transformer.transform(row);
@@ -825,11 +831,11 @@ public class DDDTransformerTest {
 		assertTrue(transformedIndices.containsKey("atc"));
 		assertEquals(1, (int)transformedIndices.get("atc"));
 		
-		assertTrue(transformedIndices.containsKey("Anzahl_Packungen"));
-		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen"));
+		assertTrue(transformedIndices.containsKey("Anzahl_Packungen".toLowerCase()));
+		assertEquals(2, (int)transformedIndices.get("Anzahl_Packungen".toLowerCase()));
 		
-		assertTrue(transformedIndices.containsKey("Verordnungsdatum"));
-		assertEquals(3, (int)transformedIndices.get("Verordnungsdatum"));
+		assertTrue(transformedIndices.containsKey("Verordnungsdatum".toLowerCase()));
+		assertEquals(3, (int)transformedIndices.get("Verordnungsdatum".toLowerCase()));
 		
 		assertTrue(transformedIndices.containsKey(WidoColumn.DDDPK.getLabel()));
 		assertEquals(4, (int)transformedIndices.get(WidoColumn.DDDPK.getLabel()));

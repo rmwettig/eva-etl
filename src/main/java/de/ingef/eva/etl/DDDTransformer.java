@@ -20,6 +20,7 @@ import de.ingef.eva.configuration.append.AppendSourceConfig;
 import de.ingef.eva.data.RowElement;
 import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
+import de.ingef.eva.utility.Helper;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -40,6 +41,7 @@ public class DDDTransformer extends Transformer {
 	private static final String PRESCRIPTION_DATE_COLUMN_NAME = "Verordnungsdatum";
 	private static final String IS_CLASSIFIED_COLUMN_NAME = "IS_CLASSIFIED";
 	private static final DateTimeFormatter WIDO_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
+	private static final int EXPECTED_PZN_LENGTH = 8;
 	
 	@Override
 	public Row transform(Row row) {
@@ -294,7 +296,7 @@ public class DDDTransformer extends Transformer {
 			if(line.isEmpty()) continue;
 			String[] values = line.split(";", -1);
 			for(AppendColumnConfig config : columnConfig) {
-				String pzn = values[keyIndex];
+				String pzn = Helper.addPaddingZeros(values[keyIndex], EXPECTED_PZN_LENGTH);
 				if(pzn2Column2Data.containsKey(pzn)) {
 					Map<String,RowElement> column2Data = pzn2Column2Data.get(pzn);
 					RowElement element = new SimpleRowElement(values[config.getIndex()], TeradataColumnType.ANY);

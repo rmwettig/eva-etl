@@ -17,6 +17,7 @@ import de.ingef.eva.data.RowElement;
 import de.ingef.eva.datasource.DataProcessor;
 import de.ingef.eva.datasource.file.FileDataTable;
 import de.ingef.eva.error.DataTableOperationException;
+import de.ingef.eva.utility.Helper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ import lombok.extern.log4j.Log4j2;
 public class ProcessPidDecode implements DataProcessor {
 	
 	private final Configuration config;
+	private static final int EXPECTED_PID_LENGTH = 10;	
 	
 	@AllArgsConstructor
 	private static class Mapping {
@@ -81,24 +83,6 @@ public class ProcessPidDecode implements DataProcessor {
 	}
 	
 	/**
-	 * adds zeros to pad the pid to length 10 if pid does not start with zeros
-	 * @param pid
-	 * @return
-	 */
-	private String addPaddingZeros(String pid) {
-		int length = pid.length();
-		if(length == 10)
-			return pid;
-		StringBuilder sb = new StringBuilder(10);
-		int paddingLength = 10 - length;
-		for(int i = 0; i < paddingLength; i++)
-			sb.insert(i, '0');
-		sb.insert(paddingLength, pid);
-		
-		return sb.toString();
-	}
-	
-	/**
 	 * creates unique mappings with spread information combined
 	 * @param rawPids unfiltered pids. Will be closed after use
 	 * @param unwantedPids pids that must be removed from the set
@@ -118,7 +102,7 @@ public class ProcessPidDecode implements DataProcessor {
 				String h2ik = row.get(0).getContent();
 				//skip entries with empty h2ik, pid
 				if(h2ik == null || h2ik.isEmpty() || pid == null || pid.isEmpty()) continue;
-				pid = addPaddingZeros(pid);
+				pid = Helper.addPaddingZeros(pid, EXPECTED_PID_LENGTH);
 				//skip unwanted pids
 				if(unwantedPids.contains(pid)) continue;
 				rowCount++;

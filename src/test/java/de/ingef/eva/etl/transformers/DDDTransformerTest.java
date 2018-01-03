@@ -34,7 +34,7 @@ public class DDDTransformerTest {
 		AppendConfiguration config = new ObjectMapper().readValue(new File("src/test/resources/configuration/etl/dynamicAppending/DDD_without_name.json"), AppendConfiguration.class);
 		Transformer transformer = DDDTransformer.of(config.getTargetDb(), config.getTargetTable(), config.getKeyColumn(), config.getSources());
 		List<RowElement> columns = Arrays.asList(
-				new SimpleRowElement("1", TeradataColumnType.CHARACTER),
+				new SimpleRowElement("00000001", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("abcde", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("10", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("2010-04-01", TeradataColumnType.CHARACTER)
@@ -83,7 +83,7 @@ public class DDDTransformerTest {
 		
 		RowElement pzn = transformedColumns.get(0);
 		assertNotNull(pzn);
-		assertEquals("1", pzn.getContent());
+		assertEquals("00000001", pzn.getContent());
 		
 		RowElement atc = transformedColumns.get(1);
 		assertNotNull(atc);
@@ -115,7 +115,7 @@ public class DDDTransformerTest {
 		AppendConfiguration config = new ObjectMapper().readValue(new File("src/test/resources/configuration/etl/dynamicAppending/DDD_without_name.json"), AppendConfiguration.class);
 		Transformer transformer = DDDTransformer.of(config.getTargetDb(), config.getTargetTable(), config.getKeyColumn(), config.getSources());
 		List<RowElement> columns = Arrays.asList(
-				new SimpleRowElement("4", TeradataColumnType.CHARACTER),
+				new SimpleRowElement("00000004", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("abcde", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("10", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("2010-04-01", TeradataColumnType.CHARACTER)
@@ -164,7 +164,7 @@ public class DDDTransformerTest {
 		
 		RowElement pzn = transformedColumns.get(0);
 		assertNotNull(pzn);
-		assertEquals("4", pzn.getContent());
+		assertEquals("00000004", pzn.getContent());
 		
 		RowElement atc = transformedColumns.get(1);
 		assertNotNull(atc);
@@ -196,7 +196,7 @@ public class DDDTransformerTest {
 		AppendConfiguration config = new ObjectMapper().readValue(new File("src/test/resources/configuration/etl/dynamicAppending/DDD_without_name.json"), AppendConfiguration.class);
 		Transformer transformer = DDDTransformer.of(config.getTargetDb(), config.getTargetTable(), config.getKeyColumn(), config.getSources());
 		List<RowElement> columns = Arrays.asList(
-				new SimpleRowElement("2", TeradataColumnType.CHARACTER),
+				new SimpleRowElement("00000002", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("abcde", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("10", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("2010-04-01", TeradataColumnType.CHARACTER)
@@ -245,7 +245,7 @@ public class DDDTransformerTest {
 		
 		RowElement pzn = transformedColumns.get(0);
 		assertNotNull(pzn);
-		assertEquals("2", pzn.getContent());
+		assertEquals("00000002", pzn.getContent());
 		
 		RowElement atc = transformedColumns.get(1);
 		assertNotNull(atc);
@@ -277,7 +277,7 @@ public class DDDTransformerTest {
 		AppendConfiguration config = new ObjectMapper().readValue(new File("src/test/resources/configuration/etl/dynamicAppending/DDD_without_name.json"), AppendConfiguration.class);
 		Transformer transformer = DDDTransformer.of(config.getTargetDb(), config.getTargetTable(), config.getKeyColumn(), config.getSources());
 		List<RowElement> columns = Arrays.asList(
-				new SimpleRowElement("5", TeradataColumnType.CHARACTER),
+				new SimpleRowElement("00000005", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("abcde", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("10", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("2010-04-01", TeradataColumnType.CHARACTER)
@@ -326,7 +326,7 @@ public class DDDTransformerTest {
 		
 		RowElement pzn = transformedColumns.get(0);
 		assertNotNull(pzn);
-		assertEquals("5", pzn.getContent());
+		assertEquals("00000005", pzn.getContent());
 		
 		RowElement atc = transformedColumns.get(1);
 		assertNotNull(atc);
@@ -358,7 +358,7 @@ public class DDDTransformerTest {
 		AppendConfiguration config = new ObjectMapper().readValue(new File("src/test/resources/configuration/etl/dynamicAppending/DDD_without_name.json"), AppendConfiguration.class);
 		Transformer transformer = DDDTransformer.of(config.getTargetDb(), config.getTargetTable(), config.getKeyColumn(), config.getSources());
 		List<RowElement> columns = Arrays.asList(
-				new SimpleRowElement("5", TeradataColumnType.CHARACTER),
+				new SimpleRowElement("00000005", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("abcde", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("10", TeradataColumnType.CHARACTER)
 		);
@@ -393,7 +393,7 @@ public class DDDTransformerTest {
 		
 		RowElement pzn = transformedColumns.get(0);
 		assertNotNull(pzn);
-		assertEquals("5", pzn.getContent());
+		assertEquals("00000005", pzn.getContent());
 		
 		RowElement atc = transformedColumns.get(1);
 		assertNotNull(atc);
@@ -409,7 +409,7 @@ public class DDDTransformerTest {
 		AppendConfiguration config = new ObjectMapper().readValue(new File("src/test/resources/configuration/etl/dynamicAppending/DDD_without_name.json"), AppendConfiguration.class);
 		Transformer transformer = DDDTransformer.of(config.getTargetDb(), config.getTargetTable(), config.getKeyColumn(), config.getSources());
 		List<RowElement> columns = Arrays.asList(
-				new SimpleRowElement("5", TeradataColumnType.CHARACTER),
+				new SimpleRowElement("00000005", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("abcde", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("10", TeradataColumnType.CHARACTER)
 		);
@@ -444,7 +444,7 @@ public class DDDTransformerTest {
 		
 		RowElement pzn = transformedColumns.get(0);
 		assertNotNull(pzn);
-		assertEquals("5", pzn.getContent());
+		assertEquals("00000005", pzn.getContent());
 		
 		RowElement atc = transformedColumns.get(1);
 		assertNotNull(atc);
@@ -460,7 +460,7 @@ public class DDDTransformerTest {
 		AppendConfiguration config = new ObjectMapper().readValue(new File("src/test/resources/configuration/etl/dynamicAppending/DDD_without_name.json"), AppendConfiguration.class);
 		Transformer transformer = DDDTransformer.of(config.getTargetDb(), config.getTargetTable(), config.getKeyColumn(), config.getSources());
 		List<RowElement> columns = Arrays.asList(
-				new SimpleRowElement("6", TeradataColumnType.CHARACTER),
+				new SimpleRowElement("00000006", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("abcde", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("10", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("2011-04-01", TeradataColumnType.CHARACTER)
@@ -509,7 +509,7 @@ public class DDDTransformerTest {
 		
 		RowElement pzn = transformedColumns.get(0);
 		assertNotNull(pzn);
-		assertEquals("6", pzn.getContent());
+		assertEquals("00000006", pzn.getContent());
 		
 		RowElement atc = transformedColumns.get(1);
 		assertNotNull(atc);
@@ -541,7 +541,7 @@ public class DDDTransformerTest {
 		AppendConfiguration config = new ObjectMapper().readValue(new File("src/test/resources/configuration/etl/dynamicAppending/DDD_without_name.json"), AppendConfiguration.class);
 		Transformer transformer = DDDTransformer.of(config.getTargetDb(), config.getTargetTable(), config.getKeyColumn(), config.getSources());
 		List<RowElement> columns = Arrays.asList(
-				new SimpleRowElement("7", TeradataColumnType.CHARACTER),
+				new SimpleRowElement("00000007", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("abcde", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("10", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("2011-04-01", TeradataColumnType.CHARACTER)
@@ -590,7 +590,7 @@ public class DDDTransformerTest {
 		
 		RowElement pzn = transformedColumns.get(0);
 		assertNotNull(pzn);
-		assertEquals("7", pzn.getContent());
+		assertEquals("00000007", pzn.getContent());
 		
 		RowElement atc = transformedColumns.get(1);
 		assertNotNull(atc);
@@ -622,7 +622,7 @@ public class DDDTransformerTest {
 		AppendConfiguration config = new ObjectMapper().readValue(new File("src/test/resources/configuration/etl/dynamicAppending/DDD_without_name.json"), AppendConfiguration.class);
 		Transformer transformer = DDDTransformer.of(config.getTargetDb(), config.getTargetTable(), config.getKeyColumn(), config.getSources());
 		List<RowElement> columns = Arrays.asList(
-				new SimpleRowElement("8", TeradataColumnType.CHARACTER),
+				new SimpleRowElement("00000008", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("abcde", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("10", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("2011-04-01", TeradataColumnType.CHARACTER)
@@ -671,7 +671,7 @@ public class DDDTransformerTest {
 		
 		RowElement pzn = transformedColumns.get(0);
 		assertNotNull(pzn);
-		assertEquals("8", pzn.getContent());
+		assertEquals("00000008", pzn.getContent());
 		
 		RowElement atc = transformedColumns.get(1);
 		assertNotNull(atc);
@@ -703,7 +703,7 @@ public class DDDTransformerTest {
 		AppendConfiguration config = new ObjectMapper().readValue(new File("src/test/resources/configuration/etl/dynamicAppending/DDD_with_name.json"), AppendConfiguration.class);
 		Transformer transformer = DDDTransformer.of(config.getTargetDb(), config.getTargetTable(), config.getKeyColumn(), config.getSources());
 		List<RowElement> columns = Arrays.asList(
-				new SimpleRowElement("9", TeradataColumnType.CHARACTER),
+				new SimpleRowElement("00000009", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("abcde", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("10", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("2011-04-01", TeradataColumnType.CHARACTER)
@@ -758,7 +758,7 @@ public class DDDTransformerTest {
 		
 		RowElement pzn = transformedColumns.get(0);
 		assertNotNull(pzn);
-		assertEquals("9", pzn.getContent());
+		assertEquals("00000009", pzn.getContent());
 		
 		RowElement atc = transformedColumns.get(1);
 		assertNotNull(atc);
@@ -798,7 +798,7 @@ public class DDDTransformerTest {
 		AppendConfiguration config = new ObjectMapper().readValue(new File("src/test/resources/configuration/etl/dynamicAppending/DDD_with_name.json"), AppendConfiguration.class);
 		Transformer transformer = DDDTransformer.of(config.getTargetDb(), config.getTargetTable(), config.getKeyColumn(), config.getSources());
 		List<RowElement> columns = Arrays.asList(
-				new SimpleRowElement("10", TeradataColumnType.CHARACTER),
+				new SimpleRowElement("00000010", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("abcde", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("10", TeradataColumnType.CHARACTER),
 				new SimpleRowElement("2011-04-01", TeradataColumnType.CHARACTER)
@@ -853,7 +853,7 @@ public class DDDTransformerTest {
 		
 		RowElement pzn = transformedColumns.get(0);
 		assertNotNull(pzn);
-		assertEquals("10", pzn.getContent());
+		assertEquals("00000010", pzn.getContent());
 		
 		RowElement atc = transformedColumns.get(1);
 		assertNotNull(atc);

@@ -105,4 +105,22 @@ public final class Helper {
 	public static String joinIks(List<String> iks) {
 		return iks.stream().map(ik -> "'" + ik + "'").collect(Collectors.joining(","));
 	}
+	
+	/**
+	 * pads a string with leading zeros to the specified length
+	 * @param pid
+	 * @return
+	 */
+	public static String addPaddingZeros(String id, int expectedLength) {
+		int length = id.length();
+		if(length == expectedLength)
+			return id;
+		int paddingLength = expectedLength - length;
+		String padding = IntStream.range(0, paddingLength).mapToObj(i -> "0").collect(Collectors.joining());
+		StringBuilder sb = new StringBuilder(expectedLength);
+		sb.append(padding);
+		sb.append(id);
+		
+		return sb.toString();
+	}
 }

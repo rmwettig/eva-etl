@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -94,7 +95,7 @@ public class Merger {
 		try {
 			ExecutorService threadPool = Helper.createThreadPool(config.getThreadCount(), true);
 			List<Path> datasetLeaves = readDatasetDirectories(config.getCacheDirectory());
-			List<Dataset> datasets = findDatasets(datasetLeaves);
+			List<Dataset> datasets = findDatasets(datasetLeaves, createSliceSelectionLookup(config));
 			createMergeTasks(config.getOutputDirectory(), datasets, threadPool);
 			threadPool.shutdown();
 			threadPool.awaitTermination(3, TimeUnit.DAYS);
@@ -104,6 +105,30 @@ public class Merger {
 			log.error("Merging took too long. {}", e);
 		}
 		
+	}
+	
+	/**
+	 * creates a set of names of all configured views
+	 * @param config
+	 * @return
+	 */
+	private Set<String> createSliceSelectionLookup(Configuration config) {
+		return config
+				.getExport()
+				.getSources()
+				.stream()
+				.flatMap(source -> source.getViews().stream())
+				.map(view -> view.getName())
+				.map(this::appendDb) //quick and dirty way to add the db prefix. should not be needed when tables are written using just the relevant name part
+				.collect(Collectors.toSet());
+	}
+
+	private String appendDb(String viewName) {
+		if(viewName.contains("ADB"))
+			return "ACC_ADB_" + viewName;
+		if(viewName.contains("FDB"))
+			return "ACC_FDB_" + viewName;
+		return viewName;
 	}
 	
 	private void createMergeTasks(String rootDirectory, List<Dataset> datasets, ExecutorService threadPool) throws IOException {
@@ -175,10 +200,10 @@ public class Merger {
 		return leafFinder.getLeafDirectories();
 	}
 	
-	private List<Dataset> findDatasets(List<Path> rawDatasetDirectories) {
+	private List<Dataset> findDatasets(List<Path> rawDatasetDirectories, Set<String> selectedSlicePrefixes) {
 		List<Dataset> datasets = new ArrayList<>();
 		for(Path p : rawDatasetDirectories) {
-			datasets.addAll(findDatasetsInDirectory(p));
+			datasets.addAll(findDatasetsInDirectory(p, selectedSlicePrefixes));
 		}
 		return datasets;
 	}
@@ -186,16 +211,17 @@ public class Merger {
 	/**
 	 * Creates datasets for the given dataset directory
 	 * @param datasetDirectory directory that contains the year slices
+	 * @param selectedSlicePrefixes slices must partially match the names in the lookup
 	 * @return
 	 */
-	private List<Dataset> findDatasetsInDirectory(Path datasetDirectory) {
+	private List<Dataset> findDatasetsInDirectory(Path datasetDirectory, Set<String> selectedSlicePrefixes) {
 		Map<String,Dataset> commonName2dataset = new HashMap<>();
-		File[] slices = datasetDirectory.toFile().listFiles();
+		List<File> slices = findSelectedSlices(datasetDirectory, selectedSlicePrefixes);
 		for(File slice : slices) {
 			String fileName = slice.getName();
 			if(!fileName.endsWith(".csv"))
 				continue;
-			String commonName = fileName.substring(0, fileName.indexOf("."));
+			String commonName = extractCommonName(fileName);
 			//skip already known datasets
 			if(commonName2dataset.containsKey(commonName)) {
 				commonName2dataset.get(commonName).getFiles().add(datasetDirectory.resolve(fileName));
@@ -212,5 +238,24 @@ public class Merger {
 		}
 		return new ArrayList<>(commonName2dataset.values());
 	}
+
+	private List<File> findSelectedSlices(Path datasetDirectory, Set<String> selectedSlicePrefixes) {
+		File[] slices = datasetDirectory.toFile().listFiles();
+		List<File> selectedSlices = new ArrayList<>(slices.length);
+		for(File slice : slices) {
+			String commonName = extractCommonName(slice.getName());
+			if(selectedSlicePrefixes.contains(commonName))
+				selectedSlices.add(slice);
+		}
+		return selectedSlices;
+	}
 	
+	/**
+	 * extracts the common prefix of file names like 'prefix.yyyy.csv'
+	 * @param fileName
+	 * @return
+	 */
+	private String extractCommonName(String fileName) {
+		return fileName.substring(0, fileName.indexOf("."));
+	}
 }

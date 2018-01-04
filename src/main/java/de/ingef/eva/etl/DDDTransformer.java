@@ -97,6 +97,7 @@ public class DDDTransformer extends Transformer {
 		LocalDate prescriptionDate = LocalDate.parse(columns.get(prescriptionDateIndex).getContent());
 		boolean isValidAdmissionDate = !validityDates.getStart().isEqual(LocalDate.MIN);
 		boolean isValidRetirementDate = !validityDates.getEnd().isEqual(LocalDate.MAX);
+		
 		//drug was admitted and not retired
 		if(isValidAdmissionDate && !isValidRetirementDate) {
 			//prescription happened on or after admission
@@ -111,7 +112,8 @@ public class DDDTransformer extends Transformer {
 			return (prescriptionDate.isAfter(validityDates.getStart()) || prescriptionDate.isEqual(validityDates.getStart())) && prescriptionDate.isBefore(validityDates.getEnd()) ? preliminaryDDD : 0;
 		}
 		
-		return 0.0;
+		//keep ddd information if there is no clear date limit
+		return preliminaryDDD;
 	}
 
 	private Map<String, Integer> transformColumnIndices(Map<String, Integer> columnName2Index) {

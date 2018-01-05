@@ -13,8 +13,4 @@ public class StatisticConfig {
 	 */	
 	private Path morbiStatisticFile;
 	private List<StatisticDatasetConfig> datasets;
-	/**
-	 * path to the report output directory
-	 */
-	private Path outputDirectory;
 }

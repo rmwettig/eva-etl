@@ -6,4 +6,10 @@ import java.nio.charset.StandardCharsets;
 public class OutputDirectory {
 	
 	public static final Charset DATA_CHARSET = StandardCharsets.UTF_8;
+	
+	public enum DirectoryType {
+		CACHE,
+		PRODUCTION,
+		REPORT
+	}
 }

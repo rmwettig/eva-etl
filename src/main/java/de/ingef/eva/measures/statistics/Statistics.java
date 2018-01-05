@@ -21,8 +21,10 @@ import java.util.stream.IntStream;
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.configuration.statistics.StatisticDatasetConfig;
 import de.ingef.eva.constant.Templates;
+import de.ingef.eva.constant.OutputDirectory.DirectoryType;
 import de.ingef.eva.measures.cci.Quarter;
 import de.ingef.eva.utility.Helper;
+import de.ingef.eva.utility.IOManager;
 import de.ingef.eva.utility.QuarterCount;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -86,12 +88,12 @@ public class Statistics {
 		private final List<String> morbiHeader;
 	}
 	
-	public void createStatistics(Configuration config) {
+	public void createStatistics(Configuration config, IOManager ioManager) {
 		try (Connection conn = DriverManager.getConnection(config.getFullConnectionUrl(), config.getUser(), config.getPassword())) {
 			StatisticsCalculator calculator = new StatisticsCalculator();
 			RegionalStatisticCalculator regionalCalculator = new RegionalStatisticCalculator();
 			List<StatisticDatasetConfig> statisticsConfigs = config.getStatistics().getDatasets();
-			Path outputDirectory = config.getStatistics().getOutputDirectory();
+			Path outputDirectory = ioManager.getDirectory(DirectoryType.REPORT);
 			List<String> morbiHeader = extractMorbiColumnHeader(config.getStatistics().getMorbiStatisticFile());
 			Map<String, List<MorbiRsaEntry>> insurance2MorbiStatistics = readMorbiStatistic(config.getStatistics().getMorbiStatisticFile());
 			for(StatisticDatasetConfig statisticsConfig : statisticsConfigs) {
@@ -118,13 +120,7 @@ public class Statistics {
 	}
 		
 	private void createOutput(Path outputDirectory, StatisticDatasetConfig settings, Result result) {
-		Path file = outputDirectory.resolve(settings.getDb()).resolve(settings.getDataset());
-		try {
-			Helper.createFolders(file);
-		} catch (IOException e) {
-			log.error("Could not create path: '{}'. ", file.toString(), e);
-		}
-		file = file.resolve("statistic.pdf");
+		Path file = outputDirectory.resolve("statistic_" + settings.getDataset() + ".pdf");
 		new StatisticPdfOutput().createStatisticOutput(file, result.getOverview(), result.getDetails(), result.getMorbi(), result.getMorbiHeader());
 	}
 

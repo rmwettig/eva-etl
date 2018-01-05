@@ -1,9 +1,7 @@
 package de.ingef.eva.etl;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -21,24 +19,26 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import de.ingef.eva.configuration.Configuration;
+import de.ingef.eva.constant.OutputDirectory.DirectoryType;
 import de.ingef.eva.data.RowElement;
 import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.query.Query;
 import de.ingef.eva.utility.CsvWriter;
 import de.ingef.eva.utility.Helper;
+import de.ingef.eva.utility.IOManager;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class ETLPipeline {
 	
-	public void run(Configuration configuration, Collection<Query> queries, List<Filter> filters, List<Transformer> transformers) {
+	public void run(Configuration configuration, Collection<Query> queries, List<Filter> filters, List<Transformer> transformers, IOManager ioManager) {
 		ExecutorService threadPool = Helper.createThreadPool(configuration.getThreadCount(), true);
 		String user = configuration.getUser();
 		String url = configuration.getFullConnectionUrl();
 		String password = configuration.getPassword();
 		for(Query q : queries) {
-			startExport(q, threadPool, url, user, password, filters, transformers, configuration.getCacheDirectory());
+			startExport(q, threadPool, url, user, password, filters, transformers, ioManager);
 		}
 		
 		threadPool.shutdown();
@@ -54,7 +54,7 @@ public class ETLPipeline {
 		return DriverManager.getConnection(url, user, password);
 	}
 	
-	private void startExport(Query q, ExecutorService threadPool, String url, String user, String password, List<Filter> filters, List<Transformer> transformers, String rootOutput) {
+	private void startExport(Query q, ExecutorService threadPool, String url, String user, String password, List<Filter> filters, List<Transformer> transformers, IOManager ioManager) {
 		CompletableFuture.supplyAsync(
 				() -> {
 					Connection conn = null;
@@ -81,7 +81,7 @@ public class ETLPipeline {
 						ResultSetMetaData metaData = rs.getMetaData();
 						int columnCount = metaData.getColumnCount();
 						System.out.println("\tFetching...");
-						writer = createWriter(rootOutput, q);
+						writer = createWriter(ioManager, q);
 						boolean wasHeaderWritten = false;
 						while(rs.next()) {
 							List<RowElement> columns = new ArrayList<>(columnCount);
@@ -157,12 +157,9 @@ public class ETLPipeline {
 		writer.writeLine();
 	}
 
-	private CsvWriter createWriter(String rootDirectory, Query q) throws IOException {
+	private CsvWriter createWriter(IOManager ioManager, Query q) throws IOException {
 		String dbShortName = createDbShortName(q.getDbName());
-		Path root = Paths.get(rootDirectory, dbShortName, q.getDatasetName());
-		if(!Files.exists(root)) {
-			Files.createDirectories(root);
-		}
+		Path root = ioManager.createSubdirectories(DirectoryType.CACHE, dbShortName, q.getDatasetName());
 		String fileName = createOutputFileName(q); 
 		CsvWriter writer = new CsvWriter(root.resolve(fileName).toFile());
 		writer.open();

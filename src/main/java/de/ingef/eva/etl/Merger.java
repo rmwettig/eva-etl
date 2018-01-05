@@ -8,7 +8,6 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,7 +21,9 @@ import java.util.stream.Collectors;
 
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.constant.OutputDirectory;
+import de.ingef.eva.constant.OutputDirectory.DirectoryType;
 import de.ingef.eva.utility.Helper;
+import de.ingef.eva.utility.IOManager;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -91,12 +92,12 @@ public class Merger {
 		}
 	}
 	
-	public void run(Configuration config) {		
+	public void run(Configuration config, IOManager ioManager) {		
 		try {
 			ExecutorService threadPool = Helper.createThreadPool(config.getThreadCount(), true);
-			List<Path> datasetLeaves = readDatasetDirectories(config.getCacheDirectory());
+			List<Path> datasetLeaves = readDatasetDirectories(ioManager.getDirectory(DirectoryType.CACHE));
 			List<Dataset> datasets = findDatasets(datasetLeaves, createSliceSelectionLookup(config));
-			createMergeTasks(config.getOutputDirectory(), datasets, threadPool);
+			createMergeTasks(ioManager, datasets, threadPool);
 			threadPool.shutdown();
 			threadPool.awaitTermination(3, TimeUnit.DAYS);
 		} catch(IOException e) {
@@ -131,13 +132,13 @@ public class Merger {
 		return viewName;
 	}
 	
-	private void createMergeTasks(String rootDirectory, List<Dataset> datasets, ExecutorService threadPool) throws IOException {
+	private void createMergeTasks(IOManager ioManager, List<Dataset> datasets, ExecutorService threadPool) throws IOException {
 		for(Dataset ds : datasets) {
 			if(ds.calculateSize() == 0) {
 				log.warn("Table '{}' in dataset '{}' is empty and will not be merged.", ds.getFileName(), ds.getDatasetName());
 				continue;
 			}
-			Path directory = createMergeDirectories(rootDirectory, ds);
+			Path directory = ioManager.createSubdirectories(DirectoryType.PRODUCTION, ds.getDb(), ds.getDatasetName());
 			CompletableFuture.supplyAsync(() -> {
 					BufferedWriter writer = null;
 					try {
@@ -180,23 +181,15 @@ public class Merger {
 		}
 	}
 
-	private Path createMergeDirectories(String rootDirectory, Dataset ds) throws IOException {
-		Path output = Paths.get(rootDirectory, ds.getDb(), ds.getDatasetName());
-		if(!Files.exists(output))
-			Files.createDirectories(output);
-		return output;
-	}
-
 	/**
 	 * Finds all terminal dataset directories
 	 * @param outputDirectory root directory of output
 	 * @return paths with exemplary shape 'out/raw/ADB/Bosch'
 	 * @throws IOException
 	 */
-	private List<Path> readDatasetDirectories(String outputDirectory) throws IOException {
-		Path root = Paths.get(outputDirectory);
+	private List<Path> readDatasetDirectories(Path outputDirectory) throws IOException {
 		DatasetLeafDirectory leafFinder = new DatasetLeafDirectory();
-		Files.walkFileTree(root, leafFinder);
+		Files.walkFileTree(outputDirectory, leafFinder);
 		return leafFinder.getLeafDirectories();
 	}
 	

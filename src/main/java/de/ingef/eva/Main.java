@@ -47,6 +47,7 @@ import de.ingef.eva.query.JsonQuerySource;
 import de.ingef.eva.query.Query;
 import de.ingef.eva.query.QuerySource;
 import de.ingef.eva.utility.Helper;
+import de.ingef.eva.utility.IOManager;
 import de.ingef.eva.utility.Stopwatch;
 import lombok.extern.log4j.Log4j2;
 
@@ -84,7 +85,7 @@ public class Main {
 		Stopwatch sw = new Stopwatch();
 		sw.start();
 		Configuration configuration = Configuration.loadFromJson(cmd.getOptionValue("merge"));
-		new Merger().run(configuration);
+		new Merger().run(configuration, IOManager.of(configuration));
 		sw.stop();
 		log.info("Merging done in {}.", sw.createReadableDelta());
 	}
@@ -112,7 +113,7 @@ public class Main {
 		Collection<Query> queries = qs.createQueries();
 		List<Filter> filters = new FilterFactory().create(config.getFilters());
 		List<Transformer> transformers = new TransformerFactory().create(config.getTransformers());
-		new ETLPipeline().run(config, queries, filters, transformers);
+		new ETLPipeline().run(config, queries, filters, transformers, IOManager.of(config));
 		sw.stop();
 		log.info("Dumping done in {}.", sw.createReadableDelta());
 	}
@@ -192,13 +193,13 @@ public class Main {
 			String h2iks = dc.getH2iks().stream().map(h -> "'" + h + "'").collect(Collectors.joining(", "));
 			DataSource unfilteredPids = new SqlDataSource(String.format(Templates.Decoding.PID_DECODE_QUERY, h2iks, h2iks), dc.getName(), configuration);
 			DataSource excludedPids = new SqlDataSource(String.format(Templates.Decoding.INVALID_PIDS_QUERY, h2iks, h2iks), dc.getName(), configuration);
-			DataProcessor cleanPidProcessor = new ProcessPidDecode(configuration);
+			DataProcessor cleanPidProcessor = new ProcessPidDecode(IOManager.of(configuration));
 			cleanPidProcessor.process(unfilteredPids.fetchData(), excludedPids.fetchData());
 		}
 		
 	}
 	
 	private static void createDatabaseStatistics(Configuration configuration) {
-		new Statistics().createStatistics(configuration);
+		new Statistics().createStatistics(configuration, IOManager.of(configuration));
 	}
 }

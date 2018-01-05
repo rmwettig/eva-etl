@@ -11,13 +11,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.ingef.eva.configuration.Configuration;
+import de.ingef.eva.constant.OutputDirectory.DirectoryType;
 import de.ingef.eva.data.DataTable;
 import de.ingef.eva.data.RowElement;
 import de.ingef.eva.datasource.DataProcessor;
 import de.ingef.eva.datasource.file.FileDataTable;
 import de.ingef.eva.error.DataTableOperationException;
 import de.ingef.eva.utility.Helper;
+import de.ingef.eva.utility.IOManager;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2 @RequiredArgsConstructor
 public class ProcessPidDecode implements DataProcessor {
 	
-	private final Configuration config;
+	private final IOManager ioManager;
 	private static final int EXPECTED_PID_LENGTH = 10;	
 	
 	@AllArgsConstructor
@@ -150,7 +151,7 @@ public class ProcessPidDecode implements DataProcessor {
 	}
 
 	private DataTable createMappingDataTable(Map<String,Mapping> mappings, String name, List<RowElement> columnNames) {
-		File outfile = new File(config.getOutputDirectory() + "/decoding_" + name + ".csv");
+		File outfile = ioManager.getDirectory(DirectoryType.PRODUCTION).resolve("decoding_" + name + ".csv").toFile();
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(outfile))) {
 			StringBuilder header = new StringBuilder();
 			for(RowElement columnName : columnNames) {

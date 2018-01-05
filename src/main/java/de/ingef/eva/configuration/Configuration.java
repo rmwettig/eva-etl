@@ -56,6 +56,10 @@ public class Configuration {
 	 */
 	private String logDirectory = "logs";
 	/**
+	 * Directory for report creation
+	 */
+	private String reportDirectory;
+	/**
 	 * Json file representing the data base schema
 	 */
 	private String schemaFile;

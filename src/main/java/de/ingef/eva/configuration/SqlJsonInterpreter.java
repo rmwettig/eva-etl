@@ -3,6 +3,7 @@ package de.ingef.eva.configuration;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -200,17 +201,42 @@ public class SqlJsonInterpreter {
 	 */
 	private boolean evaluateColumnEntry(ViewConfig selectParameters, String tableName, Collection<Column> schemaColumns) {
 		List<String> columns = selectParameters.getColumns();
+		Set<String> excludedColumns = convertToLookup(selectParameters.getExcludeColumns());
 		if (columns == null || columns.isEmpty()) {
 			if(schemaColumns == null)
 				return false;
-			for (Column c : schemaColumns)
+			List<Column> filteredColumns = removeExcludedColumns(schemaColumns, excludedColumns);
+			for (Column c : filteredColumns)
 				_queryCreator.addColumn(tableName, c.getName());
 		} else {
-			for (String column : columns) {
+			List<String> filteredColumns = removeExcludedColumns(columns, excludedColumns);
+			for (String column : filteredColumns) {
 				_queryCreator.addColumn(tableName, column);
 			}
 		}
 		return true;
+	}
+	
+	private Set<String> convertToLookup(List<String> excludeColumns) {
+		if(excludeColumns == null || excludeColumns.isEmpty())
+			return new HashSet<String>(1);
+		return excludeColumns
+				.stream()
+				.collect(Collectors.toSet());
+	}
+	
+	private List<String> removeExcludedColumns(List<String> columns, Set<String> excludeColumns) {
+		return columns
+				.stream()
+				.filter(column -> !excludeColumns.contains(column))
+				.collect(Collectors.toList());
+	}
+
+	private List<Column> removeExcludedColumns(Collection<Column> schemaColumns, Set<String> excludeColumns) {
+		return schemaColumns
+				.stream()
+				.filter(column -> !excludeColumns.contains(column.getName()))
+				.collect(Collectors.toList());
 	}
 
 	private void evaluateWhereEntry(List<WhereConfig> wheres, String tableName) {

@@ -292,4 +292,30 @@ public class SqlJsonInterpreterTest {
 		
 		assertTrue("No terminal semicolon", job.contains(";"));
 	}
+	
+	@Test
+	public void skipExcludedColumns() throws JsonParseException, JsonMappingException, IOException {
+		SqlJsonInterpreter sqlInterpreter = new SqlJsonInterpreter(new SimpleQueryCreator(host), host);
+		
+		ExportConfig root = new ObjectMapper().readValue(new File("src/test/resources/configuration/query_with_excluded_column.json"), ExportConfig.class);
+		Collection<Query> jobs = sqlInterpreter.interpret(root);
+		/*
+		 * Expected query:
+		 * select database1.tablename.column1
+		 * from database1.tablename;
+		 */
+		String job = jobs.iterator().next().getQuery();
+		assertNotNull(job);
+		//select clause
+		String part = job.substring(0, job.indexOf("from"));
+		assertTrue("No select", part.startsWith("select"));
+		part = part.substring("select".length());
+		assertEquals("database1.tablename.columnname1", part.trim());
+				
+		//from clause
+		part = job.substring(job.indexOf("from"), job.indexOf(";"));
+		assertTrue("No from", part.startsWith("from"));
+		assertEquals("database1.tablename", part.replace("from", "").trim());
+		assertTrue("No terminal semicolon", job.contains(";"));
+	}
 }

@@ -27,6 +27,7 @@ import de.ingef.eva.query.Query;
 import de.ingef.eva.utility.CsvWriter;
 import de.ingef.eva.utility.Helper;
 import de.ingef.eva.utility.IOManager;
+import de.ingef.eva.utility.progress.ProgressBar;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -37,8 +38,9 @@ public class ETLPipeline {
 		String user = configuration.getUser();
 		String url = configuration.getFullConnectionUrl();
 		String password = configuration.getPassword();
+		ProgressBar progress = new ProgressBar(queries.size());
 		for(Query q : queries) {
-			startExport(q, threadPool, url, user, password, filters, transformers, ioManager);
+			startExport(q, threadPool, url, user, password, filters, transformers, ioManager, progress);
 		}
 		
 		threadPool.shutdown();
@@ -54,7 +56,7 @@ public class ETLPipeline {
 		return DriverManager.getConnection(url, user, password);
 	}
 	
-	private void startExport(Query q, ExecutorService threadPool, String url, String user, String password, List<Filter> filters, List<Transformer> transformers, IOManager ioManager) {
+	private void startExport(Query q, ExecutorService threadPool, String url, String user, String password, List<Filter> filters, List<Transformer> transformers, IOManager ioManager, ProgressBar progressBar) {
 		CompletableFuture.supplyAsync(
 				() -> {
 					Connection conn = null;
@@ -80,7 +82,6 @@ public class ETLPipeline {
 						
 						ResultSetMetaData metaData = rs.getMetaData();
 						int columnCount = metaData.getColumnCount();
-						System.out.println("\tFetching...");
 						writer = createWriter(ioManager, q);
 						boolean wasHeaderWritten = false;
 						while(rs.next()) {
@@ -103,9 +104,8 @@ public class ETLPipeline {
 								wasHeaderWritten = true;
 							}
 							writeToFile(writer, transformedRow);
-							
+							progressBar.increase();
 						}
-						System.out.println("\tDone.");
 					} catch(SQLException e) {
 						throw new RuntimeException(e);
 					} catch (ClassNotFoundException e) {

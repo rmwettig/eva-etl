@@ -24,6 +24,7 @@ import de.ingef.eva.constant.OutputDirectory;
 import de.ingef.eva.constant.OutputDirectory.DirectoryType;
 import de.ingef.eva.utility.Helper;
 import de.ingef.eva.utility.IOManager;
+import de.ingef.eva.utility.progress.ProgressBar;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -97,7 +98,8 @@ public class Merger {
 			ExecutorService threadPool = Helper.createThreadPool(config.getThreadCount(), true);
 			List<Path> datasetLeaves = readDatasetDirectories(ioManager.getDirectory(DirectoryType.CACHE));
 			List<Dataset> datasets = findDatasets(datasetLeaves, createSliceSelectionLookup(config));
-			createMergeTasks(ioManager, datasets, threadPool);
+			ProgressBar progress = new ProgressBar(datasets.size());
+			createMergeTasks(ioManager, datasets, threadPool, progress);
 			threadPool.shutdown();
 			threadPool.awaitTermination(3, TimeUnit.DAYS);
 		} catch(IOException e) {
@@ -132,7 +134,7 @@ public class Merger {
 		return viewName;
 	}
 	
-	private void createMergeTasks(IOManager ioManager, List<Dataset> datasets, ExecutorService threadPool) throws IOException {
+	private void createMergeTasks(IOManager ioManager, List<Dataset> datasets, ExecutorService threadPool, ProgressBar progressBar) throws IOException {
 		for(Dataset ds : datasets) {
 			if(ds.calculateSize() == 0) {
 				log.warn("Table '{}' in dataset '{}' is empty and will not be merged.", ds.getFileName(), ds.getDatasetName());
@@ -170,6 +172,7 @@ public class Merger {
 						} catch (IOException e) {
 							log.error("Could not close merge output. {}", e);
 						}
+						progressBar.increase();
 					}
 					return null;
 				},

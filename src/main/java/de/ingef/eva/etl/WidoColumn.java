@@ -14,7 +14,8 @@ public enum WidoColumn {
 	ORPHAN("ORPHAN"),
 	GENERIC("GENERIKENN"),
 	DDDPK("DDD"),
-	STANAME("STANAME")
+	STANAME("STANAME"),
+	PACK_SIZE("PACKGR\u00d6E")
 	;
 	
 	private final String label;

@@ -16,4 +16,9 @@ public class AppendColumnConfig {
 	 * If the same column appears in different sources data of earlier configurations is overwritten.
 	 */
 	private WidoColumn column;
+	
+	/**
+	 * use this field to use a column only for internal calculations
+	 */
+	private boolean meta = false;
 }

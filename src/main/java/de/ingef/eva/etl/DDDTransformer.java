@@ -1,5 +1,6 @@
 package de.ingef.eva.etl;
 
+import java.awt.peer.WindowPeer;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -34,9 +35,10 @@ public class DDDTransformer extends Transformer {
 	private final String db;
 	private final String table;
 	private final String keyColumn;
-	private final Map<String,Map<String,RowElement>> pzn2Column2Value;
+	private final Map<String, Map<String, RowElement>> pzn2Column2Value;
 	private final List<RowElement> additionalColumnNames;
-	private final Map<String,DateRange> pzn2ValidityDates;
+	private final Map<String, DateRange> pzn2ValidityDates;
+	private final Map<String, Map<WidoColumn, RowElement>> pzn2MetaColumns;
 	private static final String PACKAGE_COUNT_COLUMN_NAME = "Anzahl_Packungen".toLowerCase();
 	private static final String PRESCRIPTION_DATE_COLUMN_NAME = "Verordnungsdatum".toLowerCase();
 	private static final String IS_CLASSIFIED_COLUMN_NAME = "IS_CLASSIFIED";
@@ -71,27 +73,51 @@ public class DDDTransformer extends Transformer {
 		String keyValue = row.getColumns().get(keyIndex).getContent();
 		List<RowElement> columns = transformColumns(row.getColumns(), keyValue);
 		Map<String, Integer> columnIndices = transformColumnIndices(row.getColumnName2Index());
-		calculateDDD(columns, columnIndices, pzn2ValidityDates.get(keyValue));
+		DateRange validityDates = pzn2ValidityDates.get(keyValue);
+		deriveCalculatedColumns(columns, columnIndices, validityDates);
 		return new Row(row.getDb(), row.getTable(), columns, columnIndices);
 	}
 
-	private void calculateDDD(List<RowElement> columns, Map<String, Integer> columnIndices, DateRange validityDates) {
-		if(!columnIndices.containsKey(PACKAGE_COUNT_COLUMN_NAME)) return;
-		double packageCount = Double.parseDouble(columns.get(columnIndices.get(PACKAGE_COUNT_COLUMN_NAME)).getContent());
+	private void deriveCalculatedColumns(List<RowElement> columns, Map<String, Integer> columnIndices, DateRange validityDates) {
+		if(columnIndices.containsKey(PACKAGE_COUNT_COLUMN_NAME)) {
+			double packageCount = Double.parseDouble(columns.get(columnIndices.get(PACKAGE_COUNT_COLUMN_NAME)).getContent());
+			calculateDDD(columns, columnIndices, validityDates, packageCount);
+			calculateActualPackageSize(columns, columnIndices, validityDates, packageCount);
+		}
+	}
+
+	private void calculateDDD(List<RowElement> columns, Map<String, Integer> columnIndices, DateRange validityDates, double packageCount) {
 		int dddIndex = columnIndices.get(WidoColumn.DDDPK.getLabel());
 		RowElement dddElement = columns.get(dddIndex);
 		String numberString = dddElement.getContent();
 		if(!numberString.isEmpty()) {
 			int ddd = Integer.parseInt(numberString);
 			double result = ddd/1000.0 * packageCount;
-			result = calculateCheckedDDD(result, columns, columnIndices, validityDates);
+			result = ensureValidValue(result, columns, columnIndices, validityDates);
 			columns.set(dddIndex, new SimpleRowElement(Double.toString(result), dddElement.getType()));
 		}
 	}
+	
+	private void calculateActualPackageSize(List<RowElement> columns, Map<String, Integer> columnIndices, DateRange validityDates, double packageCount) {
+		String pzn = columns.get(columnIndices.get("pzn")).getContent();
+		if(!pzn2MetaColumns.containsKey(pzn) ||
+			!pzn2MetaColumns.get(pzn).containsKey(WidoColumn.PACK_SIZE) ||
+			pzn2MetaColumns.get(pzn).get(WidoColumn.PACK_SIZE).getContent().isEmpty()) {
+			columns.add(new SimpleRowElement("", TeradataColumnType.DECIMAL));
+			columnIndices.put("Menge_berechnet", columns.size() - 1);
+			return;
+		}
+		String packSizeString = pzn2MetaColumns.get(pzn).get(WidoColumn.PACK_SIZE).getContent();
+		int packSize = Integer.parseInt(packSizeString);
+		double result = packSize/10.0 * packageCount;
+		result = ensureValidValue(result, columns, columnIndices, validityDates);
+		columns.add(new SimpleRowElement(Double.toString(result), TeradataColumnType.DECIMAL));
+		columnIndices.put("Menge_berechnet", columns.size() - 1);
+	}
 
-	private double calculateCheckedDDD(double preliminaryDDD, List<RowElement> columns, Map<String, Integer> columnIndices, DateRange validityDates) {
+	private double ensureValidValue(double preliminaryValue, List<RowElement> columns, Map<String, Integer> columnIndices, DateRange validityDates) {
 		//pzn without date entry are always valid
-		if(validityDates == null) return preliminaryDDD;
+		if(validityDates == null) return preliminaryValue;
 		
 		int prescriptionDateIndex = columnIndices.get(PRESCRIPTION_DATE_COLUMN_NAME);
 		LocalDate prescriptionDate = LocalDate.parse(columns.get(prescriptionDateIndex).getContent());
@@ -100,15 +126,15 @@ public class DDDTransformer extends Transformer {
 		//drug was admitted and not retired
 		if(isValidAdmissionDate && !isValidRetirementDate) {
 			//prescription happened on or after admission
-			return prescriptionDate.isAfter(validityDates.getStart()) || prescriptionDate.isEqual(validityDates.getStart()) ? preliminaryDDD : 0;
+			return prescriptionDate.isAfter(validityDates.getStart()) || prescriptionDate.isEqual(validityDates.getStart()) ? preliminaryValue : 0;
 		}
 		//drug was retired but admission is unknown
 		if(isValidRetirementDate && !isValidAdmissionDate) {
-			return prescriptionDate.isBefore(validityDates.getEnd()) ? preliminaryDDD : 0;
+			return prescriptionDate.isBefore(validityDates.getEnd()) ? preliminaryValue : 0;
 		}
 		//drug was admitted and retired already
 		if(isValidAdmissionDate && isValidRetirementDate) {
-			return (prescriptionDate.isAfter(validityDates.getStart()) || prescriptionDate.isEqual(validityDates.getStart())) && prescriptionDate.isBefore(validityDates.getEnd()) ? preliminaryDDD : 0;
+			return (prescriptionDate.isAfter(validityDates.getStart()) || prescriptionDate.isEqual(validityDates.getStart())) && prescriptionDate.isBefore(validityDates.getEnd()) ? preliminaryValue : 0;
 		}
 		
 		return 0.0;
@@ -154,26 +180,60 @@ public class DDDTransformer extends Transformer {
 		//main data is at position 0, supplementary data is at position 1
 		List<Map<String, Map<String, RowElement>>> additionalColumns = new ArrayList<>(sources.size());
 		HashSet<String> orderedColumnNames = new LinkedHashSet<>();
-		HashSet<String> excludeDatesFromResult = createColumnExclusion();
+		Set<AppendColumnConfig> metaColumns = new HashSet<>();
 		for(AppendSourceConfig source : sources) {
 			BufferedReader reader = Files.newBufferedReader(source.getFile());
 			additionalColumns.add(mapKeyOntoData(source.getColumns(), reader, source.getKeyColumnIndex()));
 			reader.close();
-			source.getColumns()
-				.stream()
-				.map(column -> column.getColumn().getLabel())
-				.filter(name -> !excludeDatesFromResult.contains(name) && !orderedColumnNames.contains(name))
-				.forEachOrdered(newName -> orderedColumnNames.add(newName));
+			extractDataColumns(orderedColumnNames, source);
+			extractMetaColumns(metaColumns, source);
 		}
 		Map<String, Map<String, RowElement>> pzn2Column2Value = consolidateData(additionalColumns);
 		Set<String> supplementOnlyKeys = createSupplementKeys(additionalColumns);
 		Map<String, DateRange> pzn2ValidityDates = extractValidityDateRange(pzn2Column2Value, supplementOnlyKeys);
 		List<RowElement> columnNames = createHeader(orderedColumnNames);
-		if(columnNames.stream().anyMatch(e -> e.getContent().equalsIgnoreCase(WidoColumn.STANAME.getLabel()))) {
+		Map<String, Map<WidoColumn, RowElement>> pzn2MetaColumns = createMetaColumnMapping(pzn2Column2Value, metaColumns);
+		if(isNameSelected(columnNames)) {
 			columnNames.add(new SimpleRowElement(IS_CLASSIFIED_COLUMN_NAME, TeradataColumnType.CHARACTER));
 			pzn2Column2Value = processPackageName(pzn2Column2Value);
 		}
-		return new DDDTransformer(targetDb, targetTable, keyColumn, pzn2Column2Value, columnNames, pzn2ValidityDates);
+		return new DDDTransformer(targetDb, targetTable, keyColumn, pzn2Column2Value, columnNames, pzn2ValidityDates, pzn2MetaColumns);
+	}
+
+	private static Map<String, Map<WidoColumn, RowElement>> createMetaColumnMapping(Map<String, Map<String, RowElement>> pzn2Column2Value, Set<AppendColumnConfig> metaColumns) {
+		Map<String, Map<WidoColumn, RowElement>> metaData = new HashMap<>();
+		for(Map.Entry<String, Map<String, RowElement>> entry : pzn2Column2Value.entrySet()) {
+			Map<WidoColumn, RowElement> data = new HashMap<>();
+			for(AppendColumnConfig config : metaColumns) {
+				WidoColumn widoColumn = config.getColumn();
+				RowElement metaValue = entry.getValue().getOrDefault(widoColumn.getLabel(), new SimpleRowElement("", TeradataColumnType.ANY));
+				data.put(widoColumn, metaValue);
+			}
+			metaData.put(entry.getKey(), data);
+		}
+		return metaData;
+	}
+
+	private static boolean isNameSelected(List<RowElement> columnNames) {
+		return columnNames
+				.stream()
+				.anyMatch(e -> e.getContent().equalsIgnoreCase(WidoColumn.STANAME.getLabel()));
+	}
+
+	private static void extractMetaColumns(Set<AppendColumnConfig> metaColumns, AppendSourceConfig source) {
+		source.getColumns()
+			.stream()
+			.filter(column -> column.isMeta())
+			.forEach(metaColumn -> metaColumns.add(metaColumn));
+	}
+
+	private static void extractDataColumns(HashSet<String> orderedColumnNames, AppendSourceConfig source) {
+		source.getColumns()
+			.stream()
+			.filter(column -> !column.isMeta())
+			.map(column -> column.getColumn().getLabel())
+			.filter(name -> !orderedColumnNames.contains(name))
+			.forEachOrdered(newName -> orderedColumnNames.add(newName));
 	}
 
 	private static Set<String> createSupplementKeys(List<Map<String, Map<String, RowElement>>> additionalColumns) {
@@ -213,6 +273,7 @@ public class DDDTransformer extends Transformer {
 		HashSet<String> excludeDatesFromResult = new HashSet<>(2);
 		excludeDatesFromResult.add(WidoColumn.ADMISSION_DATE.getLabel());
 		excludeDatesFromResult.add(WidoColumn.RETIREMENT_DATE.getLabel());
+		excludeDatesFromResult.add(WidoColumn.PACK_SIZE.getLabel());
 		return excludeDatesFromResult;
 	}
 		

@@ -9,14 +9,17 @@ import lombok.ToString;
 @Getter
 @ToString
 public class AppendSourceConfig {
+	
 	/**
 	 * zero-based column index of the identifier column
 	 */
 	private int keyColumnIndex;
+	
 	/**
 	 * columns that should be added
 	 */
 	private List<AppendColumnConfig> columns;
+	
 	/**
 	 * path to the content file without header
 	 */

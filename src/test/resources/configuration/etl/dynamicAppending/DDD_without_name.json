@@ -17,11 +17,13 @@
 				},
 				{
 					"column": "ADMISSION_DATE",
-					"index": 3
+					"index": 3,
+					"meta": true
 				},
 				{
 					"column": "RETIREMENT_DATE",
-					"index": 4
+					"index": 4,
+					"meta": true
 				}
 			]
 		},

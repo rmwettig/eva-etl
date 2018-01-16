@@ -41,6 +41,7 @@ import com.itextpdf.layout.property.AreaBreakType;
 import com.itextpdf.layout.property.HorizontalAlignment;
 import com.itextpdf.layout.property.TextAlignment;
 
+import de.ingef.eva.constant.OutputDirectory;
 import de.ingef.eva.constant.Templates;
 import de.ingef.eva.measures.cci.Quarter;
 import de.ingef.eva.utility.QuarterCount;
@@ -52,7 +53,7 @@ public class StatisticPdfOutput {
 	private static final Color RATIO_HIGHLIGHT = DeviceRgb.RED;
 	private static final String OVERVIEW_CAPTION = "Datenstand der Datenbereiche zum elektronischen Datenaustausch der GKV";
 	private static final String DETAIL_CAPTION = "Aktueller Datenstand der ambulanten Daten pro KV";
-	private static final String MORBI_CAPTIO = "Morbidit\u00e4tsorientierter Risikostrukturausgleich";
+	private static final String MORBI_CAPTION = "Morbidit\u00e4tsorientierter Risikostrukturausgleich";
 	private static final DecimalFormat NUMBER_FORMATTER = (DecimalFormat) NumberFormat.getInstance(Locale.GERMAN);
 	private static final double DEVIATION = 0.5;
 	private static final String FONT_PATH = "/fonts/Roboto/Roboto-Regular.ttf";
@@ -64,7 +65,7 @@ public class StatisticPdfOutput {
 	public void createStatisticOutput(Path output, List<StatisticsEntry> overviewStatistic, List<StatisticsEntry> detailStatistic, List<MorbiRsaEntry> morbiStatistic, List<String> morbiColumnHeader) {
 		try {
 			NUMBER_FORMATTER.applyLocalizedPattern("###.###,##");
-			PdfFont font = PdfFontFactory.createFont(getClass().getResource(FONT_PATH).toString(), PdfEncodings.CP1250, true);
+			PdfFont font = PdfFontFactory.createFont(getClass().getResource(FONT_PATH).toString(), PdfEncodings.IDENTITY_H, true);
 			Table overview = createOverview(overviewStatistic, font);
 			Table details = createDetails(detailStatistic, font);
 			Table morbi = createMorbi(morbiStatistic, morbiColumnHeader, font);
@@ -76,7 +77,7 @@ public class StatisticPdfOutput {
 	
 	private Table createMorbi(List<MorbiRsaEntry> morbiStatistic, List<String> columnHeader, PdfFont font) {
 		Table table = new Table(5)
-				.addHeaderCell(createFilledCell(MORBI_CAPTIO, 1, 5).setFont(font))
+				.addHeaderCell(createFilledCell(MORBI_CAPTION, 1, 5).setFont(font))
 				.setHorizontalAlignment(HorizontalAlignment.CENTER);
 		columnHeader
 			.stream()
@@ -123,7 +124,7 @@ public class StatisticPdfOutput {
 
 	private void insertTitlePage(Document document, PdfFont font) {
 		insertVerticalPadding(document, 25, font);
-		Paragraph title = new Paragraph(new Text(encodeDiacritic("EVA-Füllstandsbericht"))
+		Paragraph title = new Paragraph(new Text("EVA-F\u00fcllstandsbericht")
 			.setFont(font)
 			.setFontSize(24));
 		document.add(title);
@@ -252,7 +253,7 @@ public class StatisticPdfOutput {
 		Quarter q = qc.getQuarter();
 		columns.add(createFilledCell(q.getYear() + "Q" + q.getQuarter()));
 		columns.add(createFilledCell(entry.getIdentifier()));
-		columns.add(createFilledCell(encodeDiacritic(entry.getLabel())));
+		columns.add(createFilledCell(entry.getLabel()));
 		columns.add(createFilledCell(NUMBER_FORMATTER.format(qc.getCount())));
 		double ratio = qc.getChangeRatio();
 		Cell cell = createFilledCell(NUMBER_FORMATTER.format(ratio));
@@ -289,9 +290,5 @@ public class StatisticPdfOutput {
 			.map(entry -> entry.getLabel())
 			.forEachOrdered(label -> header.add(createFilledCell(label).setFont(font)));
 		return header;
-	}
-	
-	private String encodeDiacritic(String s) {
-		return s.replaceAll("ü", "\u00fc");
 	}
 }

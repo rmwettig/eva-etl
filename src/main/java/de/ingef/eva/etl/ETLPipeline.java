@@ -104,8 +104,8 @@ public class ETLPipeline {
 								wasHeaderWritten = true;
 							}
 							writeToFile(writer, transformedRow);
-							progressBar.increase();
 						}
+						progressBar.increase();
 					} catch(SQLException e) {
 						throw new RuntimeException(e);
 					} catch (ClassNotFoundException e) {

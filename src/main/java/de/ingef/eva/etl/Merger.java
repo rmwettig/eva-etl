@@ -147,6 +147,10 @@ public class Merger {
 						writer = Files.newBufferedWriter(directory.resolve(ds.getFileName() + ".csv"), OutputDirectory.DATA_CHARSET);
 						boolean wasHeaderWritten = false;
 						for(Path slice : ds.getFiles()) {
+							if(sliceIsEmpty(slice)) {
+								log.warn("Skipping '{}' from '{}' because file is empty.", slice.getFileName().toString(), ds.getDatasetName());
+								continue;
+							}
 							BufferedReader reader = Files.newBufferedReader(slice);
 							//remove header if it was already written
 							if(wasHeaderWritten) {
@@ -177,11 +181,15 @@ public class Merger {
 					return null;
 				},
 				threadPool
-			).exceptionally(e -> {
-				log.error("Could not merge '{}'. ", ds.getFileName(), e);
+			).exceptionally(e -> { 
+				log.error("Could not merge '{}' for dataset '{}'. ", ds.getFileName(), ds.getDatasetName(), e);
 				return null;
 			});
 		}
+	}
+
+	private boolean sliceIsEmpty(Path slice) throws IOException {
+		return Files.size(slice) < 1;
 	}
 
 	/**

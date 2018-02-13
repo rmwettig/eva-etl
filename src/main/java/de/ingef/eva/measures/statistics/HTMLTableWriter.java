@@ -1,6 +1,7 @@
 package de.ingef.eva.measures.statistics;
 
 import static j2html.TagCreator.caption;
+import static j2html.TagCreator.h1;
 import static j2html.TagCreator.head;
 import static j2html.TagCreator.html;
 import static j2html.TagCreator.meta;
@@ -10,6 +11,9 @@ import static j2html.TagCreator.tbody;
 import static j2html.TagCreator.td;
 import static j2html.TagCreator.th;
 import static j2html.TagCreator.tr;
+import static j2html.TagCreator.span;
+import static j2html.TagCreator.div;
+import static j2html.TagCreator.img;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -17,6 +21,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,22 +34,63 @@ import de.ingef.eva.constant.OutputDirectory;
 import de.ingef.eva.measures.cci.Quarter;
 import de.ingef.eva.utility.QuarterCount;
 import j2html.tags.ContainerTag;
+import j2html.tags.EmptyTag;
 
 public class HTMLTableWriter {
 
-	private static final ContainerTag GLOBAL_TABLE_STYLES = style("table { margin-top: 100px; border-collapse: collapse; margin-left: auto; margin-right: auto; border: black solid 1px; }");
+	private static final ContainerTag GLOBAL_TABLE_STYLES = style(
+			"table { "
+			+ "margin-top: 100px; "
+			+ "border-collapse: collapse; "
+			+ "margin-left: auto; "
+			+ "margin-right: auto; "
+			+ "border: black solid 1px; "
+			+ "} "
+			+ "body { "
+			+ "font-family: sans-serif; "
+			+ "} "
+			+ ".title {"
+			+ "text-align: center; "
+			+ "margin-top: 25%;"
+			+ "}"
+			+ ".logo { "
+			+ "display: block; "
+			+ "margin: 0 auto; "
+			+ "}");
 	private static final String OVERVIEW_CAPTION = "Datenstand der Datenbereiche zum elektronischen Datenaustausch der GKV";
-	private static final String DETAIL_CAPTION = "Aktueller Datenstand der ambulanten Daten pro KV";	
+	private static final String DETAIL_CAPTION = "Aktueller Datenstand der ambulanten Daten pro KV";
+	private static final String MORBI_CAPTION = "Morbidit\u00e4tsorientierter Risikostrukturausgleich";
 	private static final DecimalFormat NUMBER_FORMATTER = (DecimalFormat) NumberFormat.getInstance(Locale.GERMAN);
+	private static final String FONT_PATH = "/fonts/Roboto/Roboto-Regular.ttf";
+	private static final String LOGO_PATH = "/logos/INGEF_Logo_ohne_claim.jpg";
 	
-	public void createStatisticHTMLFile(Path output, List<StatisticsEntry> overviewStatistic, List<StatisticsEntry> detailStatistic) {
-		ContainerTag overviewTable = createOverviewTable(overviewStatistic);
-		ContainerTag detailsTable = createDetailTable(detailStatistic);
+	static {
+		NUMBER_FORMATTER.applyLocalizedPattern("###.###,##");
+	}
+	
+	public void createStatisticHTMLFile(Path output, List<StatisticsEntry> overviewStatistic, List<StatisticsEntry> detailStatistic, List<MorbiRsaEntry> morbiStatistic, List<String> morbiColumnHeader) {
 		ContainerTag htmlDocument = createHtmlDocument();
-		htmlDocument.with(overviewTable);
-		htmlDocument.with(detailsTable);
-		
+		htmlDocument.with(createTitlePage());
+		htmlDocument.with(createLogo());
+		htmlDocument.with(createOverviewTable(overviewStatistic));
+		htmlDocument.with(createDetailTable(detailStatistic));
+		htmlDocument.with(createMorbiTable(createMorbiHeader(morbiColumnHeader), morbiStatistic));
+		//FIXME assemble path as reportDirectory + statistic_Bosch.pdf
 		writeToFile(output, htmlDocument.render());
+	}
+	
+	private ContainerTag createTitlePage() {
+		ContainerTag title = h1("EVA-F\u00fcllstandsbericht");
+		ContainerTag dateOfCreation = span(LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
+		return div().with(title, dateOfCreation).withClass("title");
+	}
+	
+	private EmptyTag createLogo() {
+		return img()
+				.attr("src", "INGEF_Logo_ohne_claim_1024x724.jpg")
+				.attr("width", "256")
+				.attr("height", "181")
+				.withClass("logo");
 	}
 	
 	private ContainerTag createOverviewTable(List<StatisticsEntry> overviewStatistic) {
@@ -58,6 +105,11 @@ public class HTMLTableWriter {
 		ContainerTag header = createDetailHeader();
 		ContainerTag tableBody = createDetailBody(detailStatistic);
 		return createHtmlTableStub(DETAIL_CAPTION, GLOBAL_TABLE_STYLES, header).with(tableBody);
+	}
+	
+	private ContainerTag createMorbiTable(ContainerTag header, List<MorbiRsaEntry> morbiStatistic) {
+		ContainerTag tableBody = createMorbiBody(morbiStatistic);
+		return createHtmlTableStub(MORBI_CAPTION, GLOBAL_TABLE_STYLES, header).with(tableBody);
 	}
 	
 	private ContainerTag createOverviewHeader(List<StatisticsEntry> entries) {
@@ -77,6 +129,12 @@ public class HTMLTableWriter {
 				.with(th().withText("KV_Name"))
 				.with(th().withText("Anzahl Fälle"))
 				.with(th().withText("Anteil VJQ"));
+	}
+	
+	private ContainerTag createMorbiHeader(List<String> morbiColumnHeader) {
+		ContainerTag header = tr();
+		morbiColumnHeader.forEach(caption -> header.with(th().withText(caption)));
+		return header;		
 	}
 	
 	private Map<Quarter,List<QuarterCount>> createQuarterToRowContent(List<StatisticsEntry> entries) {
@@ -126,6 +184,17 @@ public class HTMLTableWriter {
 		return tableBody;
 	}
 	
+	private ContainerTag createMorbiBody(List<MorbiRsaEntry> morbiStatistic) {
+		List<ContainerTag> rows = morbiStatistic
+				.stream()
+				.map(this::convertMorbiEntryToRow)
+				.collect(Collectors.toList());
+		ContainerTag tableBody = tbody();
+		rows.forEach(row -> tableBody.with(row));
+		
+		return tableBody;
+	}
+	
 	private ContainerTag convertQuarterCountToTableData(QuarterCount quarterCount, int rowIndex) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(NUMBER_FORMATTER.format(quarterCount.getCount()));
@@ -151,6 +220,16 @@ public class HTMLTableWriter {
 		double ratio = qc.getChangeRatio();
 		row.with(createRatioCell(ratio));
 				
+		return row;
+	}
+	
+	private ContainerTag convertMorbiEntryToRow(MorbiRsaEntry entry) {
+		ContainerTag row = tr();
+		row.with(td().withText(Integer.toString(entry.getGrouperYear())));
+		row.with(td().withText(Integer.toString(entry.getBenefitYear())));
+		row.with(td().withText(Integer.toString(entry.getReportingYear())));
+		row.with(td().withText(entry.getQuarter()));
+		row.with(td().withText(entry.getConfiguration()));
 		return row;
 	}
 	

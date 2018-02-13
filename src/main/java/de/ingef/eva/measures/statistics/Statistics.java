@@ -1,9 +1,14 @@
 package de.ingef.eva.measures.statistics;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -15,6 +20,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -26,6 +32,7 @@ import de.ingef.eva.measures.cci.Quarter;
 import de.ingef.eva.utility.Helper;
 import de.ingef.eva.utility.IOManager;
 import de.ingef.eva.utility.QuarterCount;
+import de.ingef.eva.utility.SystemCall;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -118,10 +125,90 @@ public class Statistics {
 			log.error("Could not read morbi statistic. ", e);
 		}
 	}
-		
+
 	private void createOutput(Path outputDirectory, StatisticDatasetConfig settings, Result result) {
-		Path file = outputDirectory.resolve("statistic_" + settings.getDataset() + ".pdf");
-		new StatisticPdfOutput().createStatisticOutput(file, result.getOverview(), result.getDetails(), result.getMorbi(), result.getMorbiHeader());
+		Path file = outputDirectory.resolve("statistic_" + settings.getDataset() + ".tex");
+		new LaTexOutput().createStatisticHTMLFile(file, result.getOverview(), result.getDetails(), result.getMorbi(), result.getMorbiHeader());
+		runDocker(outputDirectory, file);
+	}
+
+	private void runDocker(Path outputDirectory, Path file) {
+		Path dockerFolder = setupDockerFolder();
+		try {
+			SystemCall buildDocker = new SystemCall(createDockerBuildCall(dockerFolder));
+			buildDocker.execute(System.out::println);
+			buildDocker.awaitTermination(5, TimeUnit.MINUTES);
+			runDockerLatex(outputDirectory, file);
+			//long table requires second latex run
+			runDockerLatex(outputDirectory, file);
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} finally {
+			removeDockerFolder(dockerFolder);
+		}
+	}
+
+	private void runDockerLatex(Path outputDirectory, Path file) throws IOException, InterruptedException {
+		SystemCall runDocker = new SystemCall(createDockerRunCall(outputDirectory, file));
+		runDocker.execute(System.out::println);
+		runDocker.awaitTermination(5, TimeUnit.MINUTES);
+	}
+
+	private List<String> createDockerBuildCall(Path dockerFolder) {
+		return Arrays.asList(
+				"docker",
+				"build",
+				"-t",
+				"etl-stats",
+				dockerFolder.toString());
+	}
+
+	private List<String> createDockerRunCall(Path outputDirectory, Path texFile) {
+		return Arrays.asList(
+				"docker",
+				"run",
+				"--rm",
+				"-v",
+				outputDirectory.toAbsolutePath().toString() + ":/output",
+				"etl-stats:latest",
+				"-output-directory=/output",
+				"/output/" + texFile.getFileName().toString()
+			);
+	}
+	
+	private void removeDockerFolder(Path dockerFolder) {
+		try {
+			if(Files.notExists(dockerFolder))
+				return;
+			Files
+				.list(dockerFolder)
+				.forEach(this::deleteFile);
+			Files.delete(dockerFolder);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void deleteFile(Path file) {
+		try {
+			Files.delete(file);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private Path setupDockerFolder() {
+		Path folder = Paths.get(System.getProperty("user.dir")).resolve("docker-build-tmp");
+		try {
+			Helper.createFolders(folder);
+			Files.copy(getClass().getResourceAsStream("/docker/xelatex/Dockerfile"), folder.resolve("Dockerfile"));
+			Files.copy(getClass().getResourceAsStream("/logos/INGEF_Logo_ohne_claim.jpg"), folder.resolve("ingef_logo.jpg"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return folder;
 	}
 
 	private List<StatisticsEntry> calculateADBOverviewStatistics(StatisticDatasetConfig settings, StatisticsCalculator calculator, Connection connection) {

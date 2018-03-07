@@ -54,11 +54,6 @@
 		<version>1.4</version>
 	</dependency>
 	<dependency>
-		<groupId>com.j2html</groupId>
-		<artifactId>j2html</artifactId>
-		<version>1.0.0</version>
-	</dependency>
-	<dependency>
 		<groupId>com.teradata.jdbc</groupId>
 		<artifactId>terajdbc4</artifactId>
 		<version>16.10</version>

@@ -27,6 +27,8 @@ public class TransformerFactory {
 					config.getExcludeTables());
 		case DDD:
 			return createDDDTransformer(config);
+		case BS_TO_KV:
+			return new BsKvMapperTransformer();
 		default:
 			return new Transformer.NOPTransformer();
 		}

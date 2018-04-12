@@ -232,9 +232,12 @@ public class Merger {
 			} else {
 				List<Path> files = new ArrayList<>();
 				files.add(datasetDirectory.resolve(fileName));
+				int datasetNamePathIndex = datasetDirectory.getNameCount() - 1;
+				//each dataset is located within the db folder, e.g. FDB/1M_benchmark
+				int dbNamePathIndex = datasetNamePathIndex - 1;
 				Dataset ds = new Dataset(
-						datasetDirectory.getName(1).toString(),
-						datasetDirectory.getName(2).toString(),
+						datasetDirectory.getName(dbNamePathIndex).toString(),
+						datasetDirectory.getName(datasetNamePathIndex).toString(),
 						commonName,
 						files);
 				commonName2dataset.put(commonName, ds);

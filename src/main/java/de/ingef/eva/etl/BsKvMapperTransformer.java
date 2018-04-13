@@ -61,11 +61,11 @@ public class BsKvMapperTransformer extends Transformer {
 	private String mapSubKvToMajorKv(int subKv) {
 		switch(subKv) {
 			case 1:
-				return "1";
+				return "01";
 			case 2:
-				return "2";
+				return "02";
 			case 3:
-				return "3";
+				return "03";
 			case 6:
 			case 7:
 			case 8:
@@ -112,7 +112,7 @@ public class BsKvMapperTransformer extends Transformer {
 			case 60:
 			case 61:
 			case 62:
-				return "62";
+				return "52";
 			case 63:
 			case 64:
 			case 65:

@@ -101,6 +101,12 @@ public class BsKvMapperTransformer extends Transformer {
 			case 45:
 			case 46:
 				return "46";
+			case 47:
+			case 48:
+			case 49:
+			case 50:
+			case 51:
+				return "51";				
 			case 52:
 			case 53:
 			case 54:
@@ -144,6 +150,11 @@ public class BsKvMapperTransformer extends Transformer {
 			case 91:
 			case 93:
 				return "93";
+			case 94:
+			case 95:
+			case 96:
+			case 98:
+				return "98";
 			default:
 				return "";
 		}

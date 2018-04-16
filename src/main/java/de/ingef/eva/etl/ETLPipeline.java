@@ -139,7 +139,10 @@ public class ETLPipeline {
 	}
 
 	private String cleanValue(String value) {
-		return value.replaceAll(";", "_").trim();
+		return value
+				.replaceAll(";", "_")
+				.replaceAll("\"","")
+				.trim();
 	}
 
 	private void writeToFile(CsvWriter writer, Row transformedRow) throws IOException {

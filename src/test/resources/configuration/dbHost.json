@@ -2,16 +2,27 @@
 	"export": {
 		"sources": [
 			{
+				"type": "DB",
 				"db":"database1",
 				"views" : [
-					{"name": "table1"}
+					{
+						"type": "TABLE",
+						"name": "table1"
+					}
 				]
 			},
 			{
+				"type": "DB",
 				"db":"database2",
 				"views" : [
-					{"name": "table2"},
-					{"name": "table3"}
+					{
+						"type": "TABLE",
+						"name": "table2"
+					},
+					{
+						"type": "TABLE",
+						"name": "table3"
+					}
 				]
 			}
 		]

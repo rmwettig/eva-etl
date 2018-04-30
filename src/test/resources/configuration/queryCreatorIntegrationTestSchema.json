@@ -1,0 +1,32 @@
+{
+	"database1": {
+		"tablename": [
+			{
+				"column": "columnname1",
+				"type": "CHARACTER"
+			},
+			{
+				"column": "columnname2",
+				"type": "INTEGER"
+			},
+			{
+				"column": "bezugsjahr",
+				"type": "INTEGER"
+			}
+		],
+		"tablename2": [
+			{
+				"column": "columnname3",
+				"type": "CHARACTER"
+			}
+		]
+	},
+	"database2": {
+		"tablename3": [
+			{
+				"column": "columnname4",
+				"type": "INTEGER"
+			}
+		]
+	}
+}

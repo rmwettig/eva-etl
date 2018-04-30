@@ -1,0 +1,30 @@
+{
+  "type": "TABLE", 
+  "name": "table1", 
+  "alias": "t1", 
+  "columns": [
+    {
+      "type": "COLUMN",
+      "name": "column1"
+    }
+  ], 
+  "joins": [
+    {
+      "type": "JOIN",
+      "joinType": "INNER",
+      "columns": [
+        {
+          "type": "COLUMN",
+          "name": "column2"
+        }
+      ],
+      "onColumns": [ "on1" ]
+    }
+  ], 
+  "yearSlice": {
+    "type": "FIXED_YEAR_SLICE",
+    "column": "bezugsjahr",
+    "startYear": 2010,
+    "endYear": 2018
+  }
+}

@@ -52,7 +52,7 @@ public final class Alias {
 		_position = 0;
 		_currentChar = 'a';
 		int i = 0;
-		while (_alias[i] != '\u0000')
+		while (i < _alias.length &&_alias[i] != '\u0000')
 			_alias[i++] = '\u0000';
 	}
 }

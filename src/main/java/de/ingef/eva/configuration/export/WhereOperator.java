@@ -8,7 +8,8 @@ import lombok.Getter;
 public enum WhereOperator {
 	EQUAL("="),
 	LESS("<"),
-	LARGER(">");
+	LARGER(">"), 
+	LIKE("like");
 	
 	private String symbol;
 	

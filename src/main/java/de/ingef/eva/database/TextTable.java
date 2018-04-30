@@ -17,6 +17,9 @@ public class TextTable implements Table {
 		_columns.add(c);
 	}
 
+	/**
+	 * @return null if column with given name was not found
+	 */
 	@Override
 	public Column findColumnByName(String name) {
 		for (Column c : _columns) {

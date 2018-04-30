@@ -1,141 +1,150 @@
 package de.ingef.eva.query.creation;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import de.ingef.eva.configuration.export.JoinType;
+import de.ingef.eva.configuration.export.WhereOperator;
+import de.ingef.eva.configuration.export.WhereType;
+import de.ingef.eva.configuration.export.sql.YearSliceNode;
 import de.ingef.eva.database.Column;
 import de.ingef.eva.database.Database;
 import de.ingef.eva.database.DatabaseHost;
 import de.ingef.eva.database.Table;
 import de.ingef.eva.query.Query;
 import de.ingef.eva.utility.Alias;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Singular;
 
 public class SimpleQueryCreator implements QueryCreator {
 
-	private Alias _alias;
-	private DatabaseHost _schema;
+	private Alias aliaser = new Alias(20);
+	private DatabaseHost schema;
 	
-	private String _database;
-	private Map<String, Collection<String>> _tables;
-	private Map<String, Collection<OrGroup>> _where;
-	private Map<String, String> _tableAlias;
-	private Collection<Join> _joins;
-	private Set<String> _joinRightTables;
-	private OrGroup _currentGroup;
+	private String database;
+	private String datasetName;
+	private Map<String, String> tableAlias;
+	private OrGroup.OrGroupBuilder currentGroup;
 
-	private class Where {
-		private String _column;
-		private String _value;
-		private String _operator;
-
-		public Where(String column, String value, String operator) {
-			_column = column;
-			_value = value;
-			_operator = operator;
-		}
-
-		public String getColumn() {
-			return _column;
-		}
-
-		public String getValue() {
-			return _value;
-		}
-
-		public String getOperator() {
-			return _operator;
+	private List<String> selectedColumns = new ArrayList<>();
+	private List<String> selectedTables = new ArrayList<>();
+	private List<JoinInfo> joinColumns = new ArrayList<>();
+	private List<OrGroup> conditions = new ArrayList<>();
+	private List<OrGroup> globalConditions = new ArrayList<>();
+	private YearSliceNode yearSlice;
+	
+	@Getter
+	@RequiredArgsConstructor
+	private class JoinInfo {
+		private final JoinType type;
+		private final String mainTable;
+		private final String joinTable;
+		private final List<String> joinColumns;
+		
+		public String render(String database, Map<String, String> aliases) {
+			return new StringBuilder()
+					.append(type.getName())
+					.append(" join ")
+					.append(database + "." + joinTable + " " + aliases.get(joinTable) + " ")
+					.append("on ")
+					.append(
+						joinColumns
+							.stream()
+							.map(column -> aliases.get(mainTable) + "." + column + "=" + aliases.get(joinTable) + "." + column)
+							.collect(Collectors.joining(" and "))
+					)
+					.toString();
 		}
 	}
-
-	private class OrGroup {
-		private Collection<Where> _terms;
-
-		public OrGroup() {
-			_terms = new ArrayList<Where>();
+	
+	@Getter
+	@RequiredArgsConstructor
+	private class Where {
+		private final String table;
+		private final String column;
+		private final List<String> values;
+		private final WhereOperator operator;
+		private final WhereType type;
+		
+		public List<String> render(Map<String, String> tableAliases) {
+			return values
+					.stream()
+					.map(v -> {
+						return new StringBuilder()
+							.append(tableAliases.get(table) + "." + column)
+							.append(" " + operator.getSymbol() + " ")
+							.append(encode(v))
+							.toString();
+					})
+					.collect(Collectors.toList());
 		}
-
-		public void addTerm(Where w) {
-			_terms.add(w);
-		}
-
-		public Collection<Where> getTerms() {
-			return _terms;
+		
+		public String encode(String value) {
+			switch (type) {
+				case STRING:
+					return "'" + value + "'";
+				default:
+					return value;
+			}
 		}
 	}
 
 	@Getter
-	private class Join {
-		private String leftTable;
-		private String rightTable;
-		private String type;
-		private Collection<String> primaryColumns;
-		private String subQuery;
+	@Builder
+	private static class OrGroup {
+		@Singular
+		private List<Where> _terms;
 		
-		public Join(String leftTable, String rightTable, String type, String primaryColumn) {
-			this.leftTable = leftTable;
-			this.rightTable = rightTable;
-			this.type = type;
-			this.primaryColumns = new ArrayList<String>();
-			this.primaryColumns.add(primaryColumn);
-		}
-		
-		public void addPrimaryColumn(String onColumn) {
-			primaryColumns.add(onColumn);
+		public String render(Map<String, String> tableAliases) {
+			return new StringBuilder()
+					.append("(")
+					.append(_terms.stream().flatMap(w -> w.render(tableAliases).stream()).collect(Collectors.joining(" or ")))
+					.append(")")
+					.toString();
 		}
 	}
 		
 	public SimpleQueryCreator(DatabaseHost schema) {
-		_tables = new LinkedHashMap<String, Collection<String>>();
-		_joins = new ArrayList<Join>();
-		_where = new LinkedHashMap<String, Collection<OrGroup>>();
-		_joinRightTables = new HashSet<String>();
-		_tableAlias = new HashMap<String, String>();
-		_schema = schema;
+		tableAlias = new HashMap<String, String>();
+		this.schema = schema;
 	}
 
 	@Override
 	public void setDatabase(String name) {
-		_database = name;
+		database = name;
 	}
 
+	/**
+	 * adds a table to from clause. The table will be aliased automatically.
+	 * This method must be called before {@code addColumn}
+	 */
 	@Override
 	public void addTable(String name) {
-		if (!_tables.containsKey(name))
-			_tables.put(name, new ArrayList<String>());
-		createAlias(name);
+		selectedTables.add(name);
+		if(!tableAlias.containsKey(name))
+			tableAlias.put(name, createOrFindAlias(name));
 	}
 
+	/**
+	 * adds a column to the select clause. The table alias will be appended automatically.
+	 * Register the table by calling {@code addTable} before adding columns
+	 */
 	@Override
 	public void addColumn(String table, String name) {
-		if (_tables.containsKey(table))
-			_tables.get(table).add(name);
-		else {
-			Collection<String> list = new ArrayList<String>();
-			list.add(name);
-			_tables.put(table, list);
-		}
+		selectedColumns.add(createOrFindAlias(table) + "." + name);
 	}
 
 	@Override
-	public void addJoin(String leftTable, String rightTable, String onColumn, String type) {
-		for(Join j : _joins) {
-			if(j.getLeftTable().equalsIgnoreCase(leftTable) && j.getRightTable().equalsIgnoreCase(rightTable)){
-				j.addPrimaryColumn(onColumn);
-				return;
-			}
-		}
-		Join joinTerm = new Join(leftTable, rightTable, type, onColumn);
-		_joins.add(joinTerm);
-		_joinRightTables.add(rightTable);
-		createAlias(leftTable);
-		createAlias(rightTable);
+	public void addJoin(String leftTable, String rightTable, List<String> onColumns, JoinType type) {
+		joinColumns.add(new JoinInfo(type, leftTable, rightTable, onColumns));
 	}
 	
 	/**
@@ -146,204 +155,205 @@ public class SimpleQueryCreator implements QueryCreator {
 	 * @param type type of the value
 	 */
 	@Override
-	public void addWhere(String table, String column, String value, String operator, String type) {
-		String modifiedValue = value;
-		if (type.equalsIgnoreCase("STRING"))
-			modifiedValue = "'" + value + "'";
-		if (type.equalsIgnoreCase("COLUMN")) {
-			//if column was specified using table.column
-			if(!value.isEmpty() && value.contains("\\.")) {
-				// dot must be escaped since it means 'any character' in a regular expression
-				String[] content = value.split("\\.");
-				String tableValue = content[0];
-				String columnValue = content[1];
-				modifiedValue = (_tableAlias.containsKey(tableValue))
-						? String.format("%s.%s", _tableAlias.get(tableValue), columnValue)
-						: String.format("%s.%s.%s", _database, tableValue, columnValue);
-			} else {
-				modifiedValue = _tableAlias.get(table) + "." + column;
-			}
-			
-		}
-		Where whereClause = new Where(column, modifiedValue, operator);
-		if (_currentGroup != null)
-			_currentGroup.addTerm(whereClause);
+	public void addWhere(String table, String column, List<String> values, WhereOperator operator, WhereType type) {
+		if (currentGroup != null)
+			currentGroup._term(new Where(table, column, values, operator, type));
 	}
 		
 	@Override
 	public void startOrGroup() {
-		_currentGroup = new OrGroup();
+		currentGroup = OrGroup.builder();
 	};
 
 	@Override
-	public void endOrGroup(String table) {
-		if (_where.containsKey(table)) {
-			_where.get(table).add(_currentGroup);
-			_currentGroup = null;
-		} else {
-			Collection<OrGroup> conditions = new ArrayList<OrGroup>();
-			conditions.add(_currentGroup);
-			_where.put(table, conditions);
-		}
-	};
+	public void endOrGroup() {
+		conditions.add(currentGroup.build());
+		currentGroup = null;
+	}
 
 	@Override
-	public Query buildQuery() {
-
-		Query query = buildSelect();
-
+	public List<Query> buildQueries() {
+		List<Query> query = buildSelect();
 		clearCreator();
+		
 		return query;
 	}
 
 	private void clearCreator() {
-		_tables.clear();
-		_joins.clear();
-		_where.clear();
-		_tableAlias.clear();
-		_joinRightTables.clear();
-		if(_alias != null) _alias.reset();
+		selectedTables.clear();
+		selectedColumns.clear();
+		joinColumns.clear();
+		conditions.clear();
+		globalConditions.clear();
+		tableAlias.clear();
+		if(aliaser != null) aliaser.reset();
 	}
 
-	private Query buildSelect() {
-		String selectFormat = "%s.%s.%s";
-		String aliasedFormat = "%s.%s";
-		StringBuilder selectClause = new StringBuilder();
-		selectClause.append("select\n\t");
-		StringBuilder fromClause = new StringBuilder();
-		fromClause.append("from\n\t");
-		List<Column> qColumns = new ArrayList<>();
-		
-		// iterate over all tables for which columns should be appear in the
-		// result set
-		for (String table : _tables.keySet()) {
-			boolean hasAlias = _tableAlias.containsKey(table);
-			// do not add tables that appear as right tables in an 'join' clause
-			if (!_joinRightTables.contains(table)) {
-				fromClause.append(_database + "." + table);
-				if (hasAlias)
-					fromClause.append(" " + _tableAlias.get(table));
-				fromClause.append(",\n\t");
-			}
-			Collection<String> columns = _tables.get(table);
-			qColumns.addAll(createAnnotatedColumns(table, columns));
-			
-			for (String column : columns) {
-				String col = (hasAlias) ? String.format(aliasedFormat, _tableAlias.get(table), column)
-						: String.format(selectFormat, _database, table, column);
-				selectClause.append(col);
-				selectClause.append(",\n\t");
-			}
-		}
-
-		selectClause.replace(selectClause.lastIndexOf(","), selectClause.length(), "\n");
-		fromClause.replace(fromClause.lastIndexOf(","), fromClause.length(), "\n");
-
-		selectClause.append(fromClause);
-
-		if (_joins.size() > 0)
-			selectClause.append(buildJoin());
-		if (_where.size() > 0)
-			selectClause.append(buildWhere());
-
-		selectClause.append(";");
-		
-		return new SimpleQuery(selectClause.toString(), qColumns);
+	private List<Query> buildSelect() {
+		String selectClause = createColumnSelect();
+		String fromClause = createFromClause();
+		String joinClause = createJoins();
+		String whereClause = createWhereConditions();
+		StringBuilder baseQuery =
+				new StringBuilder()
+					.append(selectClause)
+					.append(" ")
+					.append(fromClause)
+					.append(" ")
+					.append(joinClause)
+					.append(" ")
+					.append(whereClause);
+		if(yearSlice != null && tableHasYearColumn(yearSlice.getColumn()))
+			return createSlicedQueries(baseQuery, !whereClause.isEmpty());
+		else
+			return createUnslicedQuery(baseQuery);
 	}
 
-	private List<Column> createAnnotatedColumns(String tableName, Collection<String> columnNames) {
-		List<Column> header = new ArrayList<>(columnNames.size());
-		Database db = _schema.findDatabaseByName(_database);
-		Table table = db.findTableByName(tableName);
-		for(String columnName : columnNames) {
-			Column column = table.findColumnByName(columnName);
-			if(column == null) continue;
-			header.add(column);
+	private boolean tableHasYearColumn(String yearColumnName) {
+		Database db = schema.findDatabaseByName(database);
+		if(db == null) return false;
+		Table t = db.findTableByName(selectedTables.get(0));
+		if(t == null) return false;
+		Column c = t.findColumnByName(yearColumnName);
+		return c != null;
+	}
+
+	private List<Query> createUnslicedQuery(StringBuilder baseQuery) {
+		return Collections.singletonList(createFinalQuery(baseQuery.append(";").toString()));
+	}
+
+	private SimpleQuery createFinalQuery(String baseQuery) {
+		return SimpleQuery
+			.builder()
+			.dbName(database)
+			.datasetName(datasetName)
+			.query(baseQuery)
+			.tableName(selectedTables.get(0))
+			.build();
+	}
+
+	private List<Query> createSlicedQueries(StringBuilder baseQuery, boolean whereClauseExists) {
+		List<Integer> years = yearSlice.calculateYearRange();
+		List<String> queries = new ArrayList<>(years.size());
+		for(int year : years) {
+			queries.add(
+						new StringBuilder(baseQuery)
+						.append(whereClauseExists ? " and " : "where ")
+						.append(
+							new Where(
+									selectedTables.get(0),
+									yearSlice.getColumn(),
+									Collections.singletonList(Integer.toString(year)),
+									WhereOperator.EQUAL,
+									WhereType.NUMERIC)
+							.render(tableAlias).get(0)
+						)
+						.append(";")
+						.toString()
+			);
 		}
 		
-		return header;
+		return queries
+				.stream()
+				.map(query -> createFinalQuery(query))
+				.collect(Collectors.toList());
+	}
+
+	private String createFromClause() {
+		return new StringBuilder()
+						.append("from ")
+						.append(
+							selectedTables
+							.stream()
+							.map(table -> database + "." + table + " " + createOrFindAlias(table))
+							.collect(Collectors.joining(", "))
+						)
+						.toString();
+	}
+
+	private String createColumnSelect() {
+		return new StringBuilder()
+						.append("select ")
+						.append(selectedColumns.stream().collect(Collectors.joining(", ")))
+						.toString();
+	}
+
+	private String createJoins() {
+		return joinColumns
+				.stream()
+				.map(joinInfo -> joinInfo.render(database, tableAlias))
+				.collect(Collectors.joining(" "));
 	}
 	
-	private StringBuilder buildJoin() {
-		
-		StringBuilder joinClause = new StringBuilder();
-
-		for (Join j : _joins) {
-			String leftOnConditionPart = (_tableAlias.containsKey(j.getLeftTable()))
-					? _tableAlias.get(j.leftTable)
-					: String.format("%s.%s", _database, j.getLeftTable());
-			boolean hasRightTableAlias = _tableAlias.containsKey(j.getRightTable());
-			//if there is an alias use the access schema alias.column
-			//otherwise use schema db.table.column
-			String rightOnConditionPart;
-			String rightTable = j.getRightTable();
-			String joinTable;
-			//if rightTable has a bracket it is a subquery
-			if(rightTable.startsWith("(")) {
-				String alias = _tableAlias.get(rightTable);
-				rightOnConditionPart = alias;
-				joinTable = rightTable + " " + alias;
-			} else {
-				rightOnConditionPart = (hasRightTableAlias)
-						? _tableAlias.get(j.getRightTable())
-						: String.format("%s.%s", _database, j.getRightTable());
-				joinTable = (hasRightTableAlias)
-						? String.format("%s.%s %s", _database, j.getRightTable(), _tableAlias.get(j.getRightTable()))
-						: String.format("%s.%s", _database, j.getRightTable());
-			}			
-			
-			StringBuilder ons = new StringBuilder();
-			
-			for(String c : j.getPrimaryColumns()) {
-				ons.append("(");
-				ons.append(leftOnConditionPart + "." + c + "=" + rightOnConditionPart + "." + c);
-				ons.append(") and");
-			}
-			ons.delete(ons.lastIndexOf(")")+1, ons.length());
-			String join = "%s join %s\non %s";
-			String clause = String.format(join, j.getType(), joinTable, ons.toString());
-			joinClause.append(clause);
-			joinClause.append('\n');
+	private String createWhereConditions() {
+		if(conditions.isEmpty() && globalConditions.isEmpty())
+			return "";
+		StringBuilder whereClause =
+				new StringBuilder()
+					.append(conditions.stream().map(condition -> condition.render(tableAlias)).collect(Collectors.joining(" and ")));
+		if(globalConditions != null && !globalConditions.isEmpty()) {
+			if(whereClause.length() > 0)
+				whereClause.append(" and ");
+			whereClause
+				.append(globalConditions.stream().map(condition -> condition.render(tableAlias)).collect(Collectors.joining(" and ")));
 		}
-
-		return joinClause;
+		whereClause.insert(0, "where ");
+		return whereClause.toString();
 	}
 
-	private StringBuilder buildWhere() {
-		StringBuilder whereClause = new StringBuilder();
-		whereClause.append("where\n\t");
-		String format = "%s %s %s";
-		for (String table : _where.keySet()) {
-			String alias = null;
-			if (_tableAlias.containsKey(table))
-				alias = _tableAlias.get(table);
+	private String createOrFindAlias(String name) {
+		if (tableAlias.containsKey(name))
+			return tableAlias.get(name);
+		
+		String alias = aliaser.findNextAlias();
+		tableAlias.put(name, alias);
+		return alias;
+	}
 
-			for (OrGroup group : _where.get(table)) {
-				whereClause.append("(");
-				for (Where w : group.getTerms()) {
-					String selector = (alias != null) ? String.format("%s.%s", alias, w.getColumn())
-							: String.format("%s.%s.%s", _database, table, w.getColumn());
-					String term = String.format(format, selector, w.getOperator(), w.getValue());
-					whereClause.append(term);
-					whereClause.append(" or ");
-				}
-				// remove trailing or
-				whereClause.delete(whereClause.length() - 4, whereClause.length());
-				whereClause.append(")\n\tand\n\t");
+	/**
+	 * use all columns that exist in the database.
+	 * Call {@code addTable} before calling this method.
+	 */
+	@Override
+	public void addAllKnownColumns(String table) {
+		addAllKnownColumns(table, Collections.emptyList());
+	}
+
+	/**
+	 * use all columns that exist in the database except for those specified.
+	 * Call {@code addTable} before calling this method.
+	 */
+	@Override
+	public void addAllKnownColumns(String table, List<String> excludeColumns) {
+		Database db = schema.findDatabaseByName(database);
+		if(db != null) {
+			Table t = db.findTableByName(table);
+			if(t != null) {
+				Set<String> exclude = new HashSet<>(excludeColumns);
+				t.getAllColumns()
+					.stream()
+					.filter(column -> !exclude.contains(column.getName()))
+					.forEach(column -> addColumn(table, column.getName()));
 			}
 		}
-		whereClause.delete(whereClause.lastIndexOf(")") + 1, whereClause.length());
-
-		return whereClause;
 	}
 
 	@Override
-	public void setAliasFactory(Alias alias) {
-		_alias = alias;
+	public void setYearSlice(YearSliceNode slice) {
+		yearSlice = slice;
 	}
 
-	private void createAlias(String name) {
-		if (!_tableAlias.containsKey(name) && _alias != null)
-			_tableAlias.put(name, _alias.findNextAlias());
+	@Override
+	public void setDatasetName(String name) {
+		datasetName = name;
+	}
+	
+	@Override
+	public void addGlobalWhere(String table, String column, List<String> values, WhereOperator symbol, WhereType name) {
+		globalConditions.add(OrGroup
+				.builder()
+				._term(new Where(table, column, values, symbol, name))
+				.build()
+		);
 	}
 }

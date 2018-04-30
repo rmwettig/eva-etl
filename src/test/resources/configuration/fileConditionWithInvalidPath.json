@@ -1,0 +1,7 @@
+{
+    "type": "WHERE_FILE",
+    "column": "pid",
+    "operator": "EQUAL",
+    "columnType": "STRING",
+    "conditionFile": "non/existing/path"
+}

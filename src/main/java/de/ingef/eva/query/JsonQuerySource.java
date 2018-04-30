@@ -1,14 +1,13 @@
 package de.ingef.eva.query;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.configuration.SchemaDatabaseHostLoader;
-import de.ingef.eva.configuration.SqlJsonInterpreter;
 import de.ingef.eva.database.DatabaseHost;
 import de.ingef.eva.query.creation.QueryCreator;
 import de.ingef.eva.query.creation.SimpleQueryCreator;
-import de.ingef.eva.utility.Alias;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -24,9 +23,10 @@ public class JsonQuerySource implements QuerySource {
 	public Collection<Query> createQueries() {
 		DatabaseHost schema = new SchemaDatabaseHostLoader().loadFromFile(configuration.getSchemaFile());
 		QueryCreator queryCreator = new SimpleQueryCreator(schema);
-		queryCreator.setAliasFactory(new Alias(120));
-		SqlJsonInterpreter jsonInterpreter = new SqlJsonInterpreter(queryCreator, schema);
-		return jsonInterpreter.interpret(configuration.getExport());
+		return configuration.getExport().getSources()
+				.stream()
+				.flatMap(source -> source.traverse(queryCreator).stream())
+				.collect(Collectors.toList());
 	}
 
 }

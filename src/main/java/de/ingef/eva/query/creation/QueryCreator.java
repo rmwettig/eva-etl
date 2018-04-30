@@ -1,5 +1,11 @@
 package de.ingef.eva.query.creation;
 
+import java.util.List;
+
+import de.ingef.eva.configuration.export.JoinType;
+import de.ingef.eva.configuration.export.WhereOperator;
+import de.ingef.eva.configuration.export.WhereType;
+import de.ingef.eva.configuration.export.sql.YearSliceNode;
 import de.ingef.eva.query.Query;
 import de.ingef.eva.utility.Alias;
 
@@ -10,15 +16,23 @@ public interface QueryCreator {
 
 	public void addColumn(String table, String name);
 
-	public void addJoin(String leftTable, String rightTable, String onColumn, String type);
+	public void addAllKnownColumns(String table);
+	
+	public void addAllKnownColumns(String table, List<String> excludeColumns);
+	
+	public void addJoin(String leftTable, String rightTable, List<String> onColumns, JoinType type);
 
-	public void addWhere(String table, String column, String value, String operator, String type);
+	public void addWhere(String table, String column, List<String> value, WhereOperator operator, WhereType type);
 	
 	public void startOrGroup();
 
-	public void endOrGroup(String table);
+	public void endOrGroup();
 
-	public void setAliasFactory(Alias alias);
+	public List<Query> buildQueries();
+	
+	public void setYearSlice(YearSliceNode slice);
+	
+	public void setDatasetName(String datasetName);
 
-	public Query buildQuery();
+	public void addGlobalWhere(String table, String column, List<String> values, WhereOperator symbol, WhereType name);
 }

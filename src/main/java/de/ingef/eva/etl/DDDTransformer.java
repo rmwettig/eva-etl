@@ -1,6 +1,5 @@
 package de.ingef.eva.etl;
 
-import java.awt.peer.WindowPeer;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,18 +21,14 @@ import de.ingef.eva.data.RowElement;
 import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.utility.Helper;
-import lombok.RequiredArgsConstructor;
 
 /**
  * Appends columns loaded from a file to the end of the row
  * @author Martin.Wettig
  *
  */
-@RequiredArgsConstructor
 public class DDDTransformer extends Transformer {
 
-	private final String db;
-	private final String table;
 	private final String keyColumn;
 	private final Map<String, Map<String, RowElement>> pzn2Column2Value;
 	private final List<RowElement> additionalColumnNames;
@@ -45,25 +40,27 @@ public class DDDTransformer extends Transformer {
 	private static final DateTimeFormatter WIDO_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
 	private static final int EXPECTED_PZN_LENGTH = 8;
 	
+	public DDDTransformer(
+			String db,
+			String table,
+			String keyColumn,
+			Map<String, Map<String, RowElement>> pzn2Column2Value,
+			List<RowElement> additionalColumnNames,
+			Map<String, DateRange> pzn2ValidityDates,
+			Map<String, Map<WidoColumn, RowElement>> pznMetaColumns) {
+		super(db, table);
+		this.keyColumn = keyColumn;
+		this.pzn2Column2Value = pzn2Column2Value;
+		this.additionalColumnNames = additionalColumnNames;
+		this.pzn2ValidityDates = pzn2ValidityDates;
+		this.pzn2MetaColumns = pznMetaColumns;
+	}
+	
 	@Override
 	public Row transform(Row row) {
 		if(canProcessRow(row.getDb(), row.getTable()))
 			return process(row);
 		return row;
-	}
-
-	private boolean canProcessRow(String rowDb, String rowTable) {
-		boolean isTablePresent = table != null && !table.isEmpty();
-		boolean isDbPresent = db != null && !db.isEmpty();
-		
-		if(isTablePresent && isDbPresent)
-			return rowDb.toLowerCase().contains(db.toLowerCase()) && rowTable.toLowerCase().contains(table.toLowerCase());
-		if(isTablePresent && !isDbPresent)
-			return rowTable.toLowerCase().contains(table.toLowerCase());
-		if(!isTablePresent && isDbPresent)
-			return rowDb.toLowerCase().contains(db.toLowerCase());
-		
-		return false; 
 	}
 	
 	private Row process(Row row) {

@@ -12,6 +12,10 @@ import de.ingef.eva.data.TeradataColumnType;
 
 public class BsKvMapperTransformer extends Transformer {
 
+	public BsKvMapperTransformer() {
+		super("", "");
+	}
+	
 	@Override
 	public Row transform(Row row) {
 		//only process evo tables

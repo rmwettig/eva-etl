@@ -18,5 +18,9 @@ public enum TransformerType {
 	/**
 	 * This transformer assesses the BS_NR and maps the first two BS_NR characters onto the major KV id
 	 */
-	BS_TO_KV
+	BS_TO_KV,
+	/**
+	 * maps apothekenik onto category
+	 */
+	APO_TYPE
 }

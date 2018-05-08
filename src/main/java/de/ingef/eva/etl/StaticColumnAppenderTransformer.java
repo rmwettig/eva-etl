@@ -9,19 +9,23 @@ import de.ingef.eva.configuration.append.AppendOrder;
 import de.ingef.eva.data.RowElement;
 import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@RequiredArgsConstructor
 public class StaticColumnAppenderTransformer extends Transformer {
 
-	private final String targetDb;
-	private final String targetTable;
 	private final String valueName;
 	private final String value;
 	private final AppendOrder order;
 	private final List<String> excludeTables;
+	
+	public StaticColumnAppenderTransformer(String db, String table, String valueName, String value, AppendOrder order, List<String> excludeTables) {
+		super(db, table);
+		this.valueName = valueName;
+		this.value = value;
+		this.order = order;
+		this.excludeTables = excludeTables;
+	}
 	
 	@Override
 	public Row transform(Row row) {
@@ -57,12 +61,8 @@ public class StaticColumnAppenderTransformer extends Transformer {
 		String rowTable = row.getTable().toLowerCase();
 		if(excludeTables != null && !excludeTables.isEmpty())
 			return excludeTables.stream().map(table -> table.toLowerCase()).anyMatch(tablePart -> rowTable.contains(tablePart));
-		if(targetDb != null && !row.getDb().toLowerCase().contains(targetDb.toLowerCase()))
-			return true;
-		if(targetTable != null && !rowTable.contains(targetTable.toLowerCase()))
-			return true;
-		
-		return false;
+				
+		return !canProcessRow(row.getDb(), row.getTable());
 	}
 
 	private boolean hasColumnAlready(Map<String,Integer> columns) {

@@ -29,6 +29,8 @@ public class TransformerFactory {
 			return createDDDTransformer(config);
 		case BS_TO_KV:
 			return new BsKvMapperTransformer();
+		case APO_TYPE:
+			return new PharmacyTypeTransformer(config.getTargetDb(), config.getTargetTable());
 		default:
 			return new Transformer.NOPTransformer();
 		}

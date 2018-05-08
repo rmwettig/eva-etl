@@ -1,8 +1,19 @@
 package de.ingef.eva.etl;
 
-public abstract class Transformer {
-	public static class NOPTransformer extends Transformer {
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
+public abstract class Transformer {
+	
+	private final String db;
+	private final String table;
+	
+	public static class NOPTransformer extends Transformer {
+		
+		public NOPTransformer() {
+			super("", "");
+		}
+		
 		@Override
 		public Row transform(Row row) {
 			return row;
@@ -11,4 +22,18 @@ public abstract class Transformer {
 	}
 	
 	public abstract Row transform(Row row);
+	
+	protected boolean canProcessRow(String rowDb, String rowTable) {
+		boolean isTablePresent = table != null && !table.isEmpty();
+		boolean isDbPresent = db != null && !db.isEmpty();
+		
+		if(isTablePresent && isDbPresent)
+			return rowDb.toLowerCase().contains(db.toLowerCase()) && rowTable.toLowerCase().contains(table.toLowerCase());
+		if(isTablePresent && !isDbPresent)
+			return rowTable.toLowerCase().contains(table.toLowerCase());
+		if(!isTablePresent && isDbPresent)
+			return rowDb.toLowerCase().contains(db.toLowerCase());
+		
+		return false; 
+	}
 }

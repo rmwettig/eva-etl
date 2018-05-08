@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.configuration.append.AppendConfiguration;
 import de.ingef.eva.configuration.append.AppendSourceConfig;
 import lombok.extern.log4j.Log4j2;
@@ -11,11 +12,11 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class TransformerFactory {
 	
-	public List<Transformer> create(List<AppendConfiguration> appendConfigs) {
-		return appendConfigs.stream().map(this::of).collect(Collectors.toList());
+	public List<Transformer> create(Configuration mainConfig, List<AppendConfiguration> appendConfigs) {
+		return appendConfigs.stream().map(config -> of(mainConfig, config)).collect(Collectors.toList());
 	}
 	
-	private Transformer of(AppendConfiguration config) {
+	private Transformer of(Configuration mainConfig, AppendConfiguration config) {
 		switch (config.getMode()) {
 		case STATIC:
 			return new StaticColumnAppenderTransformer(
@@ -31,6 +32,8 @@ public class TransformerFactory {
 			return new BsKvMapperTransformer();
 		case APO_TYPE:
 			return new PharmacyTypeTransformer(config.getTargetDb(), config.getTargetTable());
+		case PID_HASH:
+			return HashTransformer.of(mainConfig, config);
 		default:
 			return new Transformer.NOPTransformer();
 		}

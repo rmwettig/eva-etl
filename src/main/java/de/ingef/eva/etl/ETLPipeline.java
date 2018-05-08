@@ -134,7 +134,7 @@ public class ETLPipeline {
 				},
 				threadPool
 		).exceptionally(e -> {
-			log.error("Export error occurred for query: DB: {}, Table: {}, Slice: {}", q.getDbName(), q.getTableName(), q.getSliceName(), e);
+			log.error("Export error occurred for query: DB: {}, Dataset: {}, Table: {}, Slice: {}", q.getDbName(), q.getDatasetName(), q.getTableName(), q.getSliceName(), e);
 			return null;
 		});
 	}
@@ -155,6 +155,9 @@ public class ETLPipeline {
 
 	private void writeHeader(CsvWriter writer, Map<String, Integer> columnName2Index) throws IOException {
 		String[] header = new String[columnName2Index.size()];
+		if(header.length != columnName2Index.entrySet().stream().max((a, b) -> Integer.compare(a.getValue(), b.getValue())).get().getValue() + 1) {
+			System.out.println(columnName2Index);
+		}
 		columnName2Index.forEach((name, index) -> header[index] = name);
 		for(String h : header)
 			writer.addEntry(h);

@@ -37,6 +37,7 @@ import de.ingef.eva.datasource.sql.SqlDataSource;
 import de.ingef.eva.etl.ETLPipeline;
 import de.ingef.eva.etl.Filter;
 import de.ingef.eva.etl.FilterFactory;
+import de.ingef.eva.etl.HashTransformer;
 import de.ingef.eva.etl.Merger;
 import de.ingef.eva.etl.Transformer;
 import de.ingef.eva.etl.TransformerFactory;
@@ -56,6 +57,7 @@ public class Main {
 	public static void main(String[] args) {
 		Options options = createCliOptions();
 		CommandLineParser parser = new DefaultParser();
+
 		try {
 			CommandLine cmd = parser.parse(options, args);
 			if(cmd.hasOption("dump")) {
@@ -112,7 +114,7 @@ public class Main {
 		QuerySource qs = new JsonQuerySource(config);
 		Collection<Query> queries = qs.createQueries();
 		List<Filter> filters = new FilterFactory().create(config.getFilters());
-		List<Transformer> transformers = new TransformerFactory().create(config.getTransformers());
+		List<Transformer> transformers = new TransformerFactory().create(config, config.getTransformers());
 		new ETLPipeline().run(config, queries, filters, transformers, IOManager.of(config));
 		sw.stop();
 		log.info("Dumping done in {}.", sw.createReadableDelta());

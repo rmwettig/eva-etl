@@ -18,4 +18,10 @@ public class AppendConfiguration {
 	private String keyColumn;
 	private List<AppendSourceConfig> sources;
 	private List<String> excludeTables;
+	/*
+	 * configuration for hash transformer
+	 */
+	private int minYear;
+	private int maxYear;
+	private List<String> subgroups;
 }

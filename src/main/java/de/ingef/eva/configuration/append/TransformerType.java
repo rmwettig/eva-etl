@@ -22,5 +22,9 @@ public enum TransformerType {
 	/**
 	 * maps apothekenik onto category
 	 */
-	APO_TYPE
+	APO_TYPE,
+	/**
+	 * creates a transformer that appends a SHA-256 hash
+	 */
+	PID_HASH
 }

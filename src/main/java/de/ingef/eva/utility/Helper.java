@@ -52,12 +52,7 @@ public final class Helper {
 	public static boolean areCredentialsCorrect(String user, String password, String url) {
 		Connection conn = null;
 		try {
-			Class.forName("com.teradata.jdbc.TeraDriver");
-			conn = DriverManager.getConnection(
-					url,
-					user,
-					password
-			);
+			conn = createConnection(user, password, url);
 			conn.close();
 			return true;
 		} catch (ClassNotFoundException e) {
@@ -72,6 +67,45 @@ public final class Helper {
 			return false;
 		}
 		return false;
+	}
+	
+	/**
+	 * create a database connection without exception handling
+	 * @param user
+	 * @param password
+	 * @param url
+	 * @return
+	 * @throws SQLException
+	 * @throws ClassNotFoundException
+	 */
+	public static Connection createConnection(String user, String password, String url) throws SQLException, ClassNotFoundException {
+		Class.forName("com.teradata.jdbc.TeraDriver");
+		return DriverManager.getConnection(
+				url,
+				user,
+				password
+		);
+	}
+	
+	/**
+	 * creates a database connection with exception handling
+	 * @param user
+	 * @param password
+	 * @param url
+	 * @return null if creation failed
+	 */
+	public static Connection createConnectionWithErrorHandling(String user, String password, String url) {
+		try {
+			Class.forName("com.teradata.jdbc.TeraDriver");
+			return DriverManager.getConnection(
+					url,
+					user,
+					password
+			);
+		} catch (ClassNotFoundException | SQLException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 	
 	public static ExecutorService createThreadPool(int size, boolean spawnDaemonThreads) {

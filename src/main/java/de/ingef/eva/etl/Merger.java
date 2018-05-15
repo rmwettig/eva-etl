@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
@@ -18,6 +19,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
 
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.constant.OutputDirectory;
@@ -144,14 +146,14 @@ public class Merger {
 			CompletableFuture.supplyAsync(() -> {
 					BufferedWriter writer = null;
 					try {
-						writer = Files.newBufferedWriter(directory.resolve(ds.getFileName() + ".csv"), OutputDirectory.DATA_CHARSET);
+						writer = Files.newBufferedWriter(directory.resolve(ds.getFileName() + OutputDirectory.OUTPUT_FILE_EXTENSION), OutputDirectory.DATA_CHARSET);
 						boolean wasHeaderWritten = false;
 						for(Path slice : ds.getFiles()) {
 							if(sliceIsEmpty(slice)) {
 								log.warn("Skipping '{}' from '{}' because file is empty.", slice.getFileName().toString(), ds.getDatasetName());
 								continue;
 							}
-							BufferedReader reader = Files.newBufferedReader(slice);
+							BufferedReader reader = createSliceReader(slice);
 							//remove header if it was already written
 							if(wasHeaderWritten) {
 								reader.readLine();
@@ -186,6 +188,11 @@ public class Merger {
 				return null;
 			});
 		}
+	}
+
+	private BufferedReader createSliceReader(Path slice) throws IOException {
+		GZIPInputStream zippedInput = new GZIPInputStream(Files.newInputStream(slice));
+		return new BufferedReader(new InputStreamReader(zippedInput, OutputDirectory.DATA_CHARSET));
 	}
 
 	private boolean sliceIsEmpty(Path slice) throws IOException {
@@ -223,7 +230,7 @@ public class Merger {
 		List<File> slices = findSelectedSlices(datasetDirectory, selectedSlicePrefixes);
 		for(File slice : slices) {
 			String fileName = slice.getName();
-			if(!fileName.endsWith(".csv"))
+			if(!fileName.endsWith(OutputDirectory.CACHE_FILE_EXTENSION))
 				continue;
 			String commonName = extractCommonName(fileName);
 			//skip already known datasets

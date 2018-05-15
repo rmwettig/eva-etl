@@ -12,6 +12,10 @@ import de.ingef.eva.data.TeradataColumnType;
 
 public class BsKvMapperTransformer extends Transformer {
 
+	public BsKvMapperTransformer(String db, String table) {
+		super(db, table);
+	}
+
 	public BsKvMapperTransformer() {
 		super("", "");
 	}

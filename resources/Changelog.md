@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.0] - 2018-05-16
+### Added
+  * Year slices are compressed with gzip
+
 ## [1.0.0] - 2018-01-05
 ### Added
   * Columns can be excluded by using the "excludeColumns" field in a view definition

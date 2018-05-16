@@ -12,4 +12,7 @@ public class OutputDirectory {
 		PRODUCTION,
 		REPORT
 	}
+	
+	public static final String CACHE_FILE_EXTENSION = ".csv.gz";
+	public static final String OUTPUT_FILE_EXTENSION = ".csv";
 }

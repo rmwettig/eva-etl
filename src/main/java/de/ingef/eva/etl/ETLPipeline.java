@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import de.ingef.eva.configuration.Configuration;
+import de.ingef.eva.constant.OutputDirectory;
 import de.ingef.eva.constant.OutputDirectory.DirectoryType;
 import de.ingef.eva.data.RowElement;
 import de.ingef.eva.data.SimpleRowElement;
@@ -170,7 +171,7 @@ public class ETLPipeline {
 	}
 
 	private String createOutputFileName(Query q) {
-		return q.getDbName() + "_" + q.getTableName()  + "." + q.getSliceName() + ".csv";
+		return q.getDbName() + "_" + q.getTableName()  + "." + q.getSliceName() + OutputDirectory.CACHE_FILE_EXTENSION;
 	}
 
 	private String createDbShortName(String dbName) {

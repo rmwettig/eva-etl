@@ -15,7 +15,8 @@ public enum WidoColumn {
 	GENERIC("GENERIKENN"),
 	DDDPK("DDD"),
 	STANAME("STANAME"),
-	PACK_SIZE("PACKGR\u00d6E")
+	PACK_SIZE("PACKGR\u00d6E"),
+	ATC("ATC_AI")
 	;
 	
 	private final String label;

@@ -96,7 +96,7 @@ public class ProcessPidDecode implements DataProcessor {
 			Set<String> uniqueEgkNumbers = new HashSet<>();
 			Set<String> uniqueKvNumbers = new HashSet<>();
 			int numberOfDuplicates = 0;
-			int rowCount = 0;
+			int numberOfValidMappings = 0;
 			rawPids.open();
 			while(rawPids.hasMoreRows()) {
 				List<RowElement> row = rawPids.getNextRow(true);
@@ -107,7 +107,6 @@ public class ProcessPidDecode implements DataProcessor {
 				pid = Helper.addPaddingZeros(pid, EXPECTED_PID_LENGTH);
 				//skip unwanted pids
 				if(unwantedPids.contains(pid)) continue;
-				rowCount++;
 				if(uniquePids.contains(pid)) {
 					log.warn("Found duplicated pid: '{}'. Entry: [{}]", pid, rowToString(row));
 					numberOfDuplicates++;
@@ -135,15 +134,16 @@ public class ProcessPidDecode implements DataProcessor {
 				//save first occurrence to columns as key if egk is not empty
 				//increase counter for each time the key was found -> report dup
 				String key = h2ik + pid;
-				if(!ikPid2Mapping.containsKey(key))
+				if(!ikPid2Mapping.containsKey(key)) {
 					ikPid2Mapping.put(key, new Mapping(h2ik, egkNo, kvNo, pid));
-				else {
+					numberOfValidMappings++;
+				} else {
 					log.warn("Found duplicated ik+pid key: '{}'. Entry: [{}]", key, rowToString(row));
 					numberOfDuplicates++;
 				}
 			}
 			rawPids.close();
-			calculateLoss(numberOfDuplicates, rowCount);
+			calculateLoss(numberOfDuplicates, numberOfValidMappings);
 						
 			return ikPid2Mapping;
 		} 
@@ -154,8 +154,8 @@ public class ProcessPidDecode implements DataProcessor {
 		return null;
 	}
 	
-	private void calculateLoss(int numberOfDuplicates, int totalRowCount) {
-		float loss =  numberOfDuplicates / (float)totalRowCount;
+	private void calculateLoss(int numberOfDuplicates, int numberOfValidMappings) {
+		float loss =  numberOfDuplicates / (float)numberOfValidMappings;
 		if(loss > 0.05f)
 			log.warn("PID loss: {}", loss * 100);
 	}

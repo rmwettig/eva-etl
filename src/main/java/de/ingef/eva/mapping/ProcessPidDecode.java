@@ -94,6 +94,7 @@ public class ProcessPidDecode implements DataProcessor {
 			Map<String, Mapping> ikPid2Mapping = new HashMap<>();
 			Set<String> uniquePids = new HashSet<>();
 			Set<String> uniqueEgkNumbers = new HashSet<>();
+			Set<String> uniqueKvNumbers = new HashSet<>();
 			int numberOfDuplicates = 0;
 			int rowCount = 0;
 			rawPids.open();
@@ -113,9 +114,9 @@ public class ProcessPidDecode implements DataProcessor {
 					continue;
 				}
 				uniquePids.add(pid);
-				String key = h2ik + pid;
+				
 				String egkNo = row.get(1).getContent();
-				String kvNo = row.get(2).getContent();
+				
 				if(egkNo != null && !egkNo.isEmpty() && uniqueEgkNumbers.contains(egkNo)) {
 					log.warn("Found duplicated egk number: '{}'. Entry: [{}]", egkNo, rowToString(row));
 					numberOfDuplicates++;
@@ -123,8 +124,17 @@ public class ProcessPidDecode implements DataProcessor {
 				}
 				uniqueEgkNumbers.add(egkNo);
 				
-				//save first to columns as key if egk is not empty
+				String kvNo = row.get(2).getContent();
+				if(kvNo != null && !kvNo.isEmpty() && uniqueKvNumbers.contains(kvNo)) {
+					log.warn("Found duplicated kv_number: '{}', Entry: [{}]", kvNo, rowToString(row));
+					numberOfDuplicates++;
+					continue;
+				}
+				uniqueKvNumbers.add(kvNo);
+				
+				//save first occurrence to columns as key if egk is not empty
 				//increase counter for each time the key was found -> report dup
+				String key = h2ik + pid;
 				if(!ikPid2Mapping.containsKey(key))
 					ikPid2Mapping.put(key, new Mapping(h2ik, egkNo, kvNo, pid));
 				else {

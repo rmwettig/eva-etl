@@ -25,6 +25,9 @@ RUN tlmgr install float
 RUN tlmgr install graphics
 RUN tlmgr install tools
 
+RUN mkdir /resources
+COPY ingef_logo.jpg /resources/
+
 ENTRYPOINT [ "xelatex" ]
 
 EXPOSE 8000

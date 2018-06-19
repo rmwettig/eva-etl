@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -17,224 +18,210 @@ import java.util.stream.IntStream;
 import de.ingef.eva.constant.OutputDirectory;
 import de.ingef.eva.measures.cci.Quarter;
 import de.ingef.eva.utility.QuarterCount;
+import de.ingef.eva.utility.latex.Figure;
+import de.ingef.eva.utility.latex.LatexNode;
+import de.ingef.eva.utility.latex.Literal;
+import de.ingef.eva.utility.latex.PreambleEntry;
+import de.ingef.eva.utility.latex.TexDocument;
+import de.ingef.eva.utility.latex.TextColor;
+import de.ingef.eva.utility.latex.TextColor.Color;
+import de.ingef.eva.utility.latex.Wrapper;
+import de.ingef.eva.utility.latex.alignment.AlignmentOption;
+import de.ingef.eva.utility.latex.alignment.Anchor;
+import de.ingef.eva.utility.latex.environment.Landscape;
+import de.ingef.eva.utility.latex.environment.Table;
+import de.ingef.eva.utility.latex.page.PageBreak;
+import de.ingef.eva.utility.latex.page.TitlePage;
+import de.ingef.eva.utility.latex.table.BorderMode;
+import de.ingef.eva.utility.latex.table.EndHead;
+import de.ingef.eva.utility.latex.table.HLine;
+import de.ingef.eva.utility.latex.table.MultiColumnRow;
+import de.ingef.eva.utility.latex.table.RowContent;
+import de.ingef.eva.utility.latex.table.Tabular;
+import de.ingef.eva.utility.latex.table.Tabular.TabularType;
 
 public class LaTexOutput {
 	
+	private static final String DOCUMENT_FONT = "Roboto";
+	private static final String DOCUMENT_TITLE = "EVA-F\u00fcllstandsbericht";
 	private static final String OVERVIEW_CAPTION = "Datenstand der Datenbereiche zum elektronischen Datenaustausch der GKV";
 	private static final String DETAIL_CAPTION = "Aktueller Datenstand der ambulanten Daten pro KV";
 	private static final String MORBI_CAPTION = "Morbidit\u00e4tsorientierter Risikostrukturausgleich";
 	private static final DecimalFormat NUMBER_FORMATTER = (DecimalFormat) NumberFormat.getInstance(Locale.GERMAN);
-	//private static final String FONT_PATH = "/fonts/Roboto/Roboto-Regular.ttf";
-	//private static final String LOGO_PATH = "/logos/INGEF_Logo_ohne_claim.jpg";
+	private static final String LOGO_PATH = "/resources/ingef_logo.jpg";
 	
 	static {
 		NUMBER_FORMATTER.applyLocalizedPattern("###.###,##");
 	}
-	
-	private static String preamble = "\\documentclass[12pt, a4paper, twoside]{article}\n" + 
-			"\\usepackage[utf8]{inputenc}\n" + 
-			"\\usepackage{fontspec}\n" + 
-			"\\usepackage{graphicx}\n" + 
-			"\\usepackage{float}\n" + 
-			"\\usepackage{color}\n" +
-			"\\usepackage{lscape}\n" +
-			"\\usepackage{longtable}\n" +
-			"\n" + 
-			"\\setmainfont{Roboto}\n" + 
-			"\\title{EVA-F\u00fcllstandsbericht}\n" + 
-			"\\date{\\the\\day.\\the\\month.\\the\\year}\n";
 		
-	public void createStatisticHTMLFile(Path output, List<StatisticsEntry> overviewStatistic, List<StatisticsEntry> detailStatistic, List<MorbiRsaEntry> morbiStatistic, List<String> morbiColumnHeader) {
-		StringBuilder document = createDocument();
-		setPreamble(document);
-		openDocument(document);
-		insertTitlePage(document, "");
-		insertPage(document);
-		document.append(createOverviewTable(overviewStatistic));
-		insertPage(document);
-		document.append(createDetailTable(detailStatistic));
-		insertPage(document);
-		document.append(createMorbiTable(morbiStatistic, morbiColumnHeader));
-		closeDocument(document);
-		writeToFile(output, document.toString());
-	}
-	
-	private StringBuilder createDocument() {
-		return new StringBuilder();
-	}
-	
-	private void openDocument(StringBuilder document) {
-		document.append("\\begin{document}\n");
-	}
-	
-	private void closeDocument(StringBuilder document) {
-		document.append("\\end{document}");
-	}
-	
-	private void setPreamble(StringBuilder document) {
-		document.append(preamble);
-	}
-	
-	private void insertPage(StringBuilder document) {
-		document.append("\\newpage\n");
-	}
-	
-	private void insertTitlePage(StringBuilder document, String imagePath) {
-		document.append("\\begin{titlepage}\n");
-		document.append("\\maketitle\n");
-		//FIXME enable this later on to get the company logo
-		//document.append(insertLogo(imagePath));
-		document.append("\\end{titlepage}\n");
-	}
-	
-	private String insertLogo(String image) {
-		StringBuilder figure = new StringBuilder();
-		figure.append("\\begin{figure}[b]\n");
-		figure.append("\\includegraphics[scale=0.25]{" + image + "}\n");
-		figure.append("\\end{figure}\n");
+	public void createStatisticTexFile(Path output, List<StatisticsEntry> overviewStatistic, List<StatisticsEntry> detailStatistic, List<MorbiRsaEntry> morbiStatistic, List<String> morbiColumnHeader) {
+		TexDocument.TexDocumentBuilder document = createDocument();
+		document.element(new TitlePage(new Figure(Anchor.BOTTOM, Paths.get(LOGO_PATH), 0.25f)));
+		document.element(new PageBreak());
+		document.element(createOverviewTable(overviewStatistic));
+		document.element(new PageBreak());
+		document.element(createDetailTable(detailStatistic));
+		document.element(new PageBreak());
+		document.element(createMorbiTable(morbiStatistic, morbiColumnHeader));
 		
-		return figure.toString();
+		writeToFile(output, document.build().renderDocument());
 	}
 	
-	private String addTableEnvironment(String tabular) {
-		return "\\begin{table}[h]\n" +
-				tabular +
-				"\\end{table}\n";
+	private TexDocument.TexDocumentBuilder createDocument() {
+		return TexDocument
+				.builder()
+				.preambleEntry(PreambleEntry.builder().name("documentclass").option("12pt").option("a4paper").option("twoside").value("article").build())
+				.preambleEntry(PreambleEntry.builder().name("usepackage").option("utf8").value("inputenc").build())
+				.preambleEntry(PreambleEntry.builder().name("usepackage").value("fontspec").build()) 
+				.preambleEntry(PreambleEntry.builder().name("usepackage").value("graphicx").build())
+				.preambleEntry(PreambleEntry.builder().name("usepackage").value("float").build())
+				.preambleEntry(PreambleEntry.builder().name("usepackage").value("color").build())
+				.preambleEntry(PreambleEntry.builder().name("usepackage").value("lscape").build())
+				.preambleEntry(PreambleEntry.builder().name("usepackage").value("longtable").build())
+				.preambleEntry(PreambleEntry.builder().name("setmainfont").value(DOCUMENT_FONT).build())
+				.preambleEntry(PreambleEntry.builder().name("title").value(DOCUMENT_TITLE).build())
+				.preambleEntry(PreambleEntry.builder().name("date").value("\\the\\day.\\the\\month.\\the\\year").build());
 	}
 	
-	private String addLongTable(String content, String alignment) {
-		return "\\begin{longtable}{" + alignment + "}\n" +
-				content + 
-				"\\end{longtable}";
-	}
-	
-	private String useLandscape(String content) {
-		return "\\begin{landscape}\n" +
-				content +
-				"\\end{landscape}\n";
-	}
-	
-	private String createOverviewTable(List<StatisticsEntry> overview) {
-		StringBuilder tabular = new StringBuilder();
+	private LatexNode createOverviewTable(List<StatisticsEntry> overview) {
 		int columnCount = overview.size() + 1;
-		tabular.append("\\multicolumn{" + columnCount + "}{c}{" + OVERVIEW_CAPTION + "} \\\\\n");
-		tabular.append("\\hline\n");
-		tabular.append(createOverviewHeader(overview) + "\\\\\n");
-		tabular.append("\\hline\n");
-		tabular.append("\\endhead\n");
-		tabular.append(createOverviewBody(createQuarterToRowContent(overview)));
-		return useLandscape(addLongTable(tabular.toString(), createCenteredRows(columnCount)));
+		Tabular.TabularBuilder builder =
+				Tabular
+					.builder()
+					.type(TabularType.LONGTABLE)
+					.columnOptions(createCenteredRows(columnCount))
+					.row(new MultiColumnRow(columnCount, OVERVIEW_CAPTION, Anchor.CENTER))
+					.row(new HLine())
+					.row(createOverviewHeader(overview))
+					.row(new HLine())
+					.row(new EndHead());
+					
+		createOverviewBody(createQuarterToRowContent(overview)).stream().forEach(row -> builder.row(row));
+
+		return new Landscape(builder.build());
 	}
 	
-	private String createOverviewHeader(List<StatisticsEntry> overview) {
-		return "Quartal & " + overview
-				.stream()
-				.map(entry -> entry.getLabel())
-				.collect(Collectors.joining(" & "));
+	private RowContent createOverviewHeader(List<StatisticsEntry> overview) {
+		RowContent.RowContentBuilder builder = 
+				RowContent
+					.builder()
+					.value("Quartal");
+		overview
+			.stream()
+			.map(entry -> entry.getLabel())
+			.forEach(label -> builder.value(label));
+		return builder.build();
 	}
 	
-	private String createOverviewBody(Map<Quarter, List<QuarterCount>> rows) {
-		StringBuilder body = new StringBuilder();
+	private List<RowContent> createOverviewBody(Map<Quarter, List<QuarterCount>> rows) {
 		int rowIndexCounter = 0;
+		List<RowContent> rowContent = new ArrayList<>(rows.size());
 		for(Map.Entry<Quarter, List<QuarterCount>> entry : rows.entrySet()) {
+			RowContent.RowContentBuilder builder = RowContent.builder();
 			Quarter quarter = entry.getKey();
-			StringBuilder row = new StringBuilder();
-			row.append(quarter.getYear() + "Q" + quarter.getQuarter() + " & ");
+			builder.value(quarter.getYear() + "Q" + quarter.getQuarter());
 			int rowIndex = rowIndexCounter++;
-			String tableCells = entry.getValue()
+			entry.getValue()
 				.stream()
 				.map(quarterCount -> convertQuarterCountToTableData(quarterCount, rowIndex))
-				.collect(Collectors.joining(" & "));
-			row.append(tableCells);
-			body.append(row  + "\\\\\n" );
+				.forEach(value -> builder.value(value));
+			rowContent.add(builder.build());
 		}
-		//remove new table row sign after last row
-		body.delete(body.lastIndexOf("\\\\\n"), body.length());
-		return body.toString();
+		
+		return rowContent;
 	}
 	
-	private String createDetailTable(List<StatisticsEntry> detailStatistic) {
-		StringBuilder tabular = new StringBuilder();
-		tabular.append("\\begin{tabular}{" + createCenteredRows(5) + "}\n");
-		tabular.append("\\multicolumn{5}{c}{" + DETAIL_CAPTION + "} \\\\\n");
-		tabular.append("\\hline\n");
-		tabular.append(createDetailHeader() + "\\\\\n");
-		tabular.append("\\hline\n");
-		tabular.append(createDetailBody(detailStatistic));
-		tabular.append("\n\\end{tabular}\n");
-		return addTableEnvironment(tabular.toString());
+	private LatexNode createDetailTable(List<StatisticsEntry> detailStatistic) {
+		Tabular.TabularBuilder builder =
+				Tabular
+					.builder()
+					.type(TabularType.TABULAR)
+					.columnOptions(createCenteredRows(5))
+					.row(new MultiColumnRow(5, DETAIL_CAPTION, Anchor.CENTER))
+					.row(new HLine())
+					.row(createDetailHeader())
+					.row(new HLine());
+		
+		createDetailBody(detailStatistic).stream().forEach(content -> builder.row(content));
+		
+		return new Table(Anchor.HERE, builder.build());
 	}
 	
-	private String createDetailHeader() {
-		StringBuilder header = new StringBuilder();
-		header.append("Quartal & ");
-		header.append("KV &");
-		header.append("KV-Name & ");
-		header.append("Anzahl F\u00e4lle &");
-		header.append("Anteil VJQ \\\\");
-		return header.toString();
+	private RowContent createDetailHeader() {
+		return RowContent
+				.builder()
+				.value("Quartal")
+				.value("KV")
+				.value("KV-Name")
+				.value("Anzahl F\u00e4lle")
+				.value("Anteil VJQ")
+				.build();
 	}
 	
-	private String createDetailBody(List<StatisticsEntry> rows) {
+	private List<RowContent> createDetailBody(List<StatisticsEntry> rows) {
 		return rows
 				.stream()
 				.map(this::convertToRow)
-				.collect(Collectors.joining(" \\\\\n"));
+				.collect(Collectors.toList());
 	}
 	
-	private String createMorbiTable(List<MorbiRsaEntry> morbiStatistic, List<String> morbiColumnHeader) {
-		StringBuilder tabular = new StringBuilder();
-		tabular.append("\\begin{tabular}{" + createCenteredRows(5) + "}\n");
-		tabular.append("\\multicolumn{5}{c}{" + MORBI_CAPTION + "} \\\\\n");
-		tabular.append("\\hline\n");
-		tabular.append(createMorbiHeader(morbiColumnHeader) + "\\\\\n");
-		tabular.append("\\hline\n");
-		tabular.append(createMorbiBody(morbiStatistic));
-		tabular.append("\n\\end{tabular}\n");
-		return addTableEnvironment(tabular.toString());
+	private LatexNode createMorbiTable(List<MorbiRsaEntry> morbiStatistic, List<String> morbiColumnHeader) {
+		Tabular.TabularBuilder builder =
+				Tabular
+					.builder()
+					.type(TabularType.TABULAR)
+					.columnOptions(createCenteredRows(5))
+					.row(new MultiColumnRow(5, MORBI_CAPTION, Anchor.CENTER))
+					.row(new HLine())
+					.row(createMorbiHeader(morbiColumnHeader))
+					.row(new HLine());
+		
+		createMorbiBody(morbiStatistic).stream().forEach(row -> builder.row(row));
+		return new Table(Anchor.HERE, builder.build());
 	}
 	
-	private String createMorbiHeader(List<String> morbiColumnHeader) {
-		return morbiColumnHeader
-				.stream()
-				.collect(Collectors.joining(" & "));
+	private RowContent createMorbiHeader(List<String> morbiColumnHeader) {
+		RowContent.RowContentBuilder builder = RowContent.builder();
+		morbiColumnHeader.stream().forEach(header -> builder.value(header));
+		return builder.build();
 	}
 	
-	private String createMorbiBody(List<MorbiRsaEntry> morbiStatistic) {
+	private List<RowContent> createMorbiBody(List<MorbiRsaEntry> morbiStatistic) {
 		return morbiStatistic
 				.stream()
 				.map(this::convertMorbiEntryToRow)
-				.collect(Collectors.joining(" \\\\\n"));
+				.collect(Collectors.toList());
 	}
 	
-	private String convertMorbiEntryToRow(MorbiRsaEntry entry) {
-		StringBuilder row = new StringBuilder();
-		row.append(Integer.toString(entry.getGrouperYear()) + " & ");
-		row.append(Integer.toString(entry.getBenefitYear()) + " & ");
-		row.append(Integer.toString(entry.getReportingYear()) + " & ");
-		row.append(entry.getQuarter() + " & ");
-		row.append(entry.getConfiguration());
-		return row.toString();
+	private RowContent convertMorbiEntryToRow(MorbiRsaEntry entry) {
+		return RowContent
+				.builder()
+				.value(Integer.toString(entry.getGrouperYear()))
+				.value(Integer.toString(entry.getBenefitYear()))
+				.value(Integer.toString(entry.getReportingYear()))
+				.value(entry.getQuarter())
+				.value(entry.getConfiguration())
+				.build();
 	}
 	
-	private String convertToRow(StatisticsEntry entry) {
-		StringBuilder row = new StringBuilder();		
+	private RowContent convertToRow(StatisticsEntry entry) {	
 		QuarterCount qc = entry.getDataCount().get(0);
 		Quarter q = qc.getQuarter();
-		row.append(q.getYear() + "Q" + q.getQuarter() + " & ");
-		row.append(entry.getIdentifier() + " & ");
-		row.append(entry.getLabel() + " & ");
-		row.append(NUMBER_FORMATTER.format(qc.getCount()) + " & ");
-		row.append(createRatioText(qc.getChangeRatio()));
-		
-		return row.toString();
+		return RowContent
+				.builder()
+				.value(q.getYear() + "Q" + q.getQuarter())
+				.value(entry.getIdentifier())
+				.value(entry.getLabel())
+				.value(NUMBER_FORMATTER.format(qc.getCount()))
+				.value(createRatioText(qc.getChangeRatio()).render())
+				.build();
 	}
 	
-	private String createCenteredRows(int count) {
+	private List<AlignmentOption> createCenteredRows(int count) {
 		return IntStream
 				.range(0, count)
-				.mapToObj(i -> i == 0 ? "c |" : "c")
-				.collect(Collectors.joining(" "));
+				.mapToObj(i -> i == 0 ? new AlignmentOption(Anchor.CENTER, BorderMode.RIGHT) : new AlignmentOption(Anchor.CENTER, BorderMode.NONE))
+				.collect(Collectors.toList());
 	}
 	
 	private Map<Quarter, List<QuarterCount>> createQuarterToRowContent(List<StatisticsEntry> entries) {
@@ -263,17 +250,17 @@ public class LaTexOutput {
 		if(rowIndex < 4)
 			return sb.toString();
 		
-		sb.append(createRatioText(ratio));
+		sb.append(createRatioText(ratio).render());
 		
 		return sb.toString();
 	}
 
-	private String createRatioText(double ratio) {
+	private LatexNode createRatioText(double ratio) {
 		//deviation outside of tolerance thresholds
 		if(ratio > 1.5 || ratio < 0.5)
-			return " (\\textcolor{red}{" + NUMBER_FORMATTER.format(ratio) + "})";
+			return new Wrapper("(", ")", new TextColor(Color.RED, NUMBER_FORMATTER.format(ratio)));
 		else
-			return " (" + NUMBER_FORMATTER.format(ratio) + ")";
+			return new Wrapper("(", ")", new Literal(NUMBER_FORMATTER.format(ratio)));
 	}
 	
 	private void writeToFile(Path outputFile, String output) {

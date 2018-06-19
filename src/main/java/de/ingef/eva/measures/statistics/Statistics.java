@@ -128,7 +128,7 @@ public class Statistics {
 
 	private void createOutput(Path outputDirectory, StatisticDatasetConfig settings, Result result) {
 		Path file = outputDirectory.resolve("statistic_" + settings.getDataset() + ".tex");
-		new LaTexOutput().createStatisticHTMLFile(file, result.getOverview(), result.getDetails(), result.getMorbi(), result.getMorbiHeader());
+		new LaTexOutput().createStatisticTexFile(file, result.getOverview(), result.getDetails(), result.getMorbi(), result.getMorbiHeader());
 		runDocker(outputDirectory, file);
 	}
 

@@ -1,5 +1,6 @@
 package de.ingef.eva.configuration.append;
 
+import java.nio.file.Path;
 import java.util.List;
 
 import lombok.Getter;
@@ -24,4 +25,8 @@ public class AppendConfiguration {
 	private int minYear;
 	private int maxYear;
 	private List<String> subgroups;
+	/*
+	 * configuration for dynamic column transformer
+	 */
+	private Path file;
 }

@@ -7,12 +7,11 @@ package de.ingef.eva.configuration.append;
  */
 public enum TransformerType {
 	/**
-	 * STATIC means that a given value is appended to all rows
+	 * append a given value to all rows
 	 */
 	STATIC,
 	/**
-	 * DYNAMIC means that the user can provide a file with mappings
-	 * and only rows that match a given key are extended with values from the file
+	 * append columns from wido stamm and supplement file
 	 */
 	DDD,
 	/**
@@ -26,5 +25,9 @@ public enum TransformerType {
 	/**
 	 * creates a transformer that appends a SHA-256 hash
 	 */
-	PID_HASH
+	PID_HASH,
+	/**
+	 * append columns from file when the specified key column matches
+	 */
+	DYNAMIC
 }

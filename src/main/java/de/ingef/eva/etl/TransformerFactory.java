@@ -34,6 +34,8 @@ public class TransformerFactory {
 			return new PharmacyTypeTransformer(config.getTargetDb(), config.getTargetTable());
 		case PID_HASH:
 			return HashTransformer.of(mainConfig, config);
+		case DYNAMIC:
+			return DynamicColumnAppender.of(config);
 		default:
 			return new Transformer.NOPTransformer();
 		}

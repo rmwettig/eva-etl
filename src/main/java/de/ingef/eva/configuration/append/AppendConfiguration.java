@@ -29,4 +29,5 @@ public class AppendConfiguration {
 	 * configuration for dynamic column transformer
 	 */
 	private Path file;
+	private List<String> keyColumns;
 }

@@ -6,7 +6,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import de.ingef.eva.configuration.append.AppendConfiguration;
 import de.ingef.eva.constant.OutputDirectory;
@@ -18,15 +20,16 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class DynamicColumnAppender extends Transformer {
 
-	private String keyColumn;
+	private static final String KEY_VALUE_DELIMITER = "|";
+	private List<String> keyColumns;
 	private List<RowElement> columnNames;
 	private Map<String, List<RowElement>> newColumns;
 	
-	public DynamicColumnAppender(String db, String table, String keyName, List<RowElement> header, Map<String, List<RowElement>> key2Columns) {
+	public DynamicColumnAppender(String db, String table, List<String> keyNames, List<RowElement> header, Map<String, List<RowElement>> key2Columns) {
 		super(db, table);
 		newColumns = key2Columns;
 		columnNames = header;
-		keyColumn = keyName;
+		keyColumns = keyNames;
 	}
 
 	@Override
@@ -35,15 +38,22 @@ public class DynamicColumnAppender extends Transformer {
 			return row;
 		Map<String, Integer> transformedIndices = transformIndices(row.getColumnName2Index());
 		List<RowElement> transformedColumns;
-		if(row.getColumnName2Index().containsKey(keyColumn)) {
-			int keyIndex = row.getColumnName2Index().get(keyColumn);
-			String key = row.getColumns().get(keyIndex).getContent();
-			transformedColumns = transformColumns(key, row.getColumns());
+		
+		if(row.getColumnName2Index().keySet().containsAll(keyColumns)) {
+			transformedColumns = transformColumns(createOrderedCombinedKey(row), row.getColumns());
 		} else {
 			transformedColumns = emptyColumns();
 		}
 		
 		return new Row(row.getDb(), row.getTable(), transformedColumns, transformedIndices);
+	}
+
+	private String createOrderedCombinedKey(Row row) {
+		return keyColumns
+				.stream()
+				.map(k -> row.getColumnName2Index().get(k))
+				.map(index -> row.getColumns().get(index).getContent())
+				.collect(Collectors.joining(KEY_VALUE_DELIMITER));
 	}
 
 	private List<RowElement> transformColumns(String key, List<RowElement> columns) {
@@ -74,16 +84,23 @@ public class DynamicColumnAppender extends Transformer {
 	public static Transformer of(AppendConfiguration config) {
 		try {
 			List<String> lines = Files.newBufferedReader(config.getFile(), OutputDirectory.DATA_CHARSET).lines().collect(Collectors.toList());
-			Map<String, List<RowElement>> newColumns = createMappings(lines.subList(1, lines.size()));
-			List<RowElement> header = createColumnHeaders(lines.get(0));
-			return new DynamicColumnAppender(config.getTargetDb(), config.getTargetTable(), config.getKeyColumn(), header, newColumns);
+			int keyColumnCount = config.getKeyColumns().size();
+			Map<String, List<RowElement>> newColumns = createMappings(lines.subList(1, lines.size()), keyColumnCount);
+			List<RowElement> header = createColumnHeaders(lines.get(0), keyColumnCount);
+			return new DynamicColumnAppender(config.getTargetDb(), config.getTargetTable(), config.getKeyColumns(), header, newColumns);
 		} catch (IOException e) {
 			log.error("Could not read mapping file: {}", e);
 			return new Transformer.NOPTransformer();
 		}		
 	}
 	
-	private static Map<String, List<RowElement>> createMappings(List<String> mappings) {
+	private static Map<String, List<RowElement>> createMappings(List<String> mappings, int keyColumnCount) {
+		Function<? super List<RowElement>, String> keyCreator = list -> {
+			return IntStream
+						.range(0, keyColumnCount)
+						.mapToObj(index -> list.get(index).getContent())
+						.collect(Collectors.joining(KEY_VALUE_DELIMITER));
+		};
 		return mappings
 				.stream()
 				.map(lines -> {
@@ -93,13 +110,13 @@ public class DynamicColumnAppender extends Transformer {
 						re.add(new SimpleRowElement(column, TeradataColumnType.VARCHAR));
 					return re;
 				})
-				.collect(Collectors.toMap(columns -> columns.get(0).getContent(), columns -> columns.subList(1, columns.size())));
+				.collect(Collectors.toMap(keyCreator, columns -> columns.subList(keyColumnCount, columns.size())));
 	}
 	
-	private static List<RowElement> createColumnHeaders(String header) {
+	private static List<RowElement> createColumnHeaders(String header, int keyColumnCount) {
 		String[] columns = header.split(";");
 		List<RowElement> headerColumns = new ArrayList<>(columns.length - 1);
-		for(int i = 1; i < columns.length; i++)
+		for(int i = keyColumnCount; i < columns.length; i++)
 			headerColumns.add(new SimpleRowElement(columns[i], TeradataColumnType.VARCHAR));
 		return headerColumns;
 	}

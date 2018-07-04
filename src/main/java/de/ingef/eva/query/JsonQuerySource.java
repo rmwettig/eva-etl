@@ -23,7 +23,7 @@ public class JsonQuerySource implements QuerySource {
 	public Collection<Query> createQueries() {
 		DatabaseHost schema = new SchemaDatabaseHostLoader().loadFromFile(configuration.getSchemaFile());
 		QueryCreator queryCreator = new SimpleQueryCreator(schema);
-		return configuration.getExport().getSources()
+		return configuration.getSources()
 				.stream()
 				.flatMap(source -> source.traverse(queryCreator).stream())
 				.collect(Collectors.toList());

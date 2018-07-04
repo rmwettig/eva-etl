@@ -14,11 +14,7 @@ import lombok.extern.log4j.Log4j2;
 public class ConfigurationDatabaseHostLoader {
 	
 	public DatabaseHost createDatabaseHost(Configuration config) {
-		if(config.getExport() == null) {
-			log.error("No export config specified.");
-			return null;
-		}
-		List<SourceConfig> sources = config.getExport().getSources();
+		List<SourceConfig> sources = config.getSources();
 		if(sources == null || sources.isEmpty()) {
 			log.error("No sources specified.");
 			return null;

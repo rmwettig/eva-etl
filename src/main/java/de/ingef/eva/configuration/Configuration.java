@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.ingef.eva.configuration.append.AppendConfiguration;
 import de.ingef.eva.configuration.cci.CCIConfig;
 import de.ingef.eva.configuration.decoding.DecodingConfig;
-import de.ingef.eva.configuration.export.ExportConfig;
+import de.ingef.eva.configuration.export.SourceConfig;
 import de.ingef.eva.configuration.statistics.StatisticConfig;
 import de.ingef.eva.etl.FilterConfig;
 import lombok.Getter;
@@ -70,7 +70,7 @@ public class Configuration {
 	/**
 	 * View export definition
 	 */
-	private ExportConfig export;
+	private List<SourceConfig> sources;
 	/**
 	 * Configuration for decode file creation
 	 */

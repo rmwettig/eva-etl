@@ -119,7 +119,6 @@ public class Merger {
 	 */
 	private Set<String> createSliceSelectionLookup(Configuration config) {
 		return config
-				.getExport()
 				.getSources()
 				.stream()
 				.flatMap(source -> source.getViews().stream())

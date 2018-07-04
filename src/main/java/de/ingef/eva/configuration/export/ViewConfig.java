@@ -13,15 +13,38 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * Model class for a table from which data is exported
+ * @author Martin.Wettig
+ *
+ */
 @Getter @Setter
 @JsonTypeName(value="TABLE")
 @ToString
 public class ViewConfig extends SqlNode {
+	/**
+	 * Name of the table
+	 */
 	private String name;
+	/**
+	 * @deprecated unused
+	 */
 	private String alias;
+	/**
+	 * Columns that should be exported
+	 */
 	private List<ColumnNode> columns;
+	/**
+	 * Names of columns that should be ignored
+	 */
 	private List<String> excludeColumns;
+	/**
+	 * Conditions for columns in this table
+	 */
 	private List<WhereConfig> where;
+	/**
+	 * Joins to add data to this table
+	 */
 	private List<JoinConfig> joins;
 	
 	/**

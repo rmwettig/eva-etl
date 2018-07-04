@@ -7,6 +7,11 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * Calculates a year span. The starting year is the current year minus the specified number of previous years.
+ * @author Martin.Wettig
+ *
+ */
 @Getter @Setter
 @JsonTypeName(value="DYNAMIC_YEAR_SLICE")
 public class DynamicYearSlice extends YearSliceNode {

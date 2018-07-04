@@ -16,14 +16,34 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * Model class for a database from which data is exported
+ * @author Martin.Wettig
+ *
+ */
 @Getter @Setter
 @JsonTypeName(value="DB")
 @ToString
 public class SourceConfig extends SqlNode {
+	/**
+	 * Name of the database, e.g. 'ACC_ADB'
+	 */
 	private String db;
+	/**
+	 * Name of the dataset to which the exported data belongs to
+	 */
 	private String datasetName;
+	/**
+	 * Tables that are exported
+	 */
 	private List<ViewConfig> views = Collections.emptyList();
+	/**
+	 * Global where conditions that are applied to all tables
+	 */
 	private List<WhereConfig> where = Collections.emptyList();
+	/**
+	 * Years to be exported. By default, the current year plus three previous years are exported.
+	 */
 	private YearSliceNode yearSlice = new DynamicYearSlice("bezugsjahr", 3);
 	
 	public SourceConfig() {

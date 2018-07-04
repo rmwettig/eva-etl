@@ -13,15 +13,40 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * Model class for json join definition
+ * @author Martin.Wettig
+ *
+ */
 @Getter @Setter
 @JsonTypeName(value="JOIN")
 @ToString
 public class JoinConfig extends SqlNode {
+	/**
+	 * Name of the table that is used as an additional data source
+	 */
 	private String table;
+	/**
+	 * Columns that are included from the joined table.
+	 * If this field is missing or empty all known columns are used.
+	 */
 	private List<ColumnNode> columns;
+	/**
+	 * Columns that should be ignored
+	 */
 	private List<String> excludeColumns;
+	/**
+	 * Type of the join used
+	 */
 	private JoinType joinType;
+	/**
+	 * Columns that are used to connect the two tables.
+	 * All columns in this list are compared for equality and are logically AND-ed
+	 */
 	private List<ColumnNode> onColumns;
+	/**
+	 * Additional conditions on the join table columns
+	 */
 	private List<WhereConfig> where;
 	
 	public JoinConfig() {

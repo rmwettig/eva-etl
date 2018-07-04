@@ -8,6 +8,11 @@ import de.ingef.eva.configuration.export.sql.SqlNodeType;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * Model class for a where condition that has its values within the json file
+ * @author Martin.Wettig
+ *
+ */
 @JsonTypeName(value="WHERE_INLINE")
 @Getter @Setter
 public class InlineCondition extends WhereConfig {

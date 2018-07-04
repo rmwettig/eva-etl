@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import de.ingef.eva.configuration.export.JoinType;
 import de.ingef.eva.configuration.export.WhereOperator;
@@ -219,16 +220,17 @@ public class SimpleQueryCreator implements QueryCreator {
 	}
 
 	private List<Query> createUnslicedQuery(StringBuilder baseQuery) {
-		return Collections.singletonList(createFinalQuery(baseQuery.append(";").toString()));
+		return Collections.singletonList(createFinalQuery(baseQuery.append(";").toString(), ""));
 	}
 
-	private SimpleQuery createFinalQuery(String baseQuery) {
+	private SimpleQuery createFinalQuery(String baseQuery, String sliceName) {
 		return SimpleQuery
 			.builder()
 			.dbName(database)
 			.datasetName(datasetName)
 			.query(baseQuery)
 			.tableName(selectedTables.get(0))
+			.sliceName(sliceName)
 			.build();
 	}
 
@@ -253,9 +255,9 @@ public class SimpleQueryCreator implements QueryCreator {
 			);
 		}
 		
-		return queries
-				.stream()
-				.map(query -> createFinalQuery(query))
+		return IntStream
+				.range(0, years.size())
+				.mapToObj(index -> createFinalQuery(queries.get(index), Integer.toString(years.get(index))))
 				.collect(Collectors.toList());
 	}
 

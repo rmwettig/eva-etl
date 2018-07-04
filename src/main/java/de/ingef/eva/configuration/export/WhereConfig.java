@@ -22,10 +22,6 @@ public abstract class WhereConfig extends SqlNode {
 	 */
 	private String column;
 	/**
-	 * @deprecated use values field instead. {@code values} allows to specify multiple values for a column at once.
-	 */
-	private String value;
-	/**
 	 * Operator to be used for comparison
 	 */
 	private WhereOperator operator;
@@ -37,23 +33,7 @@ public abstract class WhereConfig extends SqlNode {
 	public WhereConfig(SqlNodeType whereType) {
 		super(whereType);
 	}
-	
-	/**
-	 * @deprecated unused
-	 * @param whereType
-	 * @param columnName
-	 * @param valueContent
-	 * @param op
-	 * @param type
-	 */
-	public WhereConfig(SqlNodeType whereType, String columnName, String valueContent, WhereOperator op, WhereType type) {
-		super(whereType);
-		column = columnName;
-		value = valueContent;
-		operator = op;
-		columnType = type;
-	}
-	
+		
 	public WhereConfig(SqlNodeType whereType, String columnName, WhereOperator op, WhereType type) {
 		super(whereType);
 		column = columnName;

@@ -42,7 +42,6 @@ public class SimpleQueryCreatorIntegrationTest {
 		ViewConfig view = new ViewConfig();
 		view.setName("tablename");
 		view.setColumns(Arrays.asList(new ColumnNode("columnname1"), new ColumnNode("columnname2")));
-		view.setAlias("t");
 		SourceConfig source = new SourceConfig();
 		source.setDb("database1");
 		source.setViews(Collections.singletonList(view));
@@ -77,7 +76,6 @@ public class SimpleQueryCreatorIntegrationTest {
 		ViewConfig view = new ViewConfig();
 		view.setName("tablename");
 		view.setColumns(Arrays.asList(new ColumnNode("columnname1"), new ColumnNode("columnname2")));
-		view.setAlias("t");
 		view.setWhere(Collections.singletonList(new InlineCondition("columnname1", Collections.singletonList("1337"), WhereOperator.EQUAL, WhereType.NUMERIC)));
 		SourceConfig source = new SourceConfig();
 		source.setDb("database1");
@@ -127,7 +125,6 @@ public class SimpleQueryCreatorIntegrationTest {
 		ViewConfig view = new ViewConfig();
 		view.setName("tablename");
 		view.setColumns(Arrays.asList(new ColumnNode("columnname1"), new ColumnNode("columnname2")));
-		view.setAlias("t");
 		view.setWhere(Collections.singletonList(new InlineCondition("columnname1", Collections.singletonList("1337"), WhereOperator.EQUAL, WhereType.NUMERIC)));
 		SourceConfig source = new SourceConfig();
 		source.setDb("database1");

@@ -27,10 +27,6 @@ public class ViewConfig extends SqlNode {
 	 */
 	private String name;
 	/**
-	 * @deprecated unused
-	 */
-	private String alias;
-	/**
 	 * Columns that should be exported
 	 */
 	private List<ColumnNode> columns;
@@ -46,20 +42,7 @@ public class ViewConfig extends SqlNode {
 	 * Joins to add data to this table
 	 */
 	private List<JoinConfig> joins;
-	
-	/**
-	 * @deprecated unused
-	 */
-	private boolean latest;
-	/**
-	 * @deprecated unused as it belongs to latest
-	 */
-	private String timestamp;
-	/**
-	 * @deprecated unused as it belongs to latest
-	 */
-	private String idColumn;
-	
+		
 	public ViewConfig() {
 		super(SqlNodeType.TABLE);
 	}

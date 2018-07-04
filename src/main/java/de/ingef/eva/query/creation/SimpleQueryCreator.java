@@ -14,10 +14,7 @@ import de.ingef.eva.configuration.export.JoinType;
 import de.ingef.eva.configuration.export.WhereOperator;
 import de.ingef.eva.configuration.export.WhereType;
 import de.ingef.eva.configuration.export.sql.YearSliceNode;
-import de.ingef.eva.database.Column;
-import de.ingef.eva.database.Database;
-import de.ingef.eva.database.DatabaseHost;
-import de.ingef.eva.database.Table;
+import de.ingef.eva.database.DatabaseSchema;
 import de.ingef.eva.query.Query;
 import de.ingef.eva.utility.Alias;
 import lombok.Builder;
@@ -28,7 +25,7 @@ import lombok.Singular;
 public class SimpleQueryCreator implements QueryCreator {
 
 	private Alias aliaser = new Alias(20);
-	private DatabaseHost schema;
+	private DatabaseSchema schema;
 	
 	private String database;
 	private String datasetName;
@@ -113,7 +110,7 @@ public class SimpleQueryCreator implements QueryCreator {
 		}
 	}
 		
-	public SimpleQueryCreator(DatabaseHost schema) {
+	public SimpleQueryCreator(DatabaseSchema schema) {
 		tableAlias = new HashMap<String, String>();
 		this.schema = schema;
 	}
@@ -211,12 +208,10 @@ public class SimpleQueryCreator implements QueryCreator {
 	}
 
 	private boolean tableHasYearColumn(String yearColumnName) {
-		Database db = schema.findDatabaseByName(database);
-		if(db == null) return false;
-		Table t = db.findTableByName(selectedTables.get(0));
-		if(t == null) return false;
-		Column c = t.findColumnByName(yearColumnName);
-		return c != null;
+		return schema.findDatabaseByName(database)
+				.flatMap(db -> db.findTableByName(selectedTables.get(0)))
+				.flatMap(t -> t.findColumnByName(yearColumnName))
+				.isPresent();
 	}
 
 	private List<Query> createUnslicedQuery(StringBuilder baseQuery) {
@@ -327,17 +322,15 @@ public class SimpleQueryCreator implements QueryCreator {
 	 */
 	@Override
 	public void addAllKnownColumns(String table, List<String> excludeColumns) {
-		Database db = schema.findDatabaseByName(database);
-		if(db != null) {
-			Table t = db.findTableByName(table);
-			if(t != null) {
+		schema.findDatabaseByName(database)
+			.flatMap(db -> db.findTableByName(table))
+			.ifPresent(t -> {
 				Set<String> exclude = new HashSet<>(excludeColumns);
 				t.getAllColumns()
 					.stream()
 					.filter(column -> !exclude.contains(column.getName()))
 					.forEach(column -> addColumn(table, column.getName()));
-			}
-		}
+			});
 	}
 
 	@Override

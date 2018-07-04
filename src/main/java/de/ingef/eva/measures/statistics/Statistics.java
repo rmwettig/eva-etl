@@ -1,14 +1,10 @@
 package de.ingef.eva.measures.statistics;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -26,8 +22,8 @@ import java.util.stream.IntStream;
 
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.configuration.statistics.StatisticDatasetConfig;
-import de.ingef.eva.constant.Templates;
 import de.ingef.eva.constant.OutputDirectory.DirectoryType;
+import de.ingef.eva.constant.Templates;
 import de.ingef.eva.measures.cci.Quarter;
 import de.ingef.eva.utility.Helper;
 import de.ingef.eva.utility.IOManager;

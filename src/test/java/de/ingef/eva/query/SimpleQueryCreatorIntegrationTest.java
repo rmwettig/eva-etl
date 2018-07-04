@@ -7,28 +7,23 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import de.ingef.eva.configuration.SchemaDatabaseHostLoader;
 import de.ingef.eva.configuration.export.InlineCondition;
 import de.ingef.eva.configuration.export.SourceConfig;
 import de.ingef.eva.configuration.export.ViewConfig;
 import de.ingef.eva.configuration.export.WhereOperator;
 import de.ingef.eva.configuration.export.WhereType;
 import de.ingef.eva.configuration.export.sql.ColumnNode;
-import de.ingef.eva.database.DatabaseHost;
+import de.ingef.eva.data.TeradataColumnType;
+import de.ingef.eva.database.Column;
+import de.ingef.eva.database.Database;
+import de.ingef.eva.database.DatabaseSchema;
+import de.ingef.eva.database.Table;
 import de.ingef.eva.query.creation.QueryCreator;
 import de.ingef.eva.query.creation.SimpleQueryCreator;
 
 public class SimpleQueryCreatorIntegrationTest {
-
-	private static DatabaseHost host;
-	
-	@BeforeClass
-	public static void setUpOnce() {
-		host = new SchemaDatabaseHostLoader().loadFromFile("src/test/resources/configuration/queryCreatorIntegrationTestSchema.json");
-	}
 	
 	/**
 	 * Expected sql query:
@@ -38,6 +33,22 @@ public class SimpleQueryCreatorIntegrationTest {
 	 */
 	@Test
 	public void createsUnrestrictedQuery() {
+		DatabaseSchema host = new DatabaseSchema();
+		Table t1 = new Table("tablename");
+		t1.addColumn(new Column("columnname1", TeradataColumnType.CHARACTER));
+		t1.addColumn(new Column("columnname2", TeradataColumnType.INTEGER));
+		t1.addColumn(new Column("bezugsjahr", TeradataColumnType.INTEGER));
+		Database db1 = new Database("database1");
+		db1.addTable(t1);
+		Table t2 = new Table("tablename2");
+		t2.addColumn(new Column("columnname3", TeradataColumnType.CHARACTER));
+		Table t3 = new Table("tablename3");
+		t3.addColumn(new Column("columnname4", TeradataColumnType.INTEGER));
+		Database db2 = new Database("database2");
+		db2.addTable(t3);
+		host.addDatabase(db1);
+		host.addDatabase(db2);
+		
 		QueryCreator creator = new SimpleQueryCreator(host);
 		ViewConfig view = new ViewConfig();
 		view.setName("tablename");
@@ -72,6 +83,22 @@ public class SimpleQueryCreatorIntegrationTest {
 	 */
 	@Test
 	public void createQueryWithGlobalCondition() {
+		DatabaseSchema host = new DatabaseSchema();
+		Table t1 = new Table("tablename");
+		t1.addColumn(new Column("columnname1", TeradataColumnType.CHARACTER));
+		t1.addColumn(new Column("columnname2", TeradataColumnType.INTEGER));
+		t1.addColumn(new Column("bezugsjahr", TeradataColumnType.INTEGER));
+		Database db1 = new Database("database1");
+		db1.addTable(t1);
+		Table t2 = new Table("tablename2");
+		t2.addColumn(new Column("columnname3", TeradataColumnType.CHARACTER));
+		Table t3 = new Table("tablename3");
+		t3.addColumn(new Column("columnname4", TeradataColumnType.INTEGER));
+		Database db2 = new Database("database2");
+		db2.addTable(t3);
+		host.addDatabase(db1);
+		host.addDatabase(db2);
+		
 		QueryCreator creator = new SimpleQueryCreator(host);
 		ViewConfig view = new ViewConfig();
 		view.setName("tablename");
@@ -121,6 +148,22 @@ public class SimpleQueryCreatorIntegrationTest {
 	 */
 	@Test
 	public void createDefaultSlicedQueriesWithGlobalCondition() {
+		DatabaseSchema host = new DatabaseSchema();
+		Table t1 = new Table("tablename");
+		t1.addColumn(new Column("columnname1", TeradataColumnType.CHARACTER));
+		t1.addColumn(new Column("columnname2", TeradataColumnType.INTEGER));
+		t1.addColumn(new Column("bezugsjahr", TeradataColumnType.INTEGER));
+		Database db1 = new Database("database1");
+		db1.addTable(t1);
+		Table t2 = new Table("tablename2");
+		t2.addColumn(new Column("columnname3", TeradataColumnType.CHARACTER));
+		Table t3 = new Table("tablename3");
+		t3.addColumn(new Column("columnname4", TeradataColumnType.INTEGER));
+		Database db2 = new Database("database2");
+		db2.addTable(t3);
+		host.addDatabase(db1);
+		host.addDatabase(db2);
+		
 		QueryCreator creator = new SimpleQueryCreator(host);
 		ViewConfig view = new ViewConfig();
 		view.setName("tablename");

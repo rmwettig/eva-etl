@@ -7,7 +7,6 @@ import de.ingef.eva.configuration.export.WhereOperator;
 import de.ingef.eva.configuration.export.WhereType;
 import de.ingef.eva.configuration.export.sql.YearSliceNode;
 import de.ingef.eva.query.Query;
-import de.ingef.eva.utility.Alias;
 
 public interface QueryCreator {
 	public void setDatabase(String name);

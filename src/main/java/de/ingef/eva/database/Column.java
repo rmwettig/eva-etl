@@ -1,9 +1,21 @@
 package de.ingef.eva.database;
 
 import de.ingef.eva.data.TeradataColumnType;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
-public interface Column {
-	String getName();
+@RequiredArgsConstructor
+@Getter
+@EqualsAndHashCode
+@ToString
+public class Column {
 
-	TeradataColumnType getType();
+	private final String name;
+	private final TeradataColumnType type;
+
+	public Column(String name) {
+		this(name, TeradataColumnType.UNKNOWN);
+	}
 }

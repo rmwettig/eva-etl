@@ -28,7 +28,6 @@ import de.ingef.eva.data.RowElement;
 import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.utility.Helper;
-import de.ingef.eva.utility.Stopwatch;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

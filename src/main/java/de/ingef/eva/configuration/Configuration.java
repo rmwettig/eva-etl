@@ -60,10 +60,6 @@ public class Configuration {
 	 */
 	private String reportDirectory;
 	/**
-	 * Json file representing the data base schema
-	 */
-	private String schemaFile;
-	/**
 	 * Number of threads to be used
 	 */
 	private int threadCount;

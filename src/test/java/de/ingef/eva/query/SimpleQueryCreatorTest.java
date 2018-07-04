@@ -16,35 +16,31 @@ import de.ingef.eva.configuration.export.WhereOperator;
 import de.ingef.eva.configuration.export.WhereType;
 import de.ingef.eva.database.Column;
 import de.ingef.eva.database.Database;
-import de.ingef.eva.database.DatabaseHost;
+import de.ingef.eva.database.DatabaseSchema;
 import de.ingef.eva.database.Table;
-import de.ingef.eva.database.TextColumn;
-import de.ingef.eva.database.TextDatabase;
-import de.ingef.eva.database.TextSchema;
-import de.ingef.eva.database.TextTable;
 import de.ingef.eva.query.creation.SimpleQueryCreator;
 
 public class SimpleQueryCreatorTest {
 
-	private static DatabaseHost schema;
+	private static DatabaseSchema schema;
 	
 	@BeforeClass
 	public static void createSchemaMock() {
-		Database db = new TextDatabase("DB");
-		Table table1 = new TextTable("table");
-		Column c1 = new TextColumn("column");
-		Column c2 = new TextColumn("column2");
-		Column c3 = new TextColumn("column3");
+		Database db = new Database("DB");
+		Table table1 = new Table("table");
+		Column c1 = new Column("column");
+		Column c2 = new Column("column2");
+		Column c3 = new Column("column3");
 		table1.addColumn(c1);
 		table1.addColumn(c2);
 		table1.addColumn(c3);
 		db.addTable(table1);
 		
-		Table table2 = new TextTable("table2");
-		table2.addColumn(new TextColumn("column"));
+		Table table2 = new Table("table2");
+		table2.addColumn(new Column("column"));
 		db.addTable(table2);
 		
-		TextSchema dbSchema = new TextSchema();
+		DatabaseSchema dbSchema = new DatabaseSchema();
 		dbSchema.addDatabase(db);
 		
 		schema = dbSchema;

@@ -1,12 +1,6 @@
 package de.ingef.eva;
 
-import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,25 +13,17 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.ingef.eva.configuration.Configuration;
-import de.ingef.eva.configuration.ConfigurationDatabaseHostLoader;
 import de.ingef.eva.configuration.decoding.DecodingConfig;
 import de.ingef.eva.constant.Templates;
-import de.ingef.eva.data.TeradataColumnType;
-import de.ingef.eva.database.Database;
-import de.ingef.eva.database.DatabaseHost;
-import de.ingef.eva.database.Table;
 import de.ingef.eva.datasource.DataProcessor;
 import de.ingef.eva.datasource.DataSource;
 import de.ingef.eva.datasource.sql.SqlDataSource;
 import de.ingef.eva.etl.ETLPipeline;
 import de.ingef.eva.etl.Filter;
 import de.ingef.eva.etl.FilterFactory;
-import de.ingef.eva.etl.HashTransformer;
 import de.ingef.eva.etl.Merger;
 import de.ingef.eva.etl.Transformer;
 import de.ingef.eva.etl.TransformerFactory;
@@ -62,8 +48,6 @@ public class Main {
 			CommandLine cmd = parser.parse(options, args);
 			if(cmd.hasOption("dump")) {
 				export(cmd);
-			} else if(cmd.hasOption("fetchschema")) {
-				fetchschema(cmd);
 			} else if(cmd.hasOption("charlsonscores")) {
 				charlsonscores(cmd);
 			} else if (cmd.hasOption("makedecode")) {
@@ -98,21 +82,12 @@ public class Main {
 		CalculateCharlsonScores.calculate(configuration);
 	}
 
-	private static void fetchschema(CommandLine cmd) throws JsonProcessingException, IOException {
-		String path = cmd.getOptionValue("fetchschema");
-		Configuration configuration = Configuration.loadFromJson(path);
-		DatabaseHost schema = new ConfigurationDatabaseHostLoader().createDatabaseHost(configuration);
-		createHeaderLookup(configuration, schema);
-		log.info("Teradata column lookup created.");
-	}
-
 	private static void export(CommandLine cmd) throws JsonProcessingException, IOException {
 		Stopwatch sw = new Stopwatch();
 		sw.start();
 		Configuration config = Configuration.loadFromJson(cmd.getOptionValue("dump"));
 		exitIfInvalidCredentials(config);
-		QuerySource qs = new JsonQuerySource(config);
-		Collection<Query> queries = qs.createQueries();
+		Collection<Query> queries = new JsonQuerySource(config).createQueries();
 		List<Filter> filters = new FilterFactory().create(config.getFilters());
 		List<Transformer> transformers = new TransformerFactory().create(config, config.getTransformers());
 		new ETLPipeline().run(config, queries, filters, transformers, IOManager.of(config));
@@ -126,60 +101,9 @@ public class Main {
 			System.exit(-1);
 		}
 	}
-
-	/**
-	 * Creates a JSON with column names for defined tables
-	 * 
-	 * @param configuration
-	 * @param logger
-	 */
-	private static void createHeaderLookup(Configuration configuration, DatabaseHost schema) {
-		try (Connection connection = DriverManager.getConnection(
-				configuration.getFullConnectionUrl(),
-				configuration.getUser(),
-				configuration.getPassword()
-				);
-				Statement stm = connection.createStatement();
-				JsonGenerator jsonWriter = new JsonFactory()
-						.createGenerator(new FileWriter(configuration.getSchemaFile()));
-				) {
-
-			jsonWriter.writeStartObject(); // json start
-			for (Database dbEntry : schema.getAllDatabases()) {
-				String db = dbEntry.getName();
-				jsonWriter.writeObjectFieldStart(db); // db object
-				for (Table table : dbEntry.getAllTables()) {
-					jsonWriter.writeFieldName(table.getName()); // array name
-					jsonWriter.writeStartArray(); // array bracket
-
-					ResultSet rs = stm.executeQuery(String.format(Templates.QUERY_COLUMNS, db, table.getName()));
-
-					while (rs.next()) {
-						jsonWriter.writeStartObject();
-						jsonWriter.writeFieldName("column");
-						jsonWriter.writeString(rs.getString(1).trim());
-						jsonWriter.writeFieldName("type");
-						String code = rs.getString(2).trim();
-						TeradataColumnType type = TeradataColumnType.mapCodeToName(code); 
-						jsonWriter.writeString(type != TeradataColumnType.UNKNOWN ? type.getLabel() : type.getLabel()+"("+code+")");
-						jsonWriter.writeEndObject();
-					}
-					rs.close();
-					jsonWriter.writeEndArray();// table
-				}
-				jsonWriter.writeEndObject();// db
-			}
-			jsonWriter.writeEndObject();// json
-		} catch (SQLException e) {
-			log.error("Could not open connection to '{}'. ", configuration.getFullConnectionUrl(), e);
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-	}
 	
 	private static Options createCliOptions() {
 		Options options = new Options();
-		options.addOption(Option.builder("fetchschema").hasArg().argName("config.json").desc("create the database schema as a file").build());
 		options.addOption(Option.builder("charlsonscores").hasArg().argName("config.json").desc("calculate Charlson scores").build());
 		options.addOption(Option.builder("makedecode").hasArg().argName("config.json").desc("create PID mappings").build());
 		options.addOption(Option.builder("stats").hasArg().argName("config.json").desc("create database content statistics").build());

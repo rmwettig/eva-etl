@@ -23,4 +23,12 @@ public class ColumnNode extends SqlNode {
 		super(SqlNodeType.COLUMN);
 		name = columnName;
 	}
+	
+	/**
+	 * Creates an unnamed column node.
+	 * This constructor is used by jackson during deserialization
+	 */
+	public ColumnNode() {
+		this("");
+	}
 }

@@ -392,4 +392,24 @@ public final class Templates {
 				+ ") b "
 				+ "order by 1, 2;";
 	}
+	
+	public static final class Filter {
+		public static final String SELECT_EMPLOYEE_PIDS = "SELECT "
+			    + "CASE "
+		        + "WHEN LENGTH(CAST(PID AS VARCHAR(10)))=1 THEN TRIM('000000000'||CAST(PID AS CHAR(1))) " 
+		        + "WHEN LENGTH(CAST(PID AS VARCHAR(10)))=2 THEN TRIM('00000000'||CAST(PID AS CHAR(2))) "
+		        + "WHEN LENGTH(CAST(PID AS VARCHAR(10)))=3 THEN TRIM('0000000'||CAST(PID AS CHAR(3))) "
+		        + "WHEN LENGTH(CAST(PID AS VARCHAR(10)))=4 THEN TRIM('000000'||CAST(PID AS CHAR(4))) "
+		        + "WHEN LENGTH(CAST(PID AS VARCHAR(10)))=5 THEN TRIM('00000'||CAST(PID AS CHAR(5))) " 
+		        + "WHEN LENGTH(CAST(PID AS VARCHAR(10)))=6 THEN TRIM('0000'||CAST(PID AS CHAR(6))) "
+		        + "WHEN LENGTH(CAST(PID AS VARCHAR(10)))=7 THEN TRIM('000'||CAST(PID AS CHAR(7))) "
+		        + "WHEN LENGTH(CAST(PID AS VARCHAR(10)))=8 THEN TRIM('00'||CAST(PID AS CHAR(8))) "   
+		        + "WHEN LENGTH(CAST(PID AS VARCHAR(10)))=9 THEN TRIM('0'||CAST(PID AS CHAR(9))) "    
+		        + "WHEN LENGTH(CAST(PID AS VARCHAR(10)))=10 THEN CAST(PID AS CHAR(10)) "
+		        + "END AS PID, "
+		        + "H2ik "
+		        + "FROM ACC_ADB.AVK_ADB_PID_AKTUELL "
+		        + "WHERE (EGK_NR_MA<>'' OR KV_NUMMER_MA<>'');";
+
+	}
 }

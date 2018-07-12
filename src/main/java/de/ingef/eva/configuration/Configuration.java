@@ -13,7 +13,7 @@ import de.ingef.eva.configuration.cci.CCIConfig;
 import de.ingef.eva.configuration.decoding.DecodingConfig;
 import de.ingef.eva.configuration.export.SourceConfig;
 import de.ingef.eva.configuration.statistics.StatisticConfig;
-import de.ingef.eva.etl.FilterConfig;
+import de.ingef.eva.etl.Filter;
 import lombok.Getter;
 
 /**
@@ -79,7 +79,7 @@ public class Configuration {
 	/**
 	 * Filter settings for cleaning phase
 	 */
-	private List<FilterConfig> filters;
+	private List<Filter> filters;
 	
 	private CCIConfig cci;
 	

@@ -25,7 +25,7 @@ public class JoinConfig extends SqlNode {
 	/**
 	 * Name of the table that is used as an additional data source
 	 */
-	private String table;
+	private String name;
 	/**
 	 * Columns that are included from the joined table.
 	 * If this field is missing or empty all known columns are used.
@@ -62,16 +62,16 @@ public class JoinConfig extends SqlNode {
 	private void processColumns(QueryCreator builder) {
 		if(columns == null || columns.isEmpty())
 			if(excludeColumns == null || excludeColumns.isEmpty())
-				builder.addAllKnownColumns(table);
+				builder.addAllKnownColumns(name);
 			else
-				builder.addAllKnownColumns(table, excludeColumns);
+				builder.addAllKnownColumns(name, excludeColumns);
 		else
-			columns.stream().forEach(column -> builder.addColumn(table, column.getName()));
+			columns.stream().forEach(column -> builder.addColumn(name, column.getName()));
 	}
 
 	private void processWheres(QueryCreator builder) {
 		if(where == null || where.isEmpty()) return;
-		where.stream().forEach(w -> w.traverse(table, builder));
+		where.stream().forEach(w -> w.traverse(name, builder));
 	}
 
 	private void processJoinColumns(ViewConfig parent, QueryCreator builder) {
@@ -80,6 +80,6 @@ public class JoinConfig extends SqlNode {
 					.stream()
 					.map(column -> column.getName())
 					.collect(Collectors.toList());
-		builder.addJoin(parent.getName(), table, columns, joinType);
+		builder.addJoin(parent.getName(), name, columns, joinType);
 	}
 }

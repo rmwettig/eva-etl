@@ -66,10 +66,10 @@
         {
           "type": "TABLE",
           "name": "AVK_ADB_T_KH_Diagnose",
-          "join": [
+          "joins": [
             {
               "type": "JOIN",
-              "table": "AVK_ADB_T_KH_FALL",
+              "name": "AVK_ADB_T_KH_FALL",
               "columns": [
                 {
                   "type": "COLUMN",
@@ -117,10 +117,10 @@
         {
           "type": "TABLE",
           "name": "AVK_ADB_T_KH_OPS",
-          "join": [
+          "joins": [
             {
-              "type": "TABLE",
-              "table": "AVK_ADB_T_KH_FALL",
+              "type": "JOIN",
+              "name": "AVK_ADB_T_KH_FALL",
               "columns": [
                 {
                   "type": "COLUMN",
@@ -176,10 +176,10 @@
         {
           "type": "TABLE",
           "name": "AVK_ADB_T_Vers_Stamm",
-          "join": [
+          "joins": [
             {
               "type": "JOIN",
-              "table": "AVK_ADB_T_Vers_Tage",
+              "name": "AVK_ADB_T_Vers_Tage",
               "columns": [
                 {
                   "type": "COLUMN",
@@ -288,10 +288,10 @@
         {
           "type": "TABLE",
           "name": "AVK_FDB_T_KH_Diagnose",
-          "join": [
+          "joins": [
             {
               "type": "JOIN",
-              "table": "AVK_FDB_T_KH_FALL",
+              "name": "AVK_FDB_T_KH_FALL",
               "columns": [
                 {
                   "type": "COLUMN",
@@ -339,10 +339,10 @@
         {
           "type": "TABLE",
           "name": "AVK_FDB_T_KH_OPS",
-          "join": [
+          "joins": [
             {
               "type": "JOIN",
-              "table": "AVK_FDB_T_KH_FALL",
+              "name": "AVK_FDB_T_KH_FALL",
               "columns": [
                 {
                   "type": "COLUMN",
@@ -510,10 +510,10 @@
         {
           "type": "TABLE",
           "name": "AVK_ADB_T_KH_Diagnose",
-          "join": [
+          "joins": [
             {
               "type": "JOIN",
-              "table": "AVK_ADB_T_KH_FALL",
+              "name": "AVK_ADB_T_KH_FALL",
               "columns": [
                 {
                   "type": "COLUMN",
@@ -561,10 +561,10 @@
         {
           "type": "TABLE",
           "name": "AVK_ADB_T_KH_OPS",
-          "join": [
+          "joins": [
             {
-              "type": "TABLE",
-              "table": "AVK_ADB_T_KH_FALL",
+              "type": "JOIN",
+              "name": "AVK_ADB_T_KH_FALL",
               "columns": [
                 {
                   "type": "COLUMN",
@@ -620,10 +620,10 @@
         {
           "type": "TABLE",
           "name": "AVK_ADB_T_Vers_Stamm",
-          "join": [
+          "joins": [
             {
               "type": "JOIN",
-              "table": "AVK_ADB_T_Vers_Tage",
+              "name": "AVK_ADB_T_Vers_Tage",
               "columns": [
                 {
                   "type": "COLUMN",
@@ -740,10 +740,10 @@
         {
           "type": "TABLE",
           "name": "AVK_ADB_T_KH_Diagnose",
-          "join": [
+          "joins": [
             {
               "type": "JOIN",
-              "table": "AVK_ADB_T_KH_FALL",
+              "name": "AVK_ADB_T_KH_FALL",
               "columns": [
                 {
                   "type": "COLUMN",
@@ -791,10 +791,10 @@
         {
           "type": "TABLE",
           "name": "AVK_ADB_T_KH_OPS",
-          "join": [
+          "joins": [
             {
-              "type": "TABLE",
-              "table": "AVK_ADB_T_KH_FALL",
+              "type": "JOIN",
+              "name": "AVK_ADB_T_KH_FALL",
               "columns": [
                 {
                   "type": "COLUMN",
@@ -850,10 +850,10 @@
         {
           "type": "TABLE",
           "name": "AVK_ADB_T_Vers_Stamm",
-          "join": [
+          "joins": [
             {
               "type": "JOIN",
-              "table": "AVK_ADB_T_Vers_Tage",
+              "name": "AVK_ADB_T_Vers_Tage",
               "columns": [
                 {
                   "type": "COLUMN",
@@ -970,10 +970,10 @@
         {
           "type": "TABLE",
           "name": "AVK_ADB_T_KH_Diagnose",
-          "join": [
+          "joins": [
             {
               "type": "JOIN",
-              "table": "AVK_ADB_T_KH_FALL",
+              "name": "AVK_ADB_T_KH_FALL",
               "columns": [
                 {
                   "type": "COLUMN",
@@ -1021,10 +1021,10 @@
         {
           "type": "TABLE",
           "name": "AVK_ADB_T_KH_OPS",
-          "join": [
+          "joins": [
             {
-              "type": "TABLE",
-              "table": "AVK_ADB_T_KH_FALL",
+              "type": "JOIN",
+              "name": "AVK_ADB_T_KH_FALL",
               "columns": [
                 {
                   "type": "COLUMN",
@@ -1080,10 +1080,10 @@
         {
           "type": "TABLE",
           "name": "AVK_ADB_T_Vers_Stamm",
-          "join": [
+          "joins": [
             {
               "type": "JOIN",
-              "table": "AVK_ADB_T_Vers_Tage",
+              "name": "AVK_ADB_T_Vers_Tage",
               "columns": [
                 {
                   "type": "COLUMN",

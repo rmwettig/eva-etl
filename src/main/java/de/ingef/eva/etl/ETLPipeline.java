@@ -134,7 +134,7 @@ public class ETLPipeline {
 				},
 				threadPool
 		).exceptionally(e -> {
-			log.error("Export error occurred for query: DB: {}, Dataset: {}, Table: {}, Slice: {}", q.getDbName(), q.getDatasetName(), q.getTableName(), q.getSliceName(), e);
+			log.error("Export error occurred for query: DB: {}, Dataset: {}, Table: {}, Slice: {}, Query: {}", q.getDbName(), q.getDatasetName(), q.getTableName(), q.getSliceName(), q.getQuery(), e);
 			return null;
 		});
 	}

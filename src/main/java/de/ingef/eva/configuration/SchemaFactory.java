@@ -57,7 +57,12 @@ public class SchemaFactory {
 						source.getViews()
 						.stream()
 						.filter(this::isValidView)
-						.map(view -> convertToTable(stm, source.getDb(), view))
+						.map(view -> convertToTable(stm, source.getDb(), view.getName()))
+						.forEachOrdered(t -> db.addTable(t));
+						source.getViews()
+						.stream()
+						.flatMap(view -> view.getJoins().stream())
+						.map(join -> convertToTable(stm, source.getDb(), join.getName()))
 						.forEachOrdered(t -> db.addTable(t));
 						return db;
 					})
@@ -94,15 +99,15 @@ public class SchemaFactory {
 	 * @param tableConfig
 	 * @return table without columns on error
 	 */
-	private Table convertToTable(Statement stm, String db, ViewConfig tableConfig) {
-		Table t = new Table(tableConfig.getName());
-		try (ResultSet rs = stm.executeQuery(String.format(Templates.QUERY_COLUMNS, db, tableConfig.getName()))){
+	private Table convertToTable(Statement stm, String db, String tableName) {
+		Table t = new Table(tableName);
+		try (ResultSet rs = stm.executeQuery(String.format(Templates.QUERY_COLUMNS, db, tableName))){
 			while(rs.next()) {
 				t.addColumn(new Column(rs.getString(1).trim(), TeradataColumnType.mapCodeToName(rs.getString(2).trim())));
 			}
 			return t;
 		} catch (SQLException e) {
-			log.error("Could not fetch columns for {}.{}. {}", db, tableConfig.getName(), e);
+			log.error("Could not fetch columns for {}.{}. {}", db, tableName, e);
 			return t;
 		}
 	}

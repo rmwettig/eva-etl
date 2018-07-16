@@ -13,6 +13,11 @@
       "type": "DB",
       "db": "ACC_ADB",
       "datasetName": "Bosch",
+      "yearSlice": {
+        "type": "FIXED_YEAR_SLICE",
+        "startYear": 2010,
+        "endYear": 2018
+      },
       "views": [
         {
           "type": "TABLE",
@@ -238,6 +243,11 @@
       "type": "DB",
       "db": "ACC_FDB",
       "datasetName": "1M_benchmark",
+      "yearSlice": {
+        "type": "FIXED_YEAR_SLICE",
+        "startYear": 2010,
+        "endYear": 2018
+      },
       "views": [
         {
           "type": "TABLE",
@@ -451,6 +461,11 @@
       "type": "DB",
       "db": "ACC_ADB",
       "datasetName": "Energie-BKK",
+      "yearSlice": {
+        "type": "FIXED_YEAR_SLICE",
+        "startYear": 2010,
+        "endYear": 2018
+      },
       "views": [
         {
           "type": "TABLE",
@@ -672,6 +687,11 @@
       "type": "DB",
       "db": "ACC_ADB",
       "datasetName": "Mhplus",
+      "yearSlice": {
+        "type": "FIXED_YEAR_SLICE",
+        "startYear": 2010,
+        "endYear": 2018
+      },
       "views": [
         {
           "type": "TABLE",
@@ -897,6 +917,11 @@
       "type": "DB",
       "db": "ACC_ADB",
       "datasetName": "Novitas",
+      "yearSlice": {
+        "type": "FIXED_YEAR_SLICE",
+        "startYear": 2010,
+        "endYear": 2018
+      },
       "views": [
         {
           "type": "TABLE",
@@ -1250,10 +1275,21 @@
   ],
   "filters": [
     {
-      "filterName": "2-digit FG",
-      "description": "enforce valid FG value if not empty",
-      "columnName": "fg",
-      "regex": "^$|[0-9]{2}"
+      "name": "2-digit FG",
+      "column": "fg",
+      "filterStrategy": {
+        "type": "PATTERN",
+        "regexPattern": "^$|[0-9]{2}"
+      },
+      "mode": "INCLUDE"
+    },
+    {
+      "name": "Employee-Filter",
+      "column": "pid",
+      "filterStrategy": {
+        "type": "EMPLOYEE_PIDS"
+      },
+      "mode": "EXCLUDE"
     }
   ],
   "statistics": {

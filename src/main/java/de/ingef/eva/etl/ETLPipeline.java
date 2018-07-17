@@ -79,6 +79,7 @@ public class ETLPipeline {
 							conn = createConnection(url, user, password);
 							ps = conn.prepareStatement(q.getQuery());
 							rs = ps.executeQuery();
+							log.info("Retrying query: {}", q.getQuery());
 						}
 						
 						ResultSetMetaData metaData = rs.getMetaData();

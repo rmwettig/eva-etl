@@ -134,8 +134,7 @@ public final class CalculateCharlsonScores {
 								PreparedStatement ps = conn.prepareStatement(query.getQuery());
 								ResultSet result = ps.executeQuery();
 							) {
-								CsvWriter writer = new CsvWriter(file.toFile());
-								writer.open();
+								CsvWriter writer = CsvWriter.createUncompressedWriter(file, false);
 								Map<String,List<QuarterEntry>> pid2Data = mapPidOntoData(result);
 								processSlidingQuarterWindow(query, writer, pid2Data);
 								writer.close();

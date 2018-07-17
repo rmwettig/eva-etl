@@ -56,6 +56,8 @@ public class Main {
 				createDatabaseStatistics(Configuration.loadFromJson(cmd.getOptionValue("stats")));
 			} else if(cmd.hasOption("merge")) {
 				merge(cmd);
+			} else if(cmd.hasOption("hash")) {
+				createPidHashes(cmd);
 			} else
 				new HelpFormatter().printHelp("java -jar eva-data.jar", options);
 		} catch (ParseException | IOException e) {
@@ -108,8 +110,19 @@ public class Main {
 		options.addOption(Option.builder("stats").hasArg().argName("config.json").desc("create database content statistics").build());
 		options.addOption(Option.builder("dump").hasArg().argName("config.json").desc("run FastExport scripts").build());
 		options.addOption(Option.builder("merge").hasArg().argName("config.json").desc("merge clean data slices").build());
-
+		options.addOption(Option.builder("hash").hasArg().argName("config.json").desc("creates a file that contains mappings from pid to hashes").build());
+		
 		return options;
+	}
+	
+	private static void createPidHashes(CommandLine cmd) throws JsonProcessingException, IOException {
+		Stopwatch sw = new Stopwatch();
+		sw.start();
+		Configuration config = Configuration.loadFromJson(cmd.getOptionValue("hash"));
+		exitIfInvalidCredentials(config);
+		config.getHashing().calculateHashes(config);
+		sw.stop();
+		log.info("Create hash mappings in {}.", sw.createReadableDelta());
 	}
 	
 	private static void createPidMappings(Configuration configuration) {

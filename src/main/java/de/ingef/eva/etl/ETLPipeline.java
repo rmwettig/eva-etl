@@ -169,9 +169,7 @@ public class ETLPipeline {
 		String dbShortName = createDbShortName(q.getDbName());
 		Path root = ioManager.createSubdirectories(DirectoryType.CACHE, dbShortName, q.getDatasetName());
 		String fileName = createOutputFileName(q); 
-		CsvWriter writer = new CsvWriter(root.resolve(fileName).toFile());
-		writer.open();
-		return writer;
+		return CsvWriter.createGzipWriter(root.resolve(fileName));
 	}
 
 	private String createOutputFileName(Query q) {

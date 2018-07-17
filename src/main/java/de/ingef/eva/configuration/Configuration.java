@@ -85,6 +85,8 @@ public class Configuration {
 	
 	private StatisticConfig statistics;
 	
+	private HashConfig hashing;
+	
 	/**
 	 * Automatically filled.
 	 */

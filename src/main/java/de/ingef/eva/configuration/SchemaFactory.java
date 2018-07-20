@@ -61,6 +61,7 @@ public class SchemaFactory {
 						.forEachOrdered(t -> db.addTable(t));
 						source.getViews()
 						.stream()
+						.filter(view -> view.getJoins() != null || view.getJoins().isEmpty())
 						.flatMap(view -> view.getJoins().stream())
 						.map(join -> convertToTable(stm, source.getDb(), join.getName()))
 						.forEachOrdered(t -> db.addTable(t));

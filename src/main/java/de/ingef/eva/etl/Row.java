@@ -4,14 +4,17 @@ import java.util.List;
 import java.util.Map;
 
 import de.ingef.eva.data.RowElement;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Getter
-@RequiredArgsConstructor
+@Getter @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Row {
-	private final String db;
-	private final String table;
-	private final List<RowElement> columns;
-	private final Map<String,Integer> columnName2Index;
+	private String db;
+	private String table;
+	private List<RowElement> columns;
+	private Map<String,Integer> columnName2Index;
 }

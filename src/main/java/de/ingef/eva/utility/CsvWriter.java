@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,13 +19,16 @@ public class CsvWriter {
 	private String delimiter;
 	private String newLine;
 	private BufferedWriter writer;
-	
+	private Path attachedFile;
+	@Getter
+	private boolean isNewFile = true;
 	private List<String> columnValues = new ArrayList<>(30);
 		
-	public CsvWriter(BufferedWriter writer, String delimiter, String newLine) {
+	public CsvWriter(BufferedWriter writer, String delimiter, String newLine, Path file) {
 		this.delimiter = delimiter;
 		this.newLine = newLine;
 		this.writer = writer;
+		this.attachedFile = file;
 	}
 			
 	public void close() throws IOException {
@@ -47,6 +51,10 @@ public class CsvWriter {
 		writer.write(String.join(delimiter, columnValues));
 		writer.write(newLine);
 		columnValues.clear();
+		//since compressed files have header information their size is not zero
+		//thus, the isNewFile flag is used to determined whether or not data is already present
+		if(isNewFile)
+			isNewFile = false;
 	}
 	
 	/**
@@ -64,7 +72,8 @@ public class CsvWriter {
 		return new CsvWriter(
 				new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(file.toFile())), OutputDirectory.DATA_CHARSET)),
 				delimiter,
-				newline
+				newline,
+				file
 			);
 	}
 	
@@ -83,7 +92,8 @@ public class CsvWriter {
 		return new CsvWriter(
 				new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file.toFile(), appendToFile), OutputDirectory.DATA_CHARSET)),
 				delimiter,
-				newline
+				newline,
+				file
 			);
 	}
 }

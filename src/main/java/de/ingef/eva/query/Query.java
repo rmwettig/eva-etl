@@ -12,4 +12,5 @@ public interface Query {
 	void setSliceName(String name);
 	String getDatasetName();
 	void setDatasetName(String name);
+	String getDescription();
 }

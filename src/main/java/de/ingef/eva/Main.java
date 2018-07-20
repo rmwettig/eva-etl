@@ -31,6 +31,9 @@ import de.ingef.eva.measures.cci.CalculateCharlsonScores;
 import de.ingef.eva.measures.statistics.Statistics;
 import de.ingef.eva.query.JsonQuerySource;
 import de.ingef.eva.query.Query;
+import de.ingef.eva.services.ConnectionFactory;
+import de.ingef.eva.services.TaskRunner;
+import de.ingef.eva.services.TeradataConnectionFactory;
 import de.ingef.eva.utility.Helper;
 import de.ingef.eva.utility.IOManager;
 import de.ingef.eva.utility.Stopwatch;
@@ -86,12 +89,14 @@ public class Main {
 		Stopwatch sw = new Stopwatch();
 		sw.start();
 		Configuration config = Configuration.loadFromJson(cmd.getOptionValue("dump"));
+		TaskRunner taskRunner = new TaskRunner(config.getThreadCount());
+		ConnectionFactory connectionFactory = new TeradataConnectionFactory(config.getUser(), config.getPassword(), config.getFullConnectionUrl());
 		exitIfInvalidCredentials(config);
 		Collection<Query> queries = new JsonQuerySource(config).createQueries();
 		List<Filter> filters = config.getFilters();
 		filters.stream().forEach(filter -> filter.initialize(config));
 		List<Transformer> transformers = new TransformerFactory().create(config, config.getTransformers());
-		new ETLPipeline().run(config, queries, filters, transformers, IOManager.of(config));
+		new ETLPipeline().run(config, queries, filters, transformers, IOManager.of(config), taskRunner, connectionFactory);
 		sw.stop();
 		log.info("Dumping done in {}.", sw.createReadableDelta());
 	}

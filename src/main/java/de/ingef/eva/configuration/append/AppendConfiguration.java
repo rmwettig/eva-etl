@@ -20,12 +20,6 @@ public class AppendConfiguration {
 	private List<AppendSourceConfig> sources;
 	private List<String> excludeTables;
 	/*
-	 * configuration for hash transformer
-	 */
-	private int minYear;
-	private int maxYear;
-	private List<String> subgroups;
-	/*
 	 * configuration for dynamic column transformer
 	 */
 	private Path file;

@@ -22,8 +22,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
-import de.ingef.eva.configuration.append.AppendConfiguration;
-import de.ingef.eva.configuration.append.TransformerType;
 import de.ingef.eva.constant.Templates;
 import de.ingef.eva.data.RowElement;
 import de.ingef.eva.data.SimpleRowElement;
@@ -44,7 +42,17 @@ import lombok.extern.log4j.Log4j2;
 public class HashConfig {
 
 	private Path hashFile;
-		
+	private int minYear;
+	private int maxYear;
+	private List<HashGroup> subgroups;
+	
+	@Getter @Setter
+	@NoArgsConstructor
+	public static class HashGroup {
+		private String db;
+		private List<String> subgroups;
+	}
+	
 	@Getter
 	@RequiredArgsConstructor
 	@EqualsAndHashCode(of={"pid"})
@@ -98,12 +106,11 @@ public class HashConfig {
 	
 	public void calculateHashes(Configuration config) {
 		ExecutorService threadPool = Helper.createThreadPool(config.getThreadCount(), true);
-		List<AppendConfiguration> hashConfigs = config.getTransformers().stream().filter(c -> c.getMode() == TransformerType.PID_HASH).collect(Collectors.toList());
 		removePreviousHashFile();
-		List<Map<String, DataEntry>> slices = new ArrayList<>(10);
-		for(AppendConfiguration transformerConfig : hashConfigs) {
-			for(String subgroup : transformerConfig.getSubgroups()) {
-				slices.add(fetchDataForSubgroup(config, transformerConfig, subgroup, threadPool));
+		List<Map<String, DataEntry>> slices = new ArrayList<>(subgroups.size());
+		for(HashGroup group : subgroups) {
+			for(String subgroup : group.getSubgroups()) {
+				slices.add(fetchDataForSubgroup(config, group, subgroup, threadPool));
 			}
 		}
 		
@@ -139,14 +146,14 @@ public class HashConfig {
 		}
 	}
 
-	private static Map<String, DataEntry> fetchDataForSubgroup(Configuration config, AppendConfiguration transformerConfig, String subgroup, ExecutorService threadPool) {
+	private Map<String, DataEntry> fetchDataForSubgroup(Configuration config, HashGroup groupConfig, String subgroup, ExecutorService threadPool) {
 		try {		
-			Map<String, DataEntry> base = fetchBaseData(config, transformerConfig, threadPool, Templates.Hashes.SELECT_MINIMUM_DATES_AND_GENDER.replaceAll("\\$subgroup", subgroup));
+			Map<String, DataEntry> base = fetchBaseData(config, groupConfig, threadPool, Templates.Hashes.SELECT_MINIMUM_DATES_AND_GENDER.replaceAll("\\$subgroup", subgroup));
 			mergeData(
 				base,
-				fetchResidenceData(config, transformerConfig, threadPool, Templates.Hashes.SELECT_MIN_MAX_KGS.replaceAll("\\$subgroup", subgroup)),
-				fetchIcdData(config, transformerConfig, threadPool, Templates.Hashes.SELECT_ICD_CODES.replaceAll("\\$subgroup", subgroup)),
-				fetchPznData(config, transformerConfig, threadPool, Templates.Hashes.SELECT_PZNS.replaceAll("\\$subgroup", subgroup))
+				fetchResidenceData(config, groupConfig, threadPool, Templates.Hashes.SELECT_MIN_MAX_KGS.replaceAll("\\$subgroup", subgroup)),
+				fetchIcdData(config, groupConfig, threadPool, Templates.Hashes.SELECT_ICD_CODES.replaceAll("\\$subgroup", subgroup)),
+				fetchPznData(config, groupConfig, threadPool, Templates.Hashes.SELECT_PZNS.replaceAll("\\$subgroup", subgroup))
 			);
 			return base;
 		} catch(SQLException e) {
@@ -154,10 +161,10 @@ public class HashConfig {
 		}
 	}
 	
-	private static Map<String, DataEntry> fetchBaseData(Configuration config, AppendConfiguration transformerConfig, ExecutorService threadPool, String subgroupTemplate) throws SQLException {
+	private Map<String, DataEntry> fetchBaseData(Configuration config, HashGroup groupConfig, ExecutorService threadPool, String subgroupTemplate) throws SQLException {
 		Map<String, DataEntry> result = fetchFromDatabase(
 				config,
-				transformerConfig,
+				groupConfig,
 				subgroupTemplate,
 				threadPool,
 				HashConfig::createBaseDataRowElement,
@@ -167,10 +174,10 @@ public class HashConfig {
 		return result;
 	}
 
-	private static Map<String, DataEntry> fetchPznData(Configuration config, AppendConfiguration transformerConfig, ExecutorService threadPool, String subgroupTemplate) throws SQLException {
+	private Map<String, DataEntry> fetchPznData(Configuration config, HashGroup groupConfig, ExecutorService threadPool, String subgroupTemplate) throws SQLException {
 		Map<String, DataEntry> result = fetchFromDatabase(
 				config,
-				transformerConfig,
+				groupConfig,
 				subgroupTemplate,
 				threadPool,
 				HashConfig::createDiagnosisDataRowElement,
@@ -180,10 +187,10 @@ public class HashConfig {
 		return result;
 	}
 
-	private static Map<String, DataEntry> fetchIcdData(Configuration config, AppendConfiguration transformerConfig, ExecutorService threadPool, String subgroupTemplate) throws SQLException {
+	private Map<String, DataEntry> fetchIcdData(Configuration config, HashGroup groupConfig, ExecutorService threadPool, String subgroupTemplate) throws SQLException {
 		Map<String, DataEntry> result = fetchFromDatabase(
 				config,
-				transformerConfig,
+				groupConfig,
 				subgroupTemplate,
 				threadPool,
 				HashConfig::createDiagnosisDataRowElement,
@@ -193,10 +200,10 @@ public class HashConfig {
 		return result;
 	}
 
-	private static Map<String, DataEntry> fetchResidenceData(Configuration config, AppendConfiguration transformerConfig, ExecutorService threadPool, String subgroupTemplate) throws SQLException {
+	private Map<String, DataEntry> fetchResidenceData(Configuration config, HashGroup groupConfig, ExecutorService threadPool, String subgroupTemplate) throws SQLException {
 		Map<String, DataEntry> result = fetchFromDatabase(
 				config,
-				transformerConfig,
+				groupConfig,
 				subgroupTemplate,
 				threadPool,
 				HashConfig::createResidenceDataRowElement,
@@ -206,7 +213,7 @@ public class HashConfig {
 		return result;
 	}
 	
-	private static Map<String, String> createHashMapping(List<Map<String, DataEntry>> subgroupData) {		
+	private Map<String, String> createHashMapping(List<Map<String, DataEntry>> subgroupData) {		
 		int numberOfEntries = subgroupData.stream().collect(Collectors.summingInt(map -> map.size()));
 		Map<String, String> pid2Hash = new HashMap<>(numberOfEntries);
 		subgroupData
@@ -219,7 +226,7 @@ public class HashConfig {
 		return pid2Hash;
 	}
 
-	private static String buildFullDataString(DataEntry data) {
+	private String buildFullDataString(DataEntry data) {
 		StringBuilder dataString = new StringBuilder();
 		dataString.append(data.getDob());
 		dataString.append("_");
@@ -244,7 +251,7 @@ public class HashConfig {
 	 * @param pid2Icd
 	 * @param pid2Pzn
 	 */
-	private static void mergeData(Map<String, DataEntry> pid2BaseData, Map<String, DataEntry> pid2ResidenceData, Map<String, DataEntry> pid2Icd, Map<String, DataEntry> pid2Pzn) {
+	private void mergeData(Map<String, DataEntry> pid2BaseData, Map<String, DataEntry> pid2ResidenceData, Map<String, DataEntry> pid2Icd, Map<String, DataEntry> pid2Pzn) {
 		integrateDataSliceIntoBaseData(pid2BaseData, pid2ResidenceData, (baseData, residenceData) -> {
 			baseData.updateMinKgs(residenceData.getMinKgs());
 			baseData.updateMaxKgs(residenceData.getMaxKgs());
@@ -261,7 +268,7 @@ public class HashConfig {
 	}
 	
 
-	private static void integrateDataSliceIntoBaseData(Map<String, DataEntry> pid2BaseData, Map<String, DataEntry> pid2Data, BiFunction<DataEntry, DataEntry, DataEntry> merger) {
+	private void integrateDataSliceIntoBaseData(Map<String, DataEntry> pid2BaseData, Map<String, DataEntry> pid2Data, BiFunction<DataEntry, DataEntry, DataEntry> merger) {
 		pid2Data.forEach((pid, data) -> pid2BaseData.merge(pid, data, merger));
 	}
 	
@@ -277,9 +284,9 @@ public class HashConfig {
 	 * @return
 	 * @throws SQLException
 	 */
-	private static Map<String, DataEntry> fetchFromDatabase(
+	private Map<String, DataEntry> fetchFromDatabase(
 			Configuration config,
-			AppendConfiguration appendConfig,
+			HashGroup groupConfig,
 			String queryTemplate,
 			Executor threadPool,
 			Function<ResultSet, List<RowElement>> rowConverter,
@@ -288,10 +295,8 @@ public class HashConfig {
 		String user = config.getUser();
 		String password = config.getPassword();
 		String connectionUrl = config.getFullConnectionUrl();
-		String database = appendConfig.getTargetDb();
-		int minYear = appendConfig.getMinYear();
-		int maxYear = appendConfig.getMaxYear();
-				
+		String database = groupConfig.getDb();
+
 		List<Map<String, DataEntry>> results = new ArrayList<>((maxYear - minYear) + 1);
 		for(int year = minYear; year <= maxYear; year++) {
 			String query = fillQueryTemplate(queryTemplate, database, year);
@@ -316,7 +321,7 @@ public class HashConfig {
 	 * @param query
 	 * @return
 	 */
-	private static Map<String, DataEntry> createFetchPromise(Executor threadPool,
+	private Map<String, DataEntry> createFetchPromise(Executor threadPool,
 			Function<ResultSet, List<RowElement>> rowConverter, Function<List<RowElement>, DataEntry> columnConverter,
 			String user, String password, String connectionUrl, String query) {
 		try {

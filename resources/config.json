@@ -8,6 +8,28 @@
   "cacheDirectory": "/var/eva/Daten/import/cache",
   "reportDirectory": "/var/eva/Daten/import/reports",
   "threadCount": "15",
+  "hashing": {
+    "hashFile": "pidhashes.csv",
+    "minYear": 2010,
+    "maxYear": 2017,
+    "subgroups": [
+      {
+        "db": "ADB",
+        "subgroups": [
+          "h2ik = '108036123'",
+          "h2ik = '108035612'",
+          "h2ik = '102129930'",
+          "h2ik = '104491707'"    
+        ]
+      },
+      {
+        "db": "FDB",
+        "subgroups": [
+          "flag_destatis = 1"    
+        ]
+      }
+    ]
+  },
   "sources": [
     {
       "type": "DB",
@@ -1251,26 +1273,7 @@
     },
     {
       "mode": "PID_HASH",
-      "targetTable": "Vers_Stamm",
-      "targetDb": "ADB",
-      "subgroups": [
-        "h2ik = '108036123'",
-        "h2ik = '108035612'",
-        "h2ik = '102129930'",
-        "h2ik = '104491707'"    
-      ],
-      "minYear": 2010,
-      "maxYear": 2017
-    },
-    {
-      "mode": "PID_HASH",
-      "targetTable": "Vers_Stamm",
-      "targetDb": "FDB",
-      "subgroups": [
-        "flag_destatis = 1"    
-      ],
-      "minYear": 2010,
-      "maxYear": 2017
+      "targetTable": "Vers_Stamm"
     }
   ],
   "filters": [

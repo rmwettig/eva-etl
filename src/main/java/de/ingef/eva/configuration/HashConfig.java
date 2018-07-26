@@ -208,7 +208,7 @@ public class HashConfig {
 	
 	private static Map<String, String> createHashMapping(List<Map<String, DataEntry>> subgroupData) {		
 		int numberOfEntries = subgroupData.stream().collect(Collectors.summingInt(map -> map.size()));
-		Map<String, String> pid2Hash = new HashMap<>(subgroupData.size());
+		Map<String, String> pid2Hash = new HashMap<>(numberOfEntries);
 		subgroupData
 			.stream()
 			.flatMap(map -> map.entrySet().stream())

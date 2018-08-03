@@ -24,4 +24,9 @@ public class AppendConfiguration {
 	 */
 	private Path file;
 	private List<String> keyColumns;
+	/*
+	 * configuration for start date transformer
+	 */
+	private String endDateColumn;
+	private String dayColumn;
 }

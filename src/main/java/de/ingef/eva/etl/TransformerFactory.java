@@ -36,6 +36,8 @@ public class TransformerFactory {
 			return HashTransformer.of(mainConfig, config);
 		case DYNAMIC:
 			return DynamicColumnAppender.of(config);
+		case START_DATE:
+			return new StartDateTransformer(config.getTargetDb(), config.getTargetTable(), config.getEndDateColumn(), config.getDayColumn(), config.getValueName());
 		default:
 			return new Transformer.NOPTransformer();
 		}

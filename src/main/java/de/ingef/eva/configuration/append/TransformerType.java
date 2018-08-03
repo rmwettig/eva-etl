@@ -29,5 +29,9 @@ public enum TransformerType {
 	/**
 	 * append columns from file when the specified key column matches
 	 */
-	DYNAMIC
+	DYNAMIC,
+	/**
+	 * calculate a start date based on end date and days
+	 */
+	START_DATE
 }

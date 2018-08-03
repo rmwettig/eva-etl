@@ -65,10 +65,9 @@ public class ETLPipeline {
 	 * @param countdown
 	 */
 	private void startExport(Query q, TaskRunner taskRunner, ConnectionFactory connectionFactory, Predicate<Row> rowFilter, Function<Row, Row> rowTransformer, IOManager ioManager, ProgressBar progressBar, CountDownLatch countdown) {
-		CsvWriter writer = createWriter(ioManager, q);
 		taskRunner
 			.run(new SqlTask("Export Query", q, connectionFactory, this::convertToRow), 3)
-			.thenCompose(rowStream -> createStreamProcessor(taskRunner, rowFilter, rowTransformer, writer, rowStream))
+			.thenAccept(rowStream -> processStream(q, rowFilter, rowTransformer, ioManager, rowStream))
 			.thenAccept(arg -> {
 				makeProgress(progressBar, countdown);
 			})
@@ -77,6 +76,13 @@ public class ETLPipeline {
 				makeProgress(progressBar, countdown);
 				return null;
 			});
+	}
+
+	private void processStream(Query q, Predicate<Row> rowFilter, Function<Row, Row> rowTransformer, IOManager ioManager, Stream<Row> rowStream) {
+		CsvWriter writer = createWriter(ioManager, q);
+		log.info("Start writing to file: '{}'", writer.getAttachedFile());
+		new WriteFileTask(writer, rowStream, rowFilter, rowTransformer).execute();
+		log.info("File '{}' created.", writer.getAttachedFile());
 	}
 
 	/**
@@ -124,19 +130,6 @@ public class ETLPipeline {
 		};
 	}
 	
-	/**
-	 * starts a file writer task to save rows to disk
-	 * @param taskRunner
-	 * @param rowFilter
-	 * @param rowTransformer
-	 * @param writer
-	 * @param rowStream
-	 * @return CompletableFuture without return value
-	 */
-	private CompletableFuture<Boolean> createStreamProcessor(TaskRunner taskRunner, Predicate<Row> rowFilter, Function<Row, Row> rowTransformer, CsvWriter writer, Stream<Row> rowStream) {
-		return taskRunner.run(new WriteFileTask(writer, rowStream, rowFilter, rowTransformer));
-	}
-
 	/**
 	 * evaluates a result set from a database and creates a row object
 	 * @param result

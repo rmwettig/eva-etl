@@ -19,6 +19,7 @@ public class CsvWriter {
 	private String delimiter;
 	private String newLine;
 	private BufferedWriter writer;
+	@Getter
 	private Path attachedFile;
 	@Getter
 	private boolean isNewFile = true;

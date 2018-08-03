@@ -51,8 +51,11 @@ public class TaskRunner {
 	public <T> CompletableFuture<T> run(Task<T> task, int repetitions) {
 		return CompletableFuture.supplyAsync(() -> {
 			for(int repetition = 0; repetition < repetitions; repetition++) {
+				log.info("Executing task '{}' (iteration {}): {}", task.getName(), repetition, task.getDescription());
 				try {
-					return task.execute();
+					T result = task.execute();
+					log.info("Task '{}' completed: {}", task.getName(), task.getDescription());
+					return result;
 				} catch (TaskExecutionException e) {
 					log.error(e);
 					continue;

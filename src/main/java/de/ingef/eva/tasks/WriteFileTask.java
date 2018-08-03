@@ -35,7 +35,7 @@ public class WriteFileTask extends Task<Boolean> {
 	}
 	
 	public WriteFileTask(CsvWriter writer, Stream<Row> rows, Predicate<Row> rowFilter, Function<Row, Row> rowTransformer) {
-		this("WriteFileTask", "", writer, rows, rowFilter, rowTransformer);
+		this("WriteFileTask", "Write to file: " + writer.getAttachedFile() + "'", writer, rows, rowFilter, rowTransformer);
 	}
 
 	@Override

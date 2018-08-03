@@ -14,12 +14,13 @@ public abstract class ConnectionFactory {
 	protected final String password;
 	protected final String connectionUrl;
 	private final String jdbcDriver;
-	
+	private int connectionCount = 0;
 	/**
 	 * creates a new db connection. Factory must be initialized by calling {@link #initialize()}
 	 * @return
 	 */
 	public synchronized Connection createConnection() throws SQLException {
+		++connectionCount;
 		return instantiateConnection();
 	}
 	

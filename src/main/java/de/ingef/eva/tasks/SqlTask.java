@@ -17,6 +17,7 @@ import de.ingef.eva.services.ConnectionFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 public class SqlTask extends Task<Stream<Row>> {
 
 	private final Query query;
@@ -32,10 +33,13 @@ public class SqlTask extends Task<Stream<Row>> {
 
 	@Override
 	public Stream<Row> execute() {
+		Connection conn = null;
+		PreparedStatement statement = null;
+		ResultSet result = null;
 		try {
-			Connection conn = connectionFactory.createConnection();
-			PreparedStatement statement = conn.prepareStatement(query.getQuery());
-			ResultSet result = statement.executeQuery();
+			conn = connectionFactory.createConnection();
+			statement = conn.prepareStatement(query.getQuery());
+			result = statement.executeQuery();
 			return StreamSupport.stream(
 					Spliterators.spliteratorUnknownSize(
 							new ResultSetIterator(conn, statement, result, createConverterWithQueryData(query, resultConverter)),
@@ -43,6 +47,15 @@ public class SqlTask extends Task<Stream<Row>> {
 					),
 					false);
 		} catch (SQLException e) {
+			log.error("{}, Error: {}", createErrorMessage(), e);
+				try {
+					if(statement != null)
+						statement.close();
+					if(conn != null)
+						conn.close();
+				} catch (SQLException e1) {
+					log.error("Could not close resources. {}", e1);
+				}
 			throw new TaskExecutionException(createErrorMessage(), e);
 		}
 	}

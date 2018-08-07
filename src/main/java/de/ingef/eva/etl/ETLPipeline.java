@@ -1,6 +1,7 @@
 package de.ingef.eva.etl;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -82,7 +83,16 @@ public class ETLPipeline {
 		CsvWriter writer = createWriter(ioManager, q);
 		log.info("Start writing to file: '{}'", writer.getAttachedFile());
 		new WriteFileTask(writer, rowStream, rowFilter, rowTransformer).execute();
-		log.info("File '{}' created.", writer.getAttachedFile());
+		if(!writer.isNewFile()) {
+			log.info("File '{}' created.", writer.getAttachedFile());
+		} else {
+			try {
+				Files.delete(writer.getAttachedFile());
+				log.warn("File '{}' was empty and was removed.", writer.getAttachedFile());
+			} catch (IOException e) {
+				log.error("Could not remove file '{}'. {}", writer.getAttachedFile(), e);
+			}
+		}
 	}
 
 	/**

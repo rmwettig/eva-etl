@@ -125,7 +125,8 @@ public class Main {
 		sw.start();
 		Configuration config = Configuration.loadFromJson(cmd.getOptionValue("hash"));
 		exitIfInvalidCredentials(config);
-		config.getHashing().calculateHashes(config);
+		ConnectionFactory connectionFactory = new TeradataConnectionFactory(config.getUser(), config.getPassword(), config.getFullConnectionUrl());
+		config.getHashing().calculateHashes(config, new TaskRunner(config.getThreadCount()), connectionFactory);
 		sw.stop();
 		log.info("Create hash mappings in {}.", sw.createReadableDelta());
 	}

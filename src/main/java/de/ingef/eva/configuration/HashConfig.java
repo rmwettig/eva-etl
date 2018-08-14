@@ -1,33 +1,24 @@
 package de.ingef.eva.configuration;
 
-import java.io.FileNotFoundException;
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
+import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import de.ingef.eva.services.ConnectionFactory;
+import de.ingef.eva.services.TaskRunner;
+import de.ingef.eva.utility.CsvReader;
+import de.ingef.eva.utility.CsvWriter;
 import org.apache.commons.codec.digest.DigestUtils;
 
-import de.ingef.eva.constant.Templates;
-import de.ingef.eva.data.RowElement;
-import de.ingef.eva.data.SimpleRowElement;
-import de.ingef.eva.data.TeradataColumnType;
-import de.ingef.eva.utility.CsvWriter;
-import de.ingef.eva.utility.Helper;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,24 +26,142 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @Log4j2
 public class HashConfig {
 
+	private static final String NO_ICD_VALUE = "0000";
+	private static final String NO_PZN_VALUE = "00000000";
+	private static final String PID_INDEX_NAME = "pidIndex";
+	//field names for vers_stamm table
+	private static final String DOB_INDEX_NAME = "dobIndex";
+	private static final String DOD_INDEX_NAME = "dodIndex";
+	private static final String GENDER_INDEX_NAME = "genderIndex";
+	//field names for vers_region table
+	private static final String KGS_INDEX_NAME = "kgsIndex";
+	//field names for arzt_diagnose
+	private static final String ICD_INDEX_NAME = "icdIndex";
+	private static final String CONFIDENCE_INDEX_NAME = "confidenceIndex";
+	private static final String CONTRACT_INDEX_NAME = "contractIndex";
+	private static final String DIAGNOSIS_CONFIDENCE = "G";
+	private static final String CONTRACT_TYPE = "kv";
+	//field names for am_evo
+	private static final String PZN_INDEX_NAME = "pznIndex";
+	private static final String TMP_FILE_EXTENSION = "tmp";
+	private static final String ORIGINAL_FILE_EXTENSION = "orig";
+	public static final String MATCH_DOT = "\\.";
+
 	private Path hashFile;
 	private int minYear;
 	private int maxYear;
-	private List<HashGroup> subgroups;
-	
-	@Getter @Setter
-	@NoArgsConstructor
-	public static class HashGroup {
-		private String db;
-		private List<String> subgroups;
+	/**
+	 * file name to column name to column index map
+	 */
+	private Map<String, Map<String, Integer>> fileDescriptors;
+
+	@Getter
+	@RequiredArgsConstructor
+	private static class HashDataPaths {
+		private final String dataset;
+		private final Path rootPath;
+		private final List<Path> dataFiles = new ArrayList<>();
+
+		/**
+		 * sorts the collected paths inline using the following rules:
+		 * 	* first, sort paths by year, i.e. slices for 2010 preceed those for 2011 and so on
+		 * 	* second, apply category order: base data -> kgs -> icd -> pzn
+		 */
+		public List<Path> sortPathsByDataSliceAndYear() {
+			dataFiles.sort((pathA, pathB) -> {
+				//name schema is: abc.yyyy.csv.gz
+				String[] fileNamePartsA = pathA.toString().split(MATCH_DOT);
+				String[] fileNamePartsB = pathB.toString().split(MATCH_DOT);
+				int yearA = Integer.parseInt(fileNamePartsA[1]);
+				int yearB = Integer.parseInt(fileNamePartsB[1]);
+				String nameA = fileNamePartsA[0];
+				String nameB = fileNamePartsB[0];
+				if(yearA == yearB) {
+					if(nameA.equalsIgnoreCase(nameB))
+						return 0;
+					if(nameA.toLowerCase().contains("vers_stamm"))
+						return -1;
+					if(nameB.toLowerCase().contains("vers_stamm"))
+						return 1;
+
+					if(nameA.toLowerCase().contains("vers_region") && !nameB.contains("vers_stamm"))
+						return -1;
+					if(nameB.toLowerCase().contains("vers_region") && !nameA.contains("vers_stamm"))
+						return 1;
+
+					if(nameA.toLowerCase().contains("arzt_diagnose") && !nameB.contains("am_evo"))
+						return -1;
+					if(nameB.toLowerCase().contains("arzt_diagnose") && !(nameA.contains("vers_region") && nameA.contains("vers_stamm")))
+						return 1;
+
+					return 1;
+				} else if(yearA < yearB) {
+					return -1;
+				} else {
+					return 1;
+				}
+			});
+			return dataFiles;
+		}
 	}
-	
+
+	@Getter
+	@RequiredArgsConstructor
+	private static class HashDataFiles implements FileVisitor<Path> {
+
+		private Map<String, HashDataPaths> hashFiles = new HashMap<>();
+		private final int minYear;
+		private final int maxYear;
+
+		@Override
+		public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+			return FileVisitResult.CONTINUE;
+		}
+
+		@Override
+		public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+			return FileVisitResult.CONTINUE;
+		}
+
+		@Override
+		public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+			return FileVisitResult.CONTINUE;
+		}
+
+		@Override
+		public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+			boolean isLeaf = Files.list(dir).filter(Files::isDirectory).count() == 0;
+			if(!isLeaf)
+				return FileVisitResult.CONTINUE;
+			HashDataPaths entry = new HashDataPaths(dir.getFileName().toString(), dir.subpath(0, dir.getNameCount() - 1));
+			for(File file : dir.toFile().listFiles()) {
+				if(file.getName().endsWith(TMP_FILE_EXTENSION) || file.getName().endsWith(ORIGINAL_FILE_EXTENSION))
+					continue;
+				String fileName = file.getName().toString().toLowerCase();
+				int yearSlice = Integer.parseInt(fileName.split(MATCH_DOT)[1]);
+				if(
+						yearSlice >= minYear &&
+								yearSlice <= maxYear &&
+								(fileName.contains("vers_stamm") ||
+										fileName.contains("am_evo") ||
+										fileName.contains("arzt_diagnose") ||
+										fileName.contains("vers_region"))
+				)
+					entry.getDataFiles().add(file.toPath());
+			}
+			hashFiles.put(dir.getFileName().toString(), entry);
+			return FileVisitResult.CONTINUE;
+		}
+	}
+
 	@Getter
 	@RequiredArgsConstructor
 	@EqualsAndHashCode(of={"pid"})
@@ -61,8 +170,8 @@ public class HashConfig {
 		private char gender = '9';
 		private LocalDate dob = LocalDate.MAX;
 		private LocalDate dod = LocalDate.MAX;
-		private String minKgs = "";
-		private String maxKgs = "";
+		private String minKgs = "999999";
+		private String maxKgs = "000000";
 		private final List<String> icdCodes = new ArrayList<>(300);
 		private final List<String> pznCodes = new ArrayList<>(20);
 		
@@ -84,11 +193,11 @@ public class HashConfig {
 		}
 		
 		public void updateMinKgs(String value) {
-			minKgs = takeMinimumKGS(minKgs, value);
+			minKgs = value.compareTo(minKgs) < 0 ? value : minKgs;
 		}
 		
 		public void updateMaxKgs(String value) {
-			maxKgs = takeMinimumKGS(maxKgs, value);
+			maxKgs = value.compareTo(maxKgs) > 0 ? value : maxKgs;
 		}
 		
 		public void addPZN(String pzn) {
@@ -98,41 +207,361 @@ public class HashConfig {
 		private LocalDate takeMinimumDate(LocalDate left, LocalDate right) {
 			return left.isBefore(right) ? left : right;
 		}
-		
-		private String takeMinimumKGS(String left, String right) {
-			return left.compareTo(right) < 0 ? left : right;
+
+		/**
+		 * @return true if no field has been changed
+		 */
+		private boolean isDefault() {
+			return gender == '9'
+					&& dob.isEqual(LocalDate.MAX)
+					&& dod.isEqual(LocalDate.MAX)
+					&& minKgs.equals("999999")
+					&& maxKgs.equals("000000")
+					&& icdCodes.isEmpty()
+					&& pznCodes.isEmpty();
+		}
+
+		public char getGenderOrDefault() {
+			char g = getGender();
+			if(g == '9')
+				return '0';
+			return g;
+		}
+
+		public LocalDate getDobOrDefault() {
+			return dob.isEqual(LocalDate.MAX)
+					? LocalDate.parse("1900-01-01")
+					: dob;
+		}
+
+		public LocalDate getDodOrDefault() {
+			return dod.isEqual(LocalDate.MAX)
+					? LocalDate.parse("2999-12-31")
+					: dod;
+		}
+
+		public String getMinKgsOrDefault() {
+			return minKgs.equals("999999")
+					? "00000"
+					: minKgs;
+		}
+
+		public String getMaxKgsOrDefault() {
+			return maxKgs.equals("000000")
+					? "00000"
+					: maxKgs;
+		}
+
+		public List<String> getICDOrDefault() {
+			return icdCodes.isEmpty()
+					? Arrays.asList(NO_ICD_VALUE)
+					: icdCodes;
+		}
+
+		public List<String> getPZNOrDefault() {
+			return pznCodes.isEmpty()
+					? Arrays.asList(NO_PZN_VALUE)
+					: pznCodes;
 		}
 	}
-	
-	public void calculateHashes(Configuration config) {
-		ExecutorService threadPool = Helper.createThreadPool(config.getThreadCount(), true);
+
+	public void calculateHashes(Configuration config, TaskRunner taskRunner, ConnectionFactory connectionFactory) {
 		removePreviousHashFile();
-		List<Map<String, DataEntry>> slices = new ArrayList<>(subgroups.size());
-		for(HashGroup group : subgroups) {
-			for(String subgroup : group.getSubgroups()) {
-				slices.add(fetchDataForSubgroup(config, group, subgroup, threadPool));
-			}
-		}
-		
-		Map<String, String> pid2Hash = createHashMapping(slices);
-		
 		try {
-			CsvWriter writer = CsvWriter.createUncompressedWriter(hashFile, false);
-			pid2Hash
+			Map<String, HashDataPaths> hashFiles = findHashData(config.getCacheDirectory());
+			for(String dataset : hashFiles.keySet()) {
+				HashDataPaths entry = hashFiles.get(dataset);
+				Map<String, DataEntry> data = readHashData(entry.sortPathsByDataSliceAndYear());
+				appendHash(entry, data);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void appendHash(HashDataPaths entry, Map<String, DataEntry> data) throws IOException {
+		List<Path> modifiableFiles =
+				entry
+					.getDataFiles()
+					.stream()
+					.filter(path -> path.getFileName().toString().toLowerCase().contains("vers_stamm"))
+					.collect(Collectors.toList());
+		for(Path path : modifiableFiles) {
+			BufferedReader reader = CsvReader.createGzipReader(path).getReader();
+			Path tmpFile = Paths.get(path.toString() + "." + TMP_FILE_EXTENSION);
+			CsvWriter writer = CsvWriter.createGzipWriter(tmpFile);
+			//check if hash column is already present
+			String[] columns = reader.readLine().split(";");
+			Arrays.stream(columns).forEach(columnName -> writer.addEntry(columnName));
+			writer.writeLine();
+			int hashColumnIndex = findColumnIndex(columns, "pid_hash");
+			int pidColumnIndex = findColumnIndex(columns, "pid");
+			Function<String[], String[]> lineProcessor = createLineProcessor(data, hashColumnIndex, pidColumnIndex);
+			String line;
+			while((line = reader.readLine()) != null) {
+				String[] modifiedLine = lineProcessor.apply(line.split(";", -1));
+				Arrays.stream(modifiedLine).forEach(value -> writer.addEntry(value));
+				writer.writeLine();
+			}
+
+			reader.close();
+			writer.close();
+			swapFiles(path, tmpFile);
+		}
+	}
+
+	private void swapFiles(Path path, Path tmpFile) throws IOException {
+		Files.move(path, Paths.get(path.toString() + "." + ORIGINAL_FILE_EXTENSION), REPLACE_EXISTING);
+		Files.move(tmpFile, path);
+	}
+
+	private Function<String[], String[]> createLineProcessor(Map<String, DataEntry> mapping, int hashColumnIndex, int pidColumnIndex) {
+		return hashColumnIndex != -1
+			//update hash
+			? columns -> {
+				String pid = columns[pidColumnIndex];
+				columns[hashColumnIndex] = mapping.containsKey(pid)
+						? createHashMapping(mapping.get(pid))
+						: "";
+				return columns;
+			}
+			//create new column
+			: columns -> {
+				String[] modified = new String[columns.length + 1];
+				for(int i = 0; i < columns.length; i++) {
+					modified[i] = columns[i];
+				}
+				modified[columns.length] = mapping.containsKey(columns[pidColumnIndex])
+						? createHashMapping(mapping.get(columns[pidColumnIndex]))
+						: "";
+				return modified;
+			};
+	}
+
+	/**
+	 * searches pid_hash column
+	 * @param line
+	 * @param columnName name of the searched column
+	 * @return -1 if pid_hash column does not exist
+	 */
+	private int findColumnIndex(String[] line, String columnName) {
+		for(int i = 0; i < line.length; i++) {
+			if(line[i].equalsIgnoreCase(columnName))
+				return i;
+		}
+		return -1;
+	}
+
+	private Map<String, DataEntry> readHashData(List<Path> files) throws IOException {
+		int numberOfYearBlocks = files.size() / 4;
+		Map<String, DataEntry> collectedDataOverYears = new HashMap<>(300_000);
+		for(int blockIndex = 0; blockIndex < numberOfYearBlocks; blockIndex++) {
+			int offset = 4 * blockIndex;
+			Path baseFilePath = files.get(0 + offset);
+			String baseCommonName = baseFilePath.getFileName().toString().split(MATCH_DOT)[0];
+			Map<String, DataEntry> baseData = readData(
+					baseFilePath,
+					createBaseDataEntry(baseCommonName),
+					this::mergeBaseDataEntries
+			);
+			Path kgsFilePath = files.get(1 + offset);
+			String kgsCommonName = kgsFilePath.getFileName().toString().split(MATCH_DOT)[0];
+			Map<String, DataEntry> kgsData = readData(
+					kgsFilePath,
+					createKgsDataEntry(kgsCommonName),
+					this::mergeKgsEntries
+			);
+			Path icdFilePath = files.get(2 + offset);
+			String icdCommonName = icdFilePath.getFileName().toString().split(MATCH_DOT)[0];
+			Map<String, DataEntry> icdData = readData(
+					icdFilePath,
+					createIcdEntry(icdCommonName),
+					this::mergeIcdEntries,
+					filterIcdEntries(icdCommonName)
+			);
+			Path pznFilePath = files.get(3 + offset);
+			String pznCommonName = pznFilePath.getFileName().toString().split(MATCH_DOT)[0];
+			Map<String, DataEntry> pznData = readData(
+					pznFilePath,
+					createPznEntry(pznCommonName),
+					this::mergePznEntry
+			);
+
+			aggregateData(collectedDataOverYears, baseData, this::mergeBaseDataEntries);
+			aggregateData(collectedDataOverYears, kgsData, this::mergeKgsEntries);
+			aggregateData(collectedDataOverYears, icdData, this::mergeIcdEntries);
+			aggregateData(collectedDataOverYears, pznData, this::mergePznEntry);
+		}
+		return collectedDataOverYears;
+	}
+
+	/**
+	 * merges data into aggregator map
+	 * @param aggregator modifiable map
+	 * @param data data slice
+	 * @param merger merges entries for same keys properly
+	 */
+	private void aggregateData(Map<String, DataEntry> aggregator, Map<String, DataEntry> data, BiFunction<DataEntry, DataEntry, DataEntry> merger) {
+		data
 			.entrySet()
 			.stream()
-			.forEach(mapping -> {
-				try {
-					writer.addEntry(mapping.getKey());
-					writer.addEntry(mapping.getValue());
-					writer.writeLine();
-				} catch (IOException e) {
-					log.error("Could not write hashes. {}", e);
-				}
-			});
-		} catch (FileNotFoundException e) {
-			log.error("Could not create writer. {}", e);
-		}
+			.forEach(entry -> aggregator.merge(entry.getKey(), entry.getValue(), merger));
+	}
+
+	private DataEntry mergePznEntry(DataEntry e1, DataEntry e2) {
+		e1.getPznCodes().addAll(e2.getPznCodes());
+		return e1;
+	}
+
+	private Function<List<String>, DataEntry> createPznEntry(String pznCommonName) {
+		return columns -> {
+			Map<String, Integer> columnIndices = fileDescriptors.get(pznCommonName);
+			int pidIndex = columnIndices.get(PID_INDEX_NAME);
+			int pznIndex = columnIndices.get(PZN_INDEX_NAME);
+			String pzn = columns.get(pznIndex);
+			DataEntry e = new DataEntry(columns.get(pidIndex));
+			e.addPZN(pzn);
+			return e;
+		};
+	}
+
+	private Predicate<List<String>> filterIcdEntries(String icdCommonName) {
+		return columns -> {
+			Map<String, Integer> columnIndices = fileDescriptors.get(icdCommonName);
+			int confidenceIndex = columnIndices.get(CONFIDENCE_INDEX_NAME);
+			int contractIndex = columnIndices.get(CONTRACT_INDEX_NAME);
+			return columns.get(confidenceIndex).equalsIgnoreCase(DIAGNOSIS_CONFIDENCE) &&
+					columns.get(contractIndex).equalsIgnoreCase(CONTRACT_TYPE);
+		};
+	}
+
+	private DataEntry mergeIcdEntries(DataEntry e1, DataEntry e2) {
+		e1.getIcdCodes().addAll(e2.getIcdCodes());
+		return e1;
+	}
+
+	private Function<List<String>, DataEntry> createIcdEntry(String icdCommonName) {
+		return columns -> {
+			Map<String, Integer> columnIndices = fileDescriptors.get(icdCommonName);
+			int pidIndex = columnIndices.get(PID_INDEX_NAME);
+			int icdIndex = columnIndices.get(ICD_INDEX_NAME);
+
+			String icd = columns.get(icdIndex);
+			DataEntry e = new DataEntry(columns.get(pidIndex));
+			e.addICDCode(icd);
+			return e;
+		};
+	}
+
+	private DataEntry mergeKgsEntries(DataEntry e1, DataEntry e2) {
+		e1.updateMinKgs(e2.getMinKgs());
+		e1.updateMaxKgs(e2.getMaxKgs());
+		return e1;
+	}
+
+	private Function<List<String>, DataEntry> createKgsDataEntry(String kgsCommonName) {
+		return columns -> {
+			Map<String, Integer> columnIndices = fileDescriptors.get(kgsCommonName);
+			int pidIndex = columnIndices.get(PID_INDEX_NAME);
+			int kgsIndex = columnIndices.get(KGS_INDEX_NAME);
+			String kgs = columns.get(kgsIndex);
+			DataEntry e = new DataEntry(columns.get(pidIndex));
+			e.updateMinKgs(kgs);
+			e.updateMaxKgs(kgs);
+			return e;
+		};
+	}
+
+	private DataEntry mergeBaseDataEntries(DataEntry e1, DataEntry e2) {
+		e1.updateDOD(e2.getDod());
+		e1.updateDOB(e2.getDob());
+		e1.updateGender(e2.getGender());
+		return e1;
+	}
+
+	private Function<List<String>, DataEntry> createBaseDataEntry(String baseCommonName) {
+		return columns -> {
+			Map<String, Integer> columnIndices = fileDescriptors.get(baseCommonName);
+			int pidIndex = columnIndices.get(PID_INDEX_NAME);
+			int dobIndex = columnIndices.get(DOB_INDEX_NAME);
+			int dodIndex = columnIndices.get(DOD_INDEX_NAME);
+			int genderIndex = columnIndices.get(GENDER_INDEX_NAME);
+			DataEntry e = new DataEntry(columns.get(pidIndex));
+			String gender = columns.get(genderIndex);
+			if(!gender.isEmpty())
+				e.updateGender(gender.charAt(0));
+			String dodText = columns.get(dodIndex);
+			if(!dodText.isEmpty())
+				e.updateDOD(LocalDate.parse(dodText));
+			String dobText = columns.get(dobIndex);
+			if(!dobText.isEmpty())
+				e.updateDOB(LocalDate.parse(dobText));
+			return e;
+		};
+	}
+
+	/**
+	 * reads data from stream without filtering stream elements
+	 * @param baseFilePath
+	 * @param rowMapper
+	 * @param mapMerger
+	 * @return
+	 * @throws IOException
+	 */
+	private Map<String, DataEntry> readData(
+			Path baseFilePath,
+			Function<List<String>, DataEntry> rowMapper,
+			BinaryOperator<DataEntry> mapMerger
+	) throws IOException {
+		return readData(baseFilePath, rowMapper, mapMerger, columns -> true);
+	}
+
+	private Map<String, DataEntry> readData(
+			Path baseFilePath,
+			Function<List<String>, DataEntry> rowMapper,
+			BinaryOperator<DataEntry> mapMerger,
+			Predicate<List<String>>	rowFilter
+	) throws IOException {
+		CsvReader baseReader = CsvReader.createGzipReader(baseFilePath);
+		Map<String, DataEntry> baseData =
+				baseReader
+						.lines()
+						.skip(1)
+						.filter(rowFilter)
+						.map(rowMapper)
+						.collect(Collectors.toMap(entry -> entry.getPid(), entry -> entry, mapMerger));
+		baseReader.close();
+		return baseData;
+	}
+
+	private Map<String, HashDataPaths> findHashData(String cacheDirectory) throws IOException {
+		HashDataFiles fileFinder = new HashDataFiles(minYear, maxYear);
+		Files.walkFileTree(Paths.get(cacheDirectory), fileFinder);
+		return fileFinder.getHashFiles();
+	}
+
+	/**
+	 * combines all data parts in a single data entry object
+	 * @param dataEntries
+	 * @return
+	 */
+	private DataEntry combineCategoriesIntoSingleEntry(List<DataEntry> dataEntries) {
+		DataEntry base = dataEntries.get(0);
+		DataEntry combined = new DataEntry(base.getPid());
+		combined.updateGender(base.getGender());
+		combined.updateDOB(base.getDob());
+		combined.updateDOD(base.getDod());
+
+		DataEntry residence = dataEntries.get(1);
+		combined.updateMinKgs(residence.getMinKgs());
+		combined.updateMaxKgs(residence.getMaxKgs());
+
+		DataEntry icd = dataEntries.get(2);
+		combined.getIcdCodes().addAll(icd.getIcdCodes());
+
+		DataEntry pzn = dataEntries.get(3);
+		combined.getPznCodes().addAll(pzn.getPznCodes());
+		return combined;
 	}
 
 	/**
@@ -146,352 +575,25 @@ public class HashConfig {
 		}
 	}
 
-	private Map<String, DataEntry> fetchDataForSubgroup(Configuration config, HashGroup groupConfig, String subgroup, ExecutorService threadPool) {
-		try {		
-			Map<String, DataEntry> base = fetchBaseData(config, groupConfig, threadPool, Templates.Hashes.SELECT_MINIMUM_DATES_AND_GENDER.replaceAll("\\$subgroup", subgroup));
-			mergeData(
-				base,
-				fetchResidenceData(config, groupConfig, threadPool, Templates.Hashes.SELECT_MIN_MAX_KGS.replaceAll("\\$subgroup", subgroup)),
-				fetchIcdData(config, groupConfig, threadPool, Templates.Hashes.SELECT_ICD_CODES.replaceAll("\\$subgroup", subgroup)),
-				fetchPznData(config, groupConfig, threadPool, Templates.Hashes.SELECT_PZNS.replaceAll("\\$subgroup", subgroup))
-			);
-			return base;
-		} catch(SQLException e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
-	private Map<String, DataEntry> fetchBaseData(Configuration config, HashGroup groupConfig, ExecutorService threadPool, String subgroupTemplate) throws SQLException {
-		Map<String, DataEntry> result = fetchFromDatabase(
-				config,
-				groupConfig,
-				subgroupTemplate,
-				threadPool,
-				HashConfig::createBaseDataRowElement,
-				HashConfig::createBaseDataEntry,
-				HashConfig::mergeBaseDataEntries
-		);
-		return result;
-	}
-
-	private Map<String, DataEntry> fetchPznData(Configuration config, HashGroup groupConfig, ExecutorService threadPool, String subgroupTemplate) throws SQLException {
-		Map<String, DataEntry> result = fetchFromDatabase(
-				config,
-				groupConfig,
-				subgroupTemplate,
-				threadPool,
-				HashConfig::createDiagnosisDataRowElement,
-				HashConfig::createPZNDataEntry,
-				HashConfig::mergePZNDataEntries
-		);
-		return result;
-	}
-
-	private Map<String, DataEntry> fetchIcdData(Configuration config, HashGroup groupConfig, ExecutorService threadPool, String subgroupTemplate) throws SQLException {
-		Map<String, DataEntry> result = fetchFromDatabase(
-				config,
-				groupConfig,
-				subgroupTemplate,
-				threadPool,
-				HashConfig::createDiagnosisDataRowElement,
-				HashConfig::createDiagnosisDataEntry,
-				HashConfig::mergeDiagnosisDataEntries
-		);
-		return result;
-	}
-
-	private Map<String, DataEntry> fetchResidenceData(Configuration config, HashGroup groupConfig, ExecutorService threadPool, String subgroupTemplate) throws SQLException {
-		Map<String, DataEntry> result = fetchFromDatabase(
-				config,
-				groupConfig,
-				subgroupTemplate,
-				threadPool,
-				HashConfig::createResidenceDataRowElement,
-				HashConfig::createResidenceDataEntry,
-				HashConfig::mergeResidenceDataEntries
-		);
-		return result;
-	}
-	
-	private Map<String, String> createHashMapping(List<Map<String, DataEntry>> subgroupData) {		
-		int numberOfEntries = subgroupData.stream().collect(Collectors.summingInt(map -> map.size()));
-		Map<String, String> pid2Hash = new HashMap<>(numberOfEntries);
-		subgroupData
-			.stream()
-			.flatMap(map -> map.entrySet().stream())
-			.forEach(entry -> {
-				String dataString = buildFullDataString(entry.getValue());
-				pid2Hash.put(entry.getKey(), DigestUtils.sha256Hex(dataString));
-			}); 
-		return pid2Hash;
+	private String createHashMapping(DataEntry pidData) {
+		return DigestUtils.sha256Hex(buildFullDataString(pidData));
 	}
 
 	private String buildFullDataString(DataEntry data) {
 		StringBuilder dataString = new StringBuilder();
-		dataString.append(data.getDob());
+		dataString.append(data.getDobOrDefault());
 		dataString.append("_");
-		dataString.append(data.getDod());
+		dataString.append(data.getDodOrDefault());
 		dataString.append("_");
-		dataString.append(data.getGender());
+		dataString.append(data.getGenderOrDefault());
 		dataString.append("_");
-		dataString.append(data.getMinKgs());
+		dataString.append(data.getMinKgsOrDefault());
 		dataString.append("_");
-		dataString.append(data.getMaxKgs());
+		dataString.append(data.getMaxKgsOrDefault());
 		dataString.append("_");
-		dataString.append(data.getIcdCodes().stream().collect(Collectors.joining("_")));
+		dataString.append(data.getICDOrDefault().stream().collect(Collectors.joining("_")));
 		dataString.append("_");
-		dataString.append(data.getPznCodes().stream().collect(Collectors.joining("_")));
+		dataString.append(data.getPZNOrDefault().stream().collect(Collectors.joining("_")));
 		return dataString.toString();
 	}
-
-	/**
-	 * changes the base data map inline
-	 * @param pid2BaseData
-	 * @param pid2ResidenceData
-	 * @param pid2Icd
-	 * @param pid2Pzn
-	 */
-	private void mergeData(Map<String, DataEntry> pid2BaseData, Map<String, DataEntry> pid2ResidenceData, Map<String, DataEntry> pid2Icd, Map<String, DataEntry> pid2Pzn) {
-		integrateDataSliceIntoBaseData(pid2BaseData, pid2ResidenceData, (baseData, residenceData) -> {
-			baseData.updateMinKgs(residenceData.getMinKgs());
-			baseData.updateMaxKgs(residenceData.getMaxKgs());
-			return baseData;
-		});
-		integrateDataSliceIntoBaseData(pid2BaseData, pid2Icd, (baseData, icd) -> {
-			icd.getIcdCodes().forEach(code -> baseData.addICDCode(code));
-			return baseData;
-		});
-		integrateDataSliceIntoBaseData(pid2BaseData, pid2Pzn, (baseData, pzn) -> {
-			pzn.getPznCodes().forEach(code -> baseData.addPZN(code));
-			return baseData;
-		});
-	}
-	
-
-	private void integrateDataSliceIntoBaseData(Map<String, DataEntry> pid2BaseData, Map<String, DataEntry> pid2Data, BiFunction<DataEntry, DataEntry, DataEntry> merger) {
-		pid2Data.forEach((pid, data) -> pid2BaseData.merge(pid, data, merger));
-	}
-	
-	/**
-	 * executes a query for all year slices
-	 * @param config
-	 * @param appendConfig
-	 * @param queryTemplate
-	 * @param threadPool
-	 * @param rowConverter
-	 * @param columnConverter
-	 * @param entryMerger
-	 * @return
-	 * @throws SQLException
-	 */
-	private Map<String, DataEntry> fetchFromDatabase(
-			Configuration config,
-			HashGroup groupConfig,
-			String queryTemplate,
-			Executor threadPool,
-			Function<ResultSet, List<RowElement>> rowConverter,
-			Function<List<RowElement>, DataEntry> columnConverter,
-			BiFunction<DataEntry, DataEntry, DataEntry> entryMerger) throws SQLException {
-		String user = config.getUser();
-		String password = config.getPassword();
-		String connectionUrl = config.getFullConnectionUrl();
-		String database = groupConfig.getDb();
-
-		List<Map<String, DataEntry>> results = new ArrayList<>((maxYear - minYear) + 1);
-		for(int year = minYear; year <= maxYear; year++) {
-			String query = fillQueryTemplate(queryTemplate, database, year);
-			results.add(createFetchPromise(threadPool, rowConverter, columnConverter, user, password, connectionUrl, query));
-		}
-		Map<String, DataEntry> baseData = new HashMap<>(1_950_000);
-		results
-		.stream()
-		.flatMap(map -> map.entrySet().stream())
-		.forEach(entry -> baseData.merge(entry.getKey(), entry.getValue(), entryMerger));
-		return baseData;
-	}
-
-	/**
-	 * creates a promise for db query
-	 * @param threadPool
-	 * @param rowConverter
-	 * @param columnConverter
-	 * @param user
-	 * @param password
-	 * @param connectionUrl
-	 * @param query
-	 * @return
-	 */
-	private Map<String, DataEntry> createFetchPromise(Executor threadPool,
-			Function<ResultSet, List<RowElement>> rowConverter, Function<List<RowElement>, DataEntry> columnConverter,
-			String user, String password, String connectionUrl, String query) {
-		try {
-			return fetchData(		
-						user,
-						password,
-						connectionUrl,
-						query,
-						rowConverter,
-						columnConverter
-					);
-		} catch (SQLException e) {
-			log.error("Could not execute query '{}'", query);
-		}
-		return Collections.emptyMap();
-	}
-	
-	private static List<RowElement> createBaseDataRowElement(ResultSet resultSet) {
-		List<RowElement> row = new ArrayList<>(4);
-		try {
-			row.add(new SimpleRowElement(resultSet.getString(1), TeradataColumnType.CHARACTER));
-			row.add(new SimpleRowElement(resultSet.getDate(2).toString(), TeradataColumnType.CHARACTER));
-			row.add(new SimpleRowElement(resultSet.getDate(3).toString(), TeradataColumnType.CHARACTER));
-			row.add(new SimpleRowElement(resultSet.getString(4), TeradataColumnType.CHARACTER));
-		} catch (SQLException e) {
-			log.error("Could not create row elements");
-		}
-		return row;
-	}
-	
-	private static DataEntry createBaseDataEntry(List<RowElement> columns) {
-		String pid = columns.get(0).getContent();
-		LocalDate dob = LocalDate.parse(columns.get(1).getContent());
-		LocalDate dod = LocalDate.parse(columns.get(2).getContent());
-		char gender = columns.get(0).getContent().charAt(0);
-		DataEntry entry = new DataEntry(pid);
-		entry.updateGender(gender);
-		entry.updateDOB(dob);
-		entry.updateDOD(dod);
-		return entry;
-	}
-	
-	private static DataEntry mergeBaseDataEntries(DataEntry previous, DataEntry next) {
-		previous.updateDOB(next.getDob());
-		previous.updateDOD(next.getDod());
-		previous.updateGender(next.getGender());
-		return previous;
-	}
-	
-	private static List<RowElement> createResidenceDataRowElement(ResultSet resultSet) {
-		List<RowElement> row = new ArrayList<>(3);
-		try {
-			row.add(new SimpleRowElement(resultSet.getString(1), TeradataColumnType.CHARACTER));
-			row.add(new SimpleRowElement(resultSet.getString(2).toString(), TeradataColumnType.CHARACTER));
-			row.add(new SimpleRowElement(resultSet.getString(3).toString(), TeradataColumnType.CHARACTER));
-		} catch (SQLException e) {
-			log.error("Could not create row elements");
-		}
-		return row;
-	}
-	
-	private static DataEntry createResidenceDataEntry(List<RowElement> columns) {
-		String pid = columns.get(0).getContent();
-		String minKgs = columns.get(1).getContent();
-		String maxKgs = columns.get(2).getContent();
-		DataEntry entry = new DataEntry(pid);
-		entry.updateMinKgs(minKgs);
-		entry.updateMaxKgs(maxKgs);
-		return entry;
-	}
-	
-	private static DataEntry mergeResidenceDataEntries(DataEntry previous, DataEntry next) {
-		previous.updateMinKgs(next.getMinKgs());
-		previous.updateMaxKgs(next.getMaxKgs());
-		return previous;
-	}
-		
-	private static List<RowElement> createDiagnosisDataRowElement(ResultSet resultSet) {
-		List<RowElement> row = new ArrayList<>(2);
-		try {
-			row.add(new SimpleRowElement(resultSet.getString(1), TeradataColumnType.CHARACTER));
-			row.add(new SimpleRowElement(resultSet.getString(2).toString(), TeradataColumnType.CHARACTER));
-		} catch (SQLException e) {
-			log.error("Could not create row elements");
-		}
-		return row;
-	}
-	
-	private static DataEntry createDiagnosisDataEntry(List<RowElement> columns) {
-		String pid = columns.get(0).getContent();
-		String icdCode = columns.get(1).getContent();
-		DataEntry entry = new DataEntry(pid);
-		entry.addICDCode(icdCode);
-		
-		return entry;
-	}
-	
-	private static DataEntry mergeDiagnosisDataEntries(DataEntry previous, DataEntry next) {
-		next.getIcdCodes().forEach(icd -> previous.addICDCode(icd));
-		return previous;
-	}
-		
-	private static DataEntry createPZNDataEntry(List<RowElement> columns) {
-		String pid = columns.get(0).getContent();
-		String pzn = columns.get(1).getContent();
-		DataEntry entry = new DataEntry(pid);
-		entry.addPZN(pzn);
-		
-		return entry;
-	}
-	
-	private static DataEntry mergePZNDataEntries(DataEntry previous, DataEntry next) {
-		next.getPznCodes().forEach(pzn -> previous.addPZN(pzn));
-		return previous;
-	}
-	
-	private static Map<String, DataEntry> fetchData(
-			String user,
-			String password,
-			String connectionUrl,
-			String query,
-			Function<ResultSet, List<RowElement>> rowConverter,
-			Function<List<RowElement>, DataEntry> columnConverter
-	) throws SQLException {
-		Map<String, DataEntry> dataMap = new HashMap<>(1_000_000);
-		Connection connection = null;
-		PreparedStatement statement = null;
-		try {
-			connection = Helper.createConnection(user, password, connectionUrl);
-			statement = connection.prepareStatement(query);
-			List<List<RowElement>> data = executeQuery(statement, rowConverter);
-			if(!connection.isValid(5)) {
-				statement.close();
-				connection.close();
-				connection = Helper.createConnection(user, password, connectionUrl);
-				statement = connection.prepareStatement(query);
-				log.info("Retrying hash query: {}", query);
-				data = executeQuery(statement, rowConverter);
-			}
-			for(List<RowElement> row : data) {
-				DataEntry entry = columnConverter.apply(row);
-				dataMap.put(entry.getPid(), entry);
-			}
-			return dataMap;
-		} catch (ClassNotFoundException | SQLException e) {
-			throw new RuntimeException("Could not execute query: '" + query + "'", e);
-		} finally {
-			if(statement != null && !statement.isClosed())
-				statement.close();
-			if(connection != null && !connection.isClosed())
-				connection.close();
-		}
-	}
-	
-	private static List<List<RowElement>> executeQuery(PreparedStatement statement, Function<ResultSet, List<RowElement>> converter) throws SQLException {
-		try (ResultSet result = statement.executeQuery()) {
-			List<List<RowElement>> data = new ArrayList<>(10_000_000);
-			while(result.next()) {
-				data.add(converter.apply(result));
-			}
-			return data;
-		} catch(SQLException e) {
-			throw new SQLException(e);
-		}
-	}
-
-	private static String fillQueryTemplate(String queryTemplate, String db, int year) {
-		return queryTemplate
-				.replaceAll("\\$year", Integer.toString(year))
-				.replaceAll("\\$db", db);
-	}
-	
 }

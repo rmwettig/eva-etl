@@ -313,6 +313,9 @@ public final class Templates {
 	}
 	
 	public static final class Hashes {
+		public static final String QUERY_PIDS = "select distinct a.pid " +
+                "from acc_$db.AVK_$db_T_Vers_Stamm a " +
+                "where a.$subgroup and a.bezugsjahr >= $year;";
 		public static final String SELECT_MINIMUM_DATES_AND_GENDER = "select "
 				+ "a.pid, "
 				+ "case "
@@ -344,7 +347,7 @@ public final class Templates {
 					+ "min(a.sterbedatum) as minDOD, "
 					+ "min(a.geschlecht) as minGeschlecht " 
 					+ "from acc_$db.AVK_$db_T_Vers_Stamm a "
-					+ "where a.bezugsjahr = $year and a.$subgroup "
+					+ "where a.bezugsjahr = $year and a.pid = '$pid' "
 					+ "group by a.pid) a";
 		
 		public static final String SELECT_MIN_MAX_KGS = "select "
@@ -356,7 +359,7 @@ public final class Templates {
 					+ " when (max(a.kgs) is not null and max(a.kgs) <> '') then max(a.kgs) "
 				+ "else '00000' end as maxKgs "
 				+ "from acc_$db.AVK_$db_T_Vers_Region a "
-				+ "where a.bezugsjahr = $year and a.$subgroup "
+				+ "where a.bezugsjahr = $year and a.pid = '$pid' "
 				+ "group by a.pid;";
 		
 		public static final String SELECT_ICD_CODES = "select distinct "
@@ -366,12 +369,12 @@ public final class Templates {
 				+ "where a.bezugsjahr = $year "
 				+ "and a.diagnosesicherheit='G' "
 				+ "and upper(trim(a.vertrags_id))='KV' "
-				+ "and a.$subgroup "
+				+ "and a.pid = '$pid' "
 				+ "union "
 				+ "select b.pid, '0000' as icd_code "
 				+ "from (select a.pid, count(distinct a.icd_code) as icdCount "
 					+ "from acc_$db.AVK_$db_T_Arzt_Diagnose a "
-					+ "where a.bezugsjahr = $year and a.$subgroup "
+					+ "where a.bezugsjahr = $year and a.pid = '$pid' "
 					+ "group by 1 "
 					+ "having icdCount = 0"
 				+ ") b "
@@ -381,12 +384,12 @@ public final class Templates {
 				+ "a.pid, "
 				+ "a.pzn "
 				+ "from acc_$db.AVK_$db_T_AM_EVO a "
-				+ "where a.bezugsjahr = $year and a.$subgroup "
+				+ "where a.bezugsjahr = $year and a.pid = '$pid' "
 				+ "union "
 				+ "select b.pid, '00000000' as icd_code "
 				+ "from (select a.pid, count(distinct a.pzn) as pznCount "
 					+ "from acc_$db.AVK_$db_T_AM_EVO a "
-					+ "where a.bezugsjahr = $year and a.$subgroup "
+					+ "where a.bezugsjahr = $year and a.pid = '$pid' "
 					+ "group by 1"
 					+ "having pznCount = 0"
 				+ ") b "

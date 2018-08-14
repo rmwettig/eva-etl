@@ -13,11 +13,13 @@ import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
 import de.ingef.eva.constant.OutputDirectory;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class CsvReader {
 
+	@Getter
 	private final BufferedReader reader;
 	private final String delimiter;
 	

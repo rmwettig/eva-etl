@@ -44,7 +44,6 @@ public class StartDateTransformerTest {
 		assertEquals(columns.get(0).getContent(), transformedColumns.get(0).getContent());
 		assertEquals(columns.get(1).getContent(), transformedColumns.get(1).getContent());
 		assertEquals(columns.get(0).getContent(), transformedColumns.get(2).getContent());
-
 	}
 
 	@Test
@@ -75,7 +74,7 @@ public class StartDateTransformerTest {
 	}
 	
 	@Test
-	public void calculateStartDateIfDayCountIsLargerZero() {
+	public void includeEndDateInTimeSpan() {
 		List<RowElement> columns = Arrays.asList(
 				new SimpleRowElement("2018-08-02", TeradataColumnType.DATE),
 				new SimpleRowElement("2", TeradataColumnType.CHARACTER)
@@ -98,7 +97,7 @@ public class StartDateTransformerTest {
 		assertEquals(3, transformedColumns.size());
 		assertEquals(columns.get(0).getContent(), transformedColumns.get(0).getContent());
 		assertEquals(columns.get(1).getContent(), transformedColumns.get(1).getContent());
-		assertEquals(LocalDate.parse("2018-07-31"), LocalDate.parse(transformedColumns.get(2).getContent()));
+		assertEquals(LocalDate.parse("2018-08-01"), LocalDate.parse(transformedColumns.get(2).getContent()));
 	}
 	
 	@Test

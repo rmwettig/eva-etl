@@ -37,7 +37,10 @@ public class StartDateTransformer extends Transformer {
 
 		LocalDate endDate = LocalDate.parse(row.getColumns().get(endDateColumnIndex.get().getValue()).getContent());
 		int kgDays = parseDayCount(row, dayColumnIndex);
-		LocalDate startDate = endDate.minusDays(kgDays);
+		LocalDate startDate = kgDays > 0
+			? endDate.minusDays(kgDays).plusDays(1)
+			: endDate;
+
 		return new Row(row.getDb(), row.getTable(), transformColumns(row.getColumns(), startDate.toString()), transformIndices(row.getColumnName2Index()));
 	}
 

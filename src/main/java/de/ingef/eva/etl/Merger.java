@@ -128,6 +128,8 @@ public class Merger {
 	}
 
 	private String appendDb(String viewName) {
+		if(viewName.contains("EVA"))
+			return "SB_HRI_" + viewName;
 		if(viewName.contains("ADB"))
 			return "ACC_ADB_" + viewName;
 		if(viewName.contains("FDB"))

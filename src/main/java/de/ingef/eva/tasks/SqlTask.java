@@ -117,7 +117,8 @@ public class SqlTask extends Task<Stream<Row>> {
 			try {
 				resultSet.close();
 				statement.close();
-				connection.close();
+				if(connection.isValid(5))
+					connection.close();
 			} catch(SQLException e) {
 				log.error("Could not close resources in iterator. {}", e);
 			}

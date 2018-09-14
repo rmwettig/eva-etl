@@ -46,7 +46,7 @@ public class LaTexOutput {
 	private static final String DOCUMENT_TITLE = "EVA-F\u00fcllstandsbericht";
 	private static final String OVERVIEW_CAPTION = "Datenstand der Datenbereiche zum elektronischen Datenaustausch der GKV";
 	private static final String DETAIL_CAPTION = "Aktueller Datenstand der ambulanten Daten pro KV";
-	private static final String MORBI_CAPTION = "Morbidit\u00e4tsorientierter Risikostrukturausgleich";
+	private static final String MORBI_CAPTION = "Morbidit\u00e4tsorientierter Risikostrukturausgleich (%s)";
 	private static final DecimalFormat NUMBER_FORMATTER = (DecimalFormat) NumberFormat.getInstance(Locale.GERMAN);
 	private static final String LOGO_PATH = "/resources/ingef_logo.jpg";
 	
@@ -54,7 +54,7 @@ public class LaTexOutput {
 		NUMBER_FORMATTER.applyLocalizedPattern("###.###,##");
 	}
 		
-	public void createStatisticTexFile(Path output, List<StatisticsEntry> overviewStatistic, List<StatisticsEntry> detailStatistic, List<MorbiRsaEntry> morbiStatistic, List<String> morbiColumnHeader) {
+	public void createStatisticTexFile(Path output, List<StatisticsEntry> overviewStatistic, List<StatisticsEntry> detailStatistic, Map<String, List<MorbiRsaEntry>> morbiStatistic, List<String> morbiColumnHeader) {
 		TexDocument.TexDocumentBuilder document = createDocument();
 		document.element(new TitlePage(new Figure(Anchor.BOTTOM, Paths.get(LOGO_PATH), 0.25f)));
 		document.element(new PageBreak());
@@ -62,7 +62,9 @@ public class LaTexOutput {
 		document.element(new PageBreak());
 		document.element(createDetailTable(detailStatistic));
 		document.element(new PageBreak());
-		document.element(createMorbiTable(morbiStatistic, morbiColumnHeader));
+		for(String setup : morbiStatistic.keySet()) {
+			document.element(createMorbiTable(setup, morbiStatistic.get(setup), morbiColumnHeader));
+		}
 		
 		writeToFile(output, document.build().renderDocument());
 	}
@@ -165,13 +167,13 @@ public class LaTexOutput {
 				.collect(Collectors.toList());
 	}
 	
-	private LatexNode createMorbiTable(List<MorbiRsaEntry> morbiStatistic, List<String> morbiColumnHeader) {
+	private LatexNode createMorbiTable(String setup, List<MorbiRsaEntry> morbiStatistic, List<String> morbiColumnHeader) {
 		Tabular.TabularBuilder builder =
 				Tabular
 					.builder()
 					.type(TabularType.TABULAR)
 					.columnOptions(createCenteredRows(5))
-					.row(new MultiColumnRow(5, MORBI_CAPTION, Anchor.CENTER))
+					.row(new MultiColumnRow(5, String.format(MORBI_CAPTION, setup), Anchor.CENTER))
 					.row(new HLine())
 					.row(createMorbiHeader(morbiColumnHeader))
 					.row(new HLine());

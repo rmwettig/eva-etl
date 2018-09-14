@@ -10,12 +10,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -87,7 +82,7 @@ public class Statistics {
 	private static class Result {
 		private final List<StatisticsEntry> overview;
 		private final List<StatisticsEntry> details;
-		private final List<MorbiRsaEntry> morbi;
+		private final Map<String, List<MorbiRsaEntry>> morbi;
 		private final List<String> morbiHeader;
 	}
 	
@@ -98,7 +93,7 @@ public class Statistics {
 			List<StatisticDatasetConfig> statisticsConfigs = config.getStatistics().getDatasets();
 			Path outputDirectory = ioManager.getDirectory(DirectoryType.REPORT);
 			List<String> morbiHeader = extractMorbiColumnHeader(config.getStatistics().getMorbiStatisticFile());
-			Map<String, List<MorbiRsaEntry>> insurance2MorbiStatistics = readMorbiStatistic(config.getStatistics().getMorbiStatisticFile());
+			Map<String, Map<String, List<MorbiRsaEntry>>> insurance2MorbiStatistics = readMorbiStatistic(config.getStatistics().getMorbiStatisticFile());
 			for(StatisticDatasetConfig statisticsConfig : statisticsConfigs) {
 				String configDb = statisticsConfig.getDb().toLowerCase();
 				String configDataset = statisticsConfig.getDataset().toLowerCase();
@@ -404,32 +399,37 @@ public class Statistics {
 		BufferedReader reader = Files.newBufferedReader(morbiStatisticFile);		
 		String[] header = reader.readLine().split(";");
 		reader.close();
-		//insurance name is not important so just drop it
+		//drop insurance name and setup
 		return IntStream
-			.range(1, header.length)
+			.range(2, header.length)
 			.mapToObj(column -> header[column])
 			.collect(Collectors.toList());
 	}
 	
-	private Map<String, List<MorbiRsaEntry>> readMorbiStatistic(Path morbiStatisticFile) throws IOException {
+	private Map<String, Map<String, List<MorbiRsaEntry>>> readMorbiStatistic(Path morbiStatisticFile) throws IOException {
 		BufferedReader reader = Files.newBufferedReader(morbiStatisticFile);
 		return reader
 				.lines()
 				.skip(1)
 				.filter(line -> line != null && !line.isEmpty())
 				.map(line -> line.split(";"))
-				.map(columns -> new MorbiRsaEntry(columns[0], Integer.parseInt(columns[1]), Integer.parseInt(columns[2]), Integer.parseInt(columns[3]), columns[4], columns[5]))
-				.collect(Collectors.groupingBy(MorbiRsaEntry::getInsurance));
+				.map(columns -> new MorbiRsaEntry(columns[0], columns[1], Integer.parseInt(columns[2]), Integer.parseInt(columns[3]), Integer.parseInt(columns[4]), columns[5], columns[6]))
+				.collect(Collectors.groupingBy(MorbiRsaEntry::getInsurance, Collectors.groupingBy(MorbiRsaEntry::getSetup)));
 	}
-	
-	private List<MorbiRsaEntry> findMorbiStatisticForDataset(String db, String dataset, Map<String, List<MorbiRsaEntry>> statistic) {
-		return statistic
-				.entrySet()
-				.stream()
-				.filter(entry -> entry.getKey().toLowerCase().contains(dataset) || entry.getKey().toLowerCase().contains(db))
-				.flatMap(entry -> entry.getValue().stream())
-				.collect(Collectors.toList());
+
+	/**
+	 * finds the associated morbi rsa entries for the given db or dataset
+	 * @param db partially matched against map keys
+	 * @param dataset partially matched against map keys
+	 * @param statistic mapping of insurance name onto setup onto configurations
+	 * @return empty list if no key matched
+	 */
+	private Map<String, List<MorbiRsaEntry>> findMorbiStatisticForDataset(String db, String dataset, Map<String, Map<String, List<MorbiRsaEntry>>> statistic) {
+		for(String insurance : statistic.keySet()) {
+			String normalizedName = insurance.toLowerCase();
+			if(normalizedName.contains(db) || normalizedName.contains(dataset))
+				return statistic.get(insurance);
+		}
+		return Collections.emptyMap();
 	}
 }
-
-

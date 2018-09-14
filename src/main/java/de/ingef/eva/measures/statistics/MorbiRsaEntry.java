@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MorbiRsaEntry {
 	private final String insurance;
+	private final String setup;
 	private final int grouperYear;
 	private final int benefitYear;
 	private final int reportingYear;

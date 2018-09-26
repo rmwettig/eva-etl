@@ -38,6 +38,8 @@ public class TransformerFactory {
 			return DynamicColumnAppender.of(config);
 		case START_DATE:
 			return new StartDateTransformer(config.getTargetDb(), config.getTargetTable(), config.getEndDateColumn(), config.getDayColumn(), config.getValueName());
+		case FIX_DATES:
+			return new FixMissingDateEntries();
 		default:
 			return new Transformer.NOPTransformer();
 		}

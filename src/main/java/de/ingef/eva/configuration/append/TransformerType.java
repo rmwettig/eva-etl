@@ -33,5 +33,9 @@ public enum TransformerType {
 	/**
 	 * calculate a start date based on end date and days
 	 */
-	START_DATE
+	START_DATE,
+	/**
+	 * quick fix for https://lyo-pgitl01.spectrumk.ads/eva4/dokumentation/issues/262
+	 */
+	FIX_DATES
 }

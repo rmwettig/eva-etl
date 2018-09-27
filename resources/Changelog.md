@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.1] - 2018-09-27
+### Changed
+  * query list is shuffled
+
 ## [1.2.0] - 2018-09-27
 ### Added
   * Pid hash calculation based on existing files

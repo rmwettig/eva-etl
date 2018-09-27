@@ -25,6 +25,10 @@ import de.ingef.eva.utility.SqlRunner;
 import de.ingef.eva.utility.Helper;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * This class holds a set of pids which must be excluded from being exported.
+ * Instances are deserialized from the configuration file if the strategy type is set to EMPLOYEE_PIDS.
+ */
 @JsonTypeName(value="EMPLOYEE_PIDS")
 @Log4j2
 public class EmployeePidsFilterStrategy extends FilterStrategy {

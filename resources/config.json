@@ -9,26 +9,50 @@
   "reportDirectory": "/var/eva/Daten/import/reports",
   "threadCount": "15",
   "hashing": {
-    "hashFile": "pidhashes.csv",
     "minYear": 2010,
-    "maxYear": 2017,
-    "subgroups": [
-      {
-        "db": "ADB",
-        "subgroups": [
-          "h2ik = '108036123'",
-          "h2ik = '108035612'",
-          "h2ik = '102129930'",
-          "h2ik = '104491707'"    
-        ]
+    "maxYear": 2018,
+    "fileDescriptors": {
+      "ACC_ADB_AVK_ADB_T_Vers_Stamm": {
+        "pidIndex": 2,
+        "dodIndex": 6,
+        "dobIndex": 4,
+        "genderIndex": 5
       },
-      {
-        "db": "FDB",
-        "subgroups": [
-          "flag_destatis = 1"    
-        ]
+      "ACC_ADB_AVK_ADB_T_AM_EVO": {
+        "pidIndex": 4,
+        "pznIndex": 10
+      },
+      "ACC_ADB_AVK_ADB_T_Arzt_Diagnose": {
+        "pidIndex": 2,
+        "icdIndex": 8,
+        "contractIndex": 11,
+        "confidenceIndex": 9
+      },
+      "ACC_ADB_AVK_ADB_T_Vers_Region": {
+        "pidIndex": 2,
+        "kgsIndex": 7
+      },
+      "ACC_FDB_AVK_FDB_T_Vers_Stamm": {
+        "pidIndex": 2,
+        "dodIndex": 5,
+        "dobIndex": 3,
+        "genderIndex": 4
+      },
+      "ACC_FDB_AVK_FDB_T_AM_EVO": {
+        "pidIndex": 3,
+        "pznIndex": 9
+      },
+      "ACC_FDB_AVK_FDB_T_Arzt_Diagnose": {
+        "pidIndex": 2,
+        "icdIndex": 9,
+        "contractIndex": 12,
+        "confidenceIndex": 10
+      },
+      "ACC_FDB_AVK_FDB_T_Vers_Region": {
+        "pidIndex": 2,
+        "kgsIndex": 6
       }
-    ]
+    }
   },
   "sources": [
     {
@@ -38,7 +62,8 @@
       "yearSlice": {
         "type": "FIXED_YEAR_SLICE",
         "startYear": 2010,
-        "endYear": 2018
+        "endYear": 2018,
+        "column": "bezugsjahr"
       },
       "views": [
         {
@@ -55,6 +80,14 @@
         },
         {
           "type": "TABLE",
+          "name": "AVK_ADB_T_AU_Fall_LEIST"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_AU_Fall_LEIST_DIA"
+        },
+        {
+          "type": "TABLE",
           "name": "AVK_ADB_T_Arzt_Fall"
         },
         {
@@ -64,10 +97,6 @@
         {
           "type": "TABLE",
           "name": "AVK_ADB_T_Arzt_OPS"
-        },
-        {
-          "type": "TABLE",
-          "name": "AVK_ADB_T_AU_Fall"
         },
         {
           "type": "TABLE",
@@ -268,12 +297,21 @@
       "yearSlice": {
         "type": "FIXED_YEAR_SLICE",
         "startYear": 2010,
-        "endYear": 2018
+        "endYear": 2018,
+        "column": "bezugsjahr"
       },
       "views": [
         {
           "type": "TABLE",
           "name": "AVK_FDB_T_AM_EVO"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_AU_Fall_LEIST"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_AU_Fall_LEIST_DIA"
         },
         {
           "type": "TABLE",
@@ -290,10 +328,6 @@
         {
           "type": "TABLE",
           "name": "AVK_FDB_T_Arzt_OPS"
-        },
-        {
-          "type": "TABLE",
-          "name": "AVK_FDB_T_AU_Fall"
         },
         {
           "type": "TABLE",
@@ -486,7 +520,8 @@
       "yearSlice": {
         "type": "FIXED_YEAR_SLICE",
         "startYear": 2010,
-        "endYear": 2018
+        "endYear": 2018,
+        "column": "bezugsjahr"
       },
       "views": [
         {
@@ -503,15 +538,19 @@
         },
         {
           "type": "TABLE",
+          "name": "AVK_ADB_T_AU_Fall_LEIST"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_AU_Fall_LEIST_DIA"
+        },
+        {
+          "type": "TABLE",
           "name": "AVK_ADB_T_Arzt_GOP"
         },
         {
           "type": "TABLE",
           "name": "AVK_ADB_T_Arzt_OPS"
-        },
-        {
-          "type": "TABLE",
-          "name": "AVK_ADB_T_AU_Fall"
         },
         {
           "type": "TABLE",
@@ -712,7 +751,8 @@
       "yearSlice": {
         "type": "FIXED_YEAR_SLICE",
         "startYear": 2010,
-        "endYear": 2018
+        "endYear": 2018,
+        "column": "bezugsjahr"
       },
       "views": [
         {
@@ -722,6 +762,14 @@
         {
           "type": "TABLE",
           "name": "AVK_ADB_T_AM_EVO"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_AU_Fall_LEIST"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_AU_Fall_LEIST_DIA"
         },
         {
           "type": "TABLE",
@@ -738,10 +786,6 @@
         {
           "type": "TABLE",
           "name": "AVK_ADB_T_Arzt_OPS"
-        },
-        {
-          "type": "TABLE",
-          "name": "AVK_ADB_T_AU_Fall"
         },
         {
           "type": "TABLE",
@@ -942,7 +986,8 @@
       "yearSlice": {
         "type": "FIXED_YEAR_SLICE",
         "startYear": 2010,
-        "endYear": 2018
+        "endYear": 2018,
+        "column": "bezugsjahr"
       },
       "views": [
         {
@@ -952,6 +997,14 @@
         {
           "type": "TABLE",
           "name": "AVK_ADB_T_AM_EVO"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_AU_Fall_LEIST"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_AU_Fall_LEIST_DIA"
         },
         {
           "type": "TABLE",
@@ -968,10 +1021,6 @@
         {
           "type": "TABLE",
           "name": "AVK_ADB_T_Arzt_OPS"
-        },
-        {
-          "type": "TABLE",
-          "name": "AVK_ADB_T_AU_Fall"
         },
         {
           "type": "TABLE",
@@ -1164,6 +1213,127 @@
           "operator": "EQUAL"
         }
       ]
+    },
+    {
+      "type": "DB",
+      "db": "SB_HRI",
+      "datasetName": "Bosch",
+      "yearSlice": {
+        "type": "FIXED_YEAR_SLICE",
+        "startYear": 2010,
+        "endYear": 2018,
+        "column": "bezugsjahr"
+      },
+      "views": [
+        {
+          "type": "TABLE",
+          "name": "EVA_ADB_AU_DIAG"
+        }
+      ],
+      "where": [
+        {
+          "type": "WHERE_INLINE",
+          "column": "h2ik",
+          "values": ["108036123"],
+          "columnType": "STRING",
+          "operator": "EQUAL"
+        }
+      ]
+    },
+    {
+      "type": "DB",
+      "db": "SB_HRI",
+      "datasetName": "Mhplus",
+      "yearSlice": {
+        "type": "FIXED_YEAR_SLICE",
+        "startYear": 2010,
+        "endYear": 2018,
+        "column": "bezugsjahr"
+      },
+      "views": [
+        {
+          "type": "TABLE",
+          "name": "EVA_ADB_AU_DIAG"
+        }
+      ],
+      "where": [
+        {
+          "type": "WHERE_INLINE",
+          "column": "h2ik",
+          "values": ["108035612"],
+          "columnType": "STRING",
+          "operator": "EQUAL"
+        }
+      ]
+    },
+    {
+      "type": "DB",
+      "db": "SB_HRI",
+      "datasetName": "Energie-BKK",
+      "yearSlice": {
+        "type": "FIXED_YEAR_SLICE",
+        "startYear": 2010,
+        "endYear": 2018,
+        "column": "bezugsjahr"
+      },
+      "views": [
+        {
+          "type": "TABLE",
+          "name": "EVA_ADB_AU_DIAG"
+        }
+      ],
+      "where": [
+        {
+          "type": "WHERE_INLINE",
+          "column": "h2ik",
+          "values": ["102129930"],
+          "columnType": "STRING",
+          "operator": "EQUAL"
+        }
+      ]
+    },
+    {
+      "type": "DB",
+      "db": "SB_HRI",
+      "datasetName": "Novitas",
+      "yearSlice": {
+        "type": "FIXED_YEAR_SLICE",
+        "startYear": 2010,
+        "endYear": 2018,
+        "column": "bezugsjahr"
+      },
+      "views": [
+        {
+          "type": "TABLE",
+          "name": "EVA_ADB_AU_DIAG"
+        }
+      ],
+      "where": [
+        {
+          "type": "WHERE_INLINE",
+          "column": "h2ik",
+          "values": ["104491707"],
+          "columnType": "STRING",
+          "operator": "EQUAL"
+        }
+      ]
+    },
+    {
+      "type": "DB",
+      "db": "SB_HRI",
+      "datasetName": "1M_benchmark",
+      "yearSlice": {
+        "type": "FIXED_YEAR_SLICE",
+        "startYear": 2010,
+        "endYear": 2018,
+        "column": "bezugsjahr"
+      },
+      "views": [
+        {
+          "type": "TABLE",
+          "name": "EVA_FDB_AU_DIAG"
+        }
+      ]
     }
   ],
   "decode": [
@@ -1272,8 +1442,34 @@
       "targetTable": "AM_EVO"
     },
     {
-      "mode": "PID_HASH",
-      "targetTable": "Vers_Stamm"
+      "mode": "START_DATE",
+      "endDateColumn": "leistungs_ende",
+      "dayColumn": "kg_tage",
+      "targetTable": "AU_FALL_Leist",
+      "valueName": "kg_beginn"
+    },
+    {
+      "mode": "DYNAMIC",
+      "targetDb": "ADB",
+      "targetTable": "arzt_fall",
+      "file": "extra-data/efn/efn-adb.csv",
+      "keyColumns": [
+        "vertrags_id",
+        "efn_id"
+      ]
+    },
+    {
+      "mode": "DYNAMIC",
+      "targetDb": "FDB",
+      "targetTable": "arzt_fall",
+      "file": "extra-data/efn/efn-fdb.csv",
+      "keyColumns": [
+        "vertrags_id",
+        "efn_id"
+      ]
+    },
+    {
+      "mode": "FIX_DATES"
     }
   ],
   "filters": [

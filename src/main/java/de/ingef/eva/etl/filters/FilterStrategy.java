@@ -1,4 +1,4 @@
-package de.ingef.eva.etl;
+package de.ingef.eva.etl.filters;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;

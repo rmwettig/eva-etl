@@ -1,4 +1,4 @@
-package de.ingef.eva.etl;
+package de.ingef.eva.utility;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import de.ingef.eva.data.RowElement;
+import de.ingef.eva.etl.Row;
 import lombok.extern.log4j.Log4j2;
 
 /**

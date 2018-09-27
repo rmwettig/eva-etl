@@ -1,8 +1,9 @@
-package de.ingef.eva.etl;
+package de.ingef.eva.etl.filters;
 
 import java.util.Map;
 
 import de.ingef.eva.configuration.Configuration;
+import de.ingef.eva.etl.Row;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

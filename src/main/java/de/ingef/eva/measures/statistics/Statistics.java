@@ -21,7 +21,7 @@ import de.ingef.eva.constant.OutputDirectory.DirectoryType;
 import de.ingef.eva.constant.Templates;
 import de.ingef.eva.measures.cci.Quarter;
 import de.ingef.eva.utility.Helper;
-import de.ingef.eva.utility.IOManager;
+import de.ingef.eva.utility.io.IOManager;
 import de.ingef.eva.utility.QuarterCount;
 import de.ingef.eva.utility.SystemCall;
 import lombok.AllArgsConstructor;

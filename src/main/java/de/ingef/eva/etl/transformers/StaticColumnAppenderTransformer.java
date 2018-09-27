@@ -1,4 +1,4 @@
-package de.ingef.eva.etl;
+package de.ingef.eva.etl.transformers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,6 +9,7 @@ import de.ingef.eva.configuration.append.AppendOrder;
 import de.ingef.eva.data.RowElement;
 import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
+import de.ingef.eva.etl.Row;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2

@@ -20,7 +20,7 @@ import de.ingef.eva.data.RowElement;
 import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.error.DataTableOperationException;
-import de.ingef.eva.utility.IOManager;
+import de.ingef.eva.utility.io.IOManager;
 
 
 public class ProcessPidDecodeTest {

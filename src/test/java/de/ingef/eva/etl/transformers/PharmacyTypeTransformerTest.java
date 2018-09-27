@@ -14,9 +14,7 @@ import org.junit.Test;
 import de.ingef.eva.data.RowElement;
 import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
-import de.ingef.eva.etl.PharmacyTypeTransformer;
 import de.ingef.eva.etl.Row;
-import de.ingef.eva.etl.Transformer;
 
 public class PharmacyTypeTransformerTest {
 	

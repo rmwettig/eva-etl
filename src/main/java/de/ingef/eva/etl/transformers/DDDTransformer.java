@@ -1,4 +1,4 @@
-package de.ingef.eva.etl;
+package de.ingef.eva.etl.transformers;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -20,6 +20,8 @@ import de.ingef.eva.configuration.append.AppendSourceConfig;
 import de.ingef.eva.data.RowElement;
 import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
+import de.ingef.eva.utility.DateRange;
+import de.ingef.eva.etl.Row;
 import de.ingef.eva.utility.Helper;
 
 /**

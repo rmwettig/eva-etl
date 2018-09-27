@@ -1,4 +1,4 @@
-package de.ingef.eva.etl;
+package de.ingef.eva.etl.transformers;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -10,6 +10,7 @@ import java.util.Optional;
 import de.ingef.eva.data.RowElement;
 import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
+import de.ingef.eva.etl.Row;
 
 public class StartDateTransformer extends Transformer {
 

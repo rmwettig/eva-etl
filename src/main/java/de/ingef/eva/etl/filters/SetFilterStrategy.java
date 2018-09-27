@@ -1,4 +1,4 @@
-package de.ingef.eva.etl;
+package de.ingef.eva.etl.filters;
 
 import java.util.Collections;
 import java.util.Set;

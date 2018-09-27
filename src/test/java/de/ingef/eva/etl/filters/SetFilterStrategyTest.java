@@ -7,8 +7,6 @@ import java.util.stream.Stream;
 
 import org.junit.Test;
 
-import de.ingef.eva.etl.SetFilterStrategy;
-
 public class SetFilterStrategyTest {
 
 	@Test

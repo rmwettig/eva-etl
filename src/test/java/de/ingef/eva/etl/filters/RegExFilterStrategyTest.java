@@ -4,8 +4,6 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import de.ingef.eva.etl.RegExFilterStrategy;
-
 public class RegExFilterStrategyTest {
 	
 	@Test

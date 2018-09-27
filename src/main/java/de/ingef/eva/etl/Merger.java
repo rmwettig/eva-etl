@@ -25,7 +25,7 @@ import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.constant.OutputDirectory;
 import de.ingef.eva.constant.OutputDirectory.DirectoryType;
 import de.ingef.eva.utility.Helper;
-import de.ingef.eva.utility.IOManager;
+import de.ingef.eva.utility.io.IOManager;
 import de.ingef.eva.utility.progress.ProgressBar;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

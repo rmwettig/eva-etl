@@ -1,4 +1,4 @@
-package de.ingef.eva.utility;
+package de.ingef.eva.utility.io;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;

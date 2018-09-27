@@ -1,5 +1,6 @@
-package de.ingef.eva.etl;
+package de.ingef.eva.etl.transformers;
 
+import de.ingef.eva.etl.Row;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor

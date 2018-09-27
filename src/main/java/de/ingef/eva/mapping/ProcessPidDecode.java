@@ -18,7 +18,7 @@ import de.ingef.eva.datasource.DataProcessor;
 import de.ingef.eva.datasource.file.FileDataTable;
 import de.ingef.eva.error.DataTableOperationException;
 import de.ingef.eva.utility.Helper;
-import de.ingef.eva.utility.IOManager;
+import de.ingef.eva.utility.io.IOManager;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

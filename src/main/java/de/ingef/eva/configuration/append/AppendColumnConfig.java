@@ -1,6 +1,6 @@
 package de.ingef.eva.configuration.append;
 
-import de.ingef.eva.etl.WidoColumn;
+import de.ingef.eva.etl.transformers.WidoColumn;
 import lombok.Getter;
 import lombok.ToString;
 

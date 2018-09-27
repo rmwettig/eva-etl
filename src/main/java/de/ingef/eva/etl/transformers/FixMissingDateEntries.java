@@ -1,7 +1,9 @@
-package de.ingef.eva.etl;
+package de.ingef.eva.etl.transformers;
 
 import de.ingef.eva.data.RowElement;
 import de.ingef.eva.data.SimpleRowElement;
+import de.ingef.eva.etl.Row;
+import de.ingef.eva.etl.transformers.Transformer;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -22,10 +22,7 @@ import de.ingef.eva.configuration.append.AppendConfiguration;
 import de.ingef.eva.data.RowElement;
 import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
-import de.ingef.eva.etl.DDDTransformer;
 import de.ingef.eva.etl.Row;
-import de.ingef.eva.etl.Transformer;
-import de.ingef.eva.etl.WidoColumn;
 
 public class DDDTransformerTest {
 

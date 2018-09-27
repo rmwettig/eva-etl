@@ -1,4 +1,4 @@
-package de.ingef.eva.etl;
+package de.ingef.eva.etl.filters;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -20,6 +20,8 @@ import de.ingef.eva.constant.Templates;
 import de.ingef.eva.data.RowElement;
 import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
+import de.ingef.eva.etl.Row;
+import de.ingef.eva.utility.SqlRunner;
 import de.ingef.eva.utility.Helper;
 import lombok.extern.log4j.Log4j2;
 

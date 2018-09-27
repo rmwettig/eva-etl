@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 
 import de.ingef.eva.error.TaskExecutionException;
 import de.ingef.eva.etl.Row;
-import de.ingef.eva.utility.CsvWriter;
+import de.ingef.eva.utility.io.CsvWriter;
 import lombok.extern.log4j.Log4j2;
 
 /**

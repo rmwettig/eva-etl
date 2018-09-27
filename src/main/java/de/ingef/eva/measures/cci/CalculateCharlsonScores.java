@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.configuration.cci.CCISource;
 import de.ingef.eva.constant.Templates;
-import de.ingef.eva.utility.CsvWriter;
+import de.ingef.eva.utility.io.CsvWriter;
 import de.ingef.eva.utility.Helper;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

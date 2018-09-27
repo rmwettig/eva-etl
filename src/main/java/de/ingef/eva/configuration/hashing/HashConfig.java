@@ -1,4 +1,4 @@
-package de.ingef.eva.configuration;
+package de.ingef.eva.configuration.hashing;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,10 +13,11 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.services.ConnectionFactory;
 import de.ingef.eva.services.TaskRunner;
-import de.ingef.eva.utility.CsvReader;
-import de.ingef.eva.utility.CsvWriter;
+import de.ingef.eva.utility.io.CsvReader;
+import de.ingef.eva.utility.io.CsvWriter;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import lombok.EqualsAndHashCode;

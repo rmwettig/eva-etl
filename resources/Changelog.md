@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.0] - 2018-09-27
+### Added
+  * Pid hash calculation based on existing files
+  * FixDateTransformer to fill 'behandl_beginn' and 'behandl_ende' if missing
+
+### Changed
+  * Reports work now with new AU structure
+  * Reports work now with new Morbi structure
+
 ## [1.1.0] - 2018-05-16
 ### Added
   * Year slices are compressed with gzip

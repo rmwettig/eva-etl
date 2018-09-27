@@ -1,0 +1,11 @@
+{
+  "type": "JOIN",
+  "joinType": "INNER",
+  "columns": [
+    {
+      "type": "COLUMN",
+      "name": "column2"
+    }
+  ],
+  "onColumns": [ "on1" ]
+}

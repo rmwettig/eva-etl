@@ -1,0 +1,31 @@
+{
+	"startYear":"2010",
+	"endYear":"2016",
+	"sources":[
+			{
+				"db":"database1",
+				"views": [
+					{  
+						"name": "tablename",
+						"where": [
+							{
+								"column":"columnname1",
+								"value":"src/test/resources/configuration/pseudoiks.csv", 
+								"type":"STRING",
+								"operator":"EQUAL",
+								"source": "FILE"
+							}
+						]
+					}
+				],					
+				"where":[
+					{
+						"column":"commonColumn",
+						"value":"1337",
+						"type":"NUMERIC",
+						"operator":"EQUAL"
+					}
+				]
+			}
+		]
+}

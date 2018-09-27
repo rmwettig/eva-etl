@@ -1,0 +1,7 @@
+{
+    "type": "WHERE_INLINE",
+    "column": "pid",
+    "operator": "EQUAL",
+    "columnType": "STRING",
+    "values": ["1", "2", "3"]
+}

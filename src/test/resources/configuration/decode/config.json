@@ -1,0 +1,13 @@
+{
+	"outputDirectory": "out",
+	"decode": [
+		{
+			"name": "Bosch",
+			"h2iks": ["108036123"]
+		},
+		{
+			"name": "Salzgitter",
+			"h2iks": ["101922757"]
+		}
+	]
+}

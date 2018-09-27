@@ -4,8 +4,8 @@
                       http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.ingef.eva</groupId>
-  <artifactId>EVA-data-import</artifactId>
-  <version>1.0</version>
+  <artifactId>eva-dump</artifactId>
+  <version>1.0-SNAPSHOT</version>
 
   <dependencies>
     <dependency>
@@ -13,12 +13,146 @@
       <artifactId>jdbi</artifactId>
       <version>2.78</version>
     </dependency>
+    <dependency>
+	    <groupId>com.fasterxml.jackson.core</groupId>
+	    <artifactId>jackson-core</artifactId>
+	    <version>2.8.6</version>
+	</dependency>
+	<dependency>
+	    <groupId>com.fasterxml.jackson.core</groupId>
+	    <artifactId>jackson-databind</artifactId>
+	    <version>2.8.6</version>
+	</dependency>
+	<dependency>
+	    <groupId>org.projectlombok</groupId>
+	    <artifactId>lombok</artifactId>
+	    <version>1.16.12</version>
+	</dependency>
+	<dependency>
+	    <groupId>junit</groupId>
+	    <artifactId>junit</artifactId>
+	    <version>4.12</version>
+	</dependency>
+	<dependency>
+	    <groupId>org.apache.logging.log4j</groupId>
+	    <artifactId>log4j-api</artifactId>
+	    <version>2.8</version>
+  	</dependency>
+	<dependency>
+	    <groupId>org.apache.logging.log4j</groupId>
+	    <artifactId>log4j-core</artifactId>
+	    <version>2.8</version>
+  	</dependency>
+	<dependency>
+		<groupId>commons-cli</groupId>
+		<artifactId>commons-cli</artifactId>
+		<version>1.4</version>
+	</dependency>
+	<dependency>
+		<groupId>org.apache.commons</groupId>
+		<artifactId>commons-csv</artifactId>
+		<version>1.4</version>
+	</dependency>
+	<dependency>
+		<groupId>com.teradata.jdbc</groupId>
+		<artifactId>terajdbc4</artifactId>
+		<version>16.10</version>
+	</dependency>
+	<dependency>
+		<groupId>com.teradata.jdbc</groupId>
+		<artifactId>tdgssconfig</artifactId>
+		<version>16.10</version>
+	</dependency>
+	<dependency>
+		<groupId>commons-codec</groupId>
+		<artifactId>commons-codec</artifactId>
+		<version>1.11</version>
+	</dependency>
+	<dependency>
+  		<groupId>io.github.lukehutch</groupId>
+  		<artifactId>fast-classpath-scanner</artifactId>
+  		<version>2.18.1</version>
+  	</dependency>
   </dependencies>
 
   <build>
-    <defaultGoal>install</defaultGoal>
+    <defaultGoal>package</defaultGoal>
     <directory>${basedir}/target</directory>
-    <finalName>${artifactId}-${version}</finalName>
-    <sourceDirectory>${project.basedir}/src</sourceDirectory>
+    <finalName>${project.artifactId}-${project.version}</finalName>
+    <sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
+	<testSourceDirectory>${project.basedir}/src/test/java</testSourceDirectory>
+	<testResources>
+      <testResource>
+        <directory>${project.basedir}/src/test/resources</directory>
+      </testResource>
+    </testResources>
+    <plugins>
+	  <plugin>
+	    <groupId>org.apache.maven.plugins</groupId>
+	    <artifactId>maven-compiler-plugin</artifactId>
+	    <version>3.6.1</version>
+	    <configuration>
+	      <source>1.8</source>
+	      <target>1.8</target>
+	    </configuration>
+	  </plugin>
+	  <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.0.2</version>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${basedir}/target</outputDirectory>
+              <resources>
+	            <resource>
+	              <directory>${basedir}/resources</directory>
+	              <filtering>true</filtering>
+	            </resource>
+              </resources>              
+            </configuration>            
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+      	<groupId>org.apache.maven.plugins</groupId>
+      	<artifactId>maven-jar-plugin</artifactId>
+      	<version>3.0.2</version>
+      	<configuration>
+      		<archive>
+      			<manifest>
+      				<addClasspath>true</addClasspath>
+      				<classpathPrefix>lib</classpathPrefix>
+      				<mainClass>de.ingef.eva.Main</mainClass>
+      			</manifest>
+      		</archive>
+      	</configuration>
+      </plugin>
+      <plugin>
+    	<groupId>org.apache.maven.plugins</groupId>
+    	<artifactId>maven-shade-plugin</artifactId>
+    	<version>3.1.0</version>
+    	<executions>
+        	<execution>
+            	<goals>
+                	<goal>shade</goal>
+            	</goals>
+            	<configuration>
+                	<shadedArtifactAttached>true</shadedArtifactAttached>
+	                <transformers>
+	                    <transformer implementation=
+	                      "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+	                        <mainClass>de.ingef.eva.Main</mainClass>
+	                	</transformer>
+	            	</transformers>
+	        	</configuration>
+        	</execution>
+    	</executions>
+		</plugin>
+  	</plugins>
   </build>
 </project>

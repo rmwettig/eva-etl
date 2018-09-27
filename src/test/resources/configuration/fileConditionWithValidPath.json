@@ -1,0 +1,7 @@
+{
+    "type": "WHERE_FILE",
+    "column": "pid",
+    "operator": "EQUAL",
+    "columnType": "STRING",
+    "conditionFile": "src/test/resources/configuration/pids.txt"
+}

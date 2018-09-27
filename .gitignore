@@ -1,5 +1,10 @@
 .settings
 .classpath
 .project
+devconfig.json
 target/
 bin/
+lib/
+out/
+tmp/
+*.jar

@@ -1,0 +1,6 @@
+{
+  "type": "FIXED_YEAR_SLICE",
+  "column": "bezugsjahr",
+  "startYear": 2010,
+  "endYear": 2018
+}

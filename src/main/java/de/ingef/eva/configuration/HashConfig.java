@@ -266,7 +266,6 @@ public class HashConfig {
 	}
 
 	public void calculateHashes(Configuration config, TaskRunner taskRunner, ConnectionFactory connectionFactory) {
-		removePreviousHashFile();
 		try {
 			Map<String, HashDataPaths> hashFiles = findHashData(config.getCacheDirectory());
 			for(String dataset : hashFiles.keySet()) {
@@ -562,17 +561,6 @@ public class HashConfig {
 		DataEntry pzn = dataEntries.get(3);
 		combined.getPznCodes().addAll(pzn.getPznCodes());
 		return combined;
-	}
-
-	/**
-	 * remove old hash file to avoid unwanted aggregation of hash mappings
-	 */
-	private void removePreviousHashFile() {
-		try {
-			Files.deleteIfExists(hashFile);
-		} catch (IOException e) {
-			log.error("Could not remove hash file '{}'. {}", hashFile, e);
-		}
 	}
 
 	private String createHashMapping(DataEntry pidData) {

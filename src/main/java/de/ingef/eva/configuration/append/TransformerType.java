@@ -23,10 +23,6 @@ public enum TransformerType {
 	 */
 	APO_TYPE,
 	/**
-	 * creates a transformer that appends a SHA-256 hash
-	 */
-	PID_HASH,
-	/**
 	 * append columns from file when the specified key column matches
 	 */
 	DYNAMIC,

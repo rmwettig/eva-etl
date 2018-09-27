@@ -32,8 +32,6 @@ public class TransformerFactory {
 			return new BsKvMapperTransformer();
 		case APO_TYPE:
 			return new PharmacyTypeTransformer(config.getTargetDb(), config.getTargetTable());
-		case PID_HASH:
-			return HashTransformer.of(mainConfig, config);
 		case DYNAMIC:
 			return DynamicColumnAppender.of(config);
 		case START_DATE:

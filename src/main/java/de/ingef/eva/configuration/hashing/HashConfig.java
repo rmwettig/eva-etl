@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.services.ConnectionFactory;
 import de.ingef.eva.services.TaskRunner;
+import de.ingef.eva.utility.DateFormatValidator;
 import de.ingef.eva.utility.io.CsvReader;
 import de.ingef.eva.utility.io.CsvWriter;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -54,7 +55,8 @@ public class HashConfig {
 	private static final String PZN_INDEX_NAME = "pznIndex";
 	private static final String TMP_FILE_EXTENSION = "tmp";
 	private static final String ORIGINAL_FILE_EXTENSION = "orig";
-	public static final String MATCH_DOT = "\\.";
+	private static final String MATCH_DOT = "\\.";
+	private static final String PID_HASH_COLUMN_NAME = "pid_hash";
 
 	private Path hashFile;
 	private int minYear;
@@ -144,22 +146,36 @@ public class HashConfig {
 				return FileVisitResult.CONTINUE;
 			HashDataPaths entry = new HashDataPaths(dir.getFileName().toString(), dir.subpath(0, dir.getNameCount() - 1));
 			for(File file : dir.toFile().listFiles()) {
-				if(file.getName().endsWith(TMP_FILE_EXTENSION) || file.getName().endsWith(ORIGINAL_FILE_EXTENSION))
+				String fileName = file.getName().toLowerCase();
+				if(isInvalidFile(fileName))
 					continue;
-				String fileName = file.getName().toString().toLowerCase();
-				int yearSlice = Integer.parseInt(fileName.split(MATCH_DOT)[1]);
-				if(
-						yearSlice >= minYear &&
-								yearSlice <= maxYear &&
-								(fileName.contains("vers_stamm") ||
-										fileName.contains("am_evo") ||
-										fileName.contains("arzt_diagnose") ||
-										fileName.contains("vers_region"))
-				)
+
+				String[] nameParts = fileName.split(MATCH_DOT);
+				if(nameParts.length < 2 || nameParts[1].isEmpty())
+					continue;
+
+				int yearSlice = Integer.parseInt(nameParts[1]);
+				//calculation is based on specified year limits
+				if(yearSlice >= minYear && yearSlice <= maxYear)
 					entry.getDataFiles().add(file.toPath());
 			}
 			hashFiles.put(dir.getFileName().toString(), entry);
 			return FileVisitResult.CONTINUE;
+		}
+
+		/**
+		 * excludes temporary, back-up and for the hash irrelevant files
+		 * @param fileName
+		 * @return true if file must be excluded
+		 */
+		private boolean isInvalidFile(String fileName) {
+			return fileName.endsWith(TMP_FILE_EXTENSION) ||
+			fileName.endsWith(ORIGINAL_FILE_EXTENSION) ||
+			!(fileName.contains("vers_stamm") ||
+				fileName.contains("am_evo") ||
+				fileName.contains("arzt_diagnose") ||
+				fileName.contains("vers_region")
+			);
 		}
 	}
 
@@ -293,8 +309,10 @@ public class HashConfig {
 			//check if hash column is already present
 			String[] columns = reader.readLine().split(";");
 			Arrays.stream(columns).forEach(columnName -> writer.addEntry(columnName));
+			int hashColumnIndex = findColumnIndex(columns, PID_HASH_COLUMN_NAME);
+			if(hashColumnIndex == -1)
+				writer.addEntry(PID_HASH_COLUMN_NAME);
 			writer.writeLine();
-			int hashColumnIndex = findColumnIndex(columns, "pid_hash");
 			int pidColumnIndex = findColumnIndex(columns, "pid");
 			Function<String[], String[]> lineProcessor = createLineProcessor(data, hashColumnIndex, pidColumnIndex);
 			String line;
@@ -490,11 +508,13 @@ public class HashConfig {
 			String gender = columns.get(genderIndex);
 			if(!gender.isEmpty())
 				e.updateGender(gender.charAt(0));
+			// do not update dates if not ISO date
+			DateFormatValidator isoDateFormat = new DateFormatValidator("yyyy-MM-dd");
 			String dodText = columns.get(dodIndex);
-			if(!dodText.isEmpty())
+			if (!dodText.isEmpty() && isoDateFormat.isValid(dodText))
 				e.updateDOD(LocalDate.parse(dodText));
 			String dobText = columns.get(dobIndex);
-			if(!dobText.isEmpty())
+			if (!dobText.isEmpty() && isoDateFormat.isValid(dobText))
 				e.updateDOB(LocalDate.parse(dobText));
 			return e;
 		};

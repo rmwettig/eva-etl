@@ -291,7 +291,7 @@ public class HashConfig {
 				appendHash(entry, data);
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error(e);
 		}
 	}
 
@@ -302,7 +302,9 @@ public class HashConfig {
 					.stream()
 					.filter(path -> path.getFileName().toString().toLowerCase().contains("vers_stamm"))
 					.collect(Collectors.toList());
+		log.info("Appending hashes");
 		for(Path path : modifiableFiles) {
+			log.info("Modifying {}", path);
 			BufferedReader reader = CsvReader.createGzipReader(path).getReader();
 			Path tmpFile = Paths.get(path.toString() + "." + TMP_FILE_EXTENSION);
 			CsvWriter writer = CsvWriter.createGzipWriter(tmpFile);
@@ -376,6 +378,7 @@ public class HashConfig {
 		for(int blockIndex = 0; blockIndex < numberOfYearBlocks; blockIndex++) {
 			int offset = 4 * blockIndex;
 			Path baseFilePath = files.get(0 + offset);
+			log.info("Processing {}", baseFilePath);
 			String baseCommonName = baseFilePath.getFileName().toString().split(MATCH_DOT)[0];
 			Map<String, DataEntry> baseData = readData(
 					baseFilePath,
@@ -383,6 +386,7 @@ public class HashConfig {
 					this::mergeBaseDataEntries
 			);
 			Path kgsFilePath = files.get(1 + offset);
+			log.info("Processing {}", kgsFilePath);
 			String kgsCommonName = kgsFilePath.getFileName().toString().split(MATCH_DOT)[0];
 			Map<String, DataEntry> kgsData = readData(
 					kgsFilePath,
@@ -390,6 +394,7 @@ public class HashConfig {
 					this::mergeKgsEntries
 			);
 			Path icdFilePath = files.get(2 + offset);
+			log.info("Processing {}", icdFilePath);
 			String icdCommonName = icdFilePath.getFileName().toString().split(MATCH_DOT)[0];
 			Map<String, DataEntry> icdData = readData(
 					icdFilePath,
@@ -398,6 +403,7 @@ public class HashConfig {
 					filterIcdEntries(icdCommonName)
 			);
 			Path pznFilePath = files.get(3 + offset);
+			log.info("Processing {}", pznFilePath);
 			String pznCommonName = pznFilePath.getFileName().toString().split(MATCH_DOT)[0];
 			Map<String, DataEntry> pznData = readData(
 					pznFilePath,

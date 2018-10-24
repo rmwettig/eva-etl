@@ -45,6 +45,7 @@ public class ETLPipeline {
 		CountDownLatch countdown = new CountDownLatch(queries.size());
 		Predicate<Row> rowFilter = createRowFilter(filters);
 		Function<Row, Row> rowTransformer = createRowTransformer(transformers);
+		log.info("Dispatching export tasks");
 		for(Query q : queries) {
 			startExport(q, taskRunner, connectionFactory, rowFilter, rowTransformer, ioManager, progress, countdown);
 		}
@@ -115,10 +116,6 @@ public class ETLPipeline {
 		return (Row row) -> {
 			for(Filter f : filters) {
 				if(!f.isValid(row)) {
-					log.error("Invalid row in table '{}'. Filter '{}' failed. [{}]",
-							row.getTable(),
-							f.getName(),
-							row.getColumns().stream().map(e -> e.getContent()).collect(Collectors.joining(", ")));
 					return false;
 				}
 			}

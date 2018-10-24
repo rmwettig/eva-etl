@@ -36,7 +36,6 @@ public class StaticColumnAppenderTransformer extends Transformer {
 		List<RowElement> columns = row.getColumns();
 		Map<String,Integer> indices = row.getColumnName2Index();
 		if(hasColumnAlready(indices)) {
-			log.warn("Skip row from '{}.{}' as column '{}' exists already.", row.getDb(), row.getTable(), valueName);
 			return row;
 		}
 		List<RowElement> transformed = new ArrayList<>(columns.size() + 1);

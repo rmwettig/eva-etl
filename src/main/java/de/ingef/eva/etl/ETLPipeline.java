@@ -37,6 +37,9 @@ import de.ingef.eva.utility.io.IOManager;
 import de.ingef.eva.utility.progress.ProgressBar;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * Export command
+ */
 @Log4j2
 public class ETLPipeline {
 	

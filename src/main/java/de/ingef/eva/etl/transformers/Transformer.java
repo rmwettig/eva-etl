@@ -3,6 +3,9 @@ package de.ingef.eva.etl.transformers;
 import de.ingef.eva.etl.Row;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Base class for transformers
+ */
 @RequiredArgsConstructor
 public abstract class Transformer {
 	

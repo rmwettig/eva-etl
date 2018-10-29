@@ -10,6 +10,9 @@ import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.etl.Row;
 
+/**
+ * Appends a separate column that denote a pharmacy category (hospital, pharmacy, miscellaneous)
+ */
 public class PharmacyTypeTransformer extends Transformer {
 
 	private static final String EMPTY_DEFAULT = "";

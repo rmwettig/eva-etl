@@ -12,12 +12,30 @@ import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.etl.Row;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * Appends a fixed value to a row
+ */
 @Log4j2
 public class StaticColumnAppenderTransformer extends Transformer {
 
+	/**
+	 * Name of the appended column
+	 */
 	private final String valueName;
+
+	/**
+	 * Appended value
+	 */
 	private final String value;
+
+	/**
+	 * Append at the beginning or at the end of a row
+	 */
 	private final AppendOrder order;
+
+	/**
+	 * Tables that should not be modified
+	 */
 	private final List<String> excludeTables;
 	
 	public StaticColumnAppenderTransformer(String db, String table, String valueName, String value, AppendOrder order, List<String> excludeTables) {

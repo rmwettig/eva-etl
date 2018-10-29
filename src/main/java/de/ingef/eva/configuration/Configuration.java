@@ -83,9 +83,15 @@ public class Configuration {
 	private List<Filter> filters;
 	
 	private CCIConfig cci;
-	
+
+	/**
+	 * Settings for report creation
+	 */
 	private StatisticConfig statistics;
-	
+
+	/**
+	 * Settings for hash calculation
+	 */
 	private HashConfig hashing;
 	
 	/**

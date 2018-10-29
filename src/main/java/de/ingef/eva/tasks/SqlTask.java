@@ -37,6 +37,7 @@ public class SqlTask extends Task<Stream<Row>> {
 		PreparedStatement statement = null;
 		ResultSet result = null;
 		try {
+			//jdbc resources will be closed after the stream has been consumed
 			conn = connectionFactory.createConnection();
 			statement = conn.prepareStatement(query.getQuery());
 			result = statement.executeQuery();

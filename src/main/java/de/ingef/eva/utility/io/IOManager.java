@@ -11,6 +11,9 @@ import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.constant.OutputDirectory.DirectoryType;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * manages application directories
+ */
 @Log4j2
 public class IOManager {
 

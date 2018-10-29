@@ -16,6 +16,10 @@ import lombok.Setter;
 @JsonTypeName(value="DYNAMIC_YEAR_SLICE")
 public class DynamicYearSlice extends YearSliceNode {
 
+	/**
+	 * determines how many years in the past are considered starting from current year.
+	 * E.g. numberOfPreviousYears = 3 and current year is 2018 then the years 2018, 2017, 2016 and 2015 are taken
+	 */
 	private final int numberOfPreviousYears;
 	
 	public DynamicYearSlice() {

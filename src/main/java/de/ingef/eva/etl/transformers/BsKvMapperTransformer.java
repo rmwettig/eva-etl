@@ -11,6 +11,9 @@ import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.etl.Row;
 
+/**
+ * Betriebsst\u00e4ttennummer to KV id mapper
+ */
 public class BsKvMapperTransformer extends Transformer {
 
 	public BsKvMapperTransformer(String db, String table) {

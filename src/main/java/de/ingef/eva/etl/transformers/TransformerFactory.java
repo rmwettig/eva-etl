@@ -9,6 +9,9 @@ import de.ingef.eva.configuration.append.AppendConfiguration;
 import de.ingef.eva.configuration.append.AppendSourceConfig;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * Creates transformer instances from config
+ */
 @Log4j2
 public class TransformerFactory {
 	

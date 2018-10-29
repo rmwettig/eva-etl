@@ -4,6 +4,9 @@ import de.ingef.eva.etl.transformers.WidoColumn;
 import lombok.Getter;
 import lombok.ToString;
 
+/**
+ * Defines a column from WIDO data
+ */
 @Getter
 @ToString
 public class AppendColumnConfig {

@@ -6,6 +6,9 @@ import java.util.List;
 import de.ingef.eva.measures.cci.Quarter;
 import de.ingef.eva.utility.QuarterCount;
 
+/**
+ * Calculates changes based on KV regions
+ */
 public class RegionalStatisticCalculator {
 
 	/**

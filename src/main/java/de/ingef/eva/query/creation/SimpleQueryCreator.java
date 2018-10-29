@@ -22,6 +22,9 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Singular;
 
+/**
+ * Collects data from {@link de.ingef.eva.configuration.export.sql.SqlNode} and creates {@link SimpleQuery}
+ */
 public class SimpleQueryCreator implements QueryCreator {
 
 	private Alias aliaser = new Alias(20);

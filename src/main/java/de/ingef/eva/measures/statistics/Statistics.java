@@ -30,6 +30,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * Report creation command
+ */
 @RequiredArgsConstructor
 @Log4j2
 public class Statistics {

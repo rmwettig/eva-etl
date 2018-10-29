@@ -6,6 +6,9 @@ import java.util.List;
 import lombok.Getter;
 import lombok.ToString;
 
+/**
+ * WIDO data file definition
+ */
 @Getter
 @ToString
 public class AppendSourceConfig {

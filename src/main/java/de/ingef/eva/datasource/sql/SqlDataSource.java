@@ -18,7 +18,10 @@ public class SqlDataSource implements DataSource {
 	private final String query;
 	private final String name;
 	private final Configuration config;
-	
+
+	/**
+	 * executes the specified query and converts it to a data table
+	 */
 	@Override
 	public DataTable fetchData() {
 		try {

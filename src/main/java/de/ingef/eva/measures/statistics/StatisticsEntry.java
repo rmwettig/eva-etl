@@ -7,6 +7,9 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
+/**
+ * A table's associated data over quarters
+ */
 @Getter
 @RequiredArgsConstructor
 @ToString

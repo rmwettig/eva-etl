@@ -7,6 +7,9 @@ import com.fasterxml.jackson.databind.annotation.JsonTypeIdResolver;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Base class for json sql mapping
+ */
 @Getter
 @RequiredArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)

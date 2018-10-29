@@ -3,6 +3,9 @@ package de.ingef.eva.measures.statistics;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Report table info
+ */
 @Getter
 @RequiredArgsConstructor
 public enum DataSlice {

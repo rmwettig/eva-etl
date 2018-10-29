@@ -6,6 +6,9 @@ import java.util.stream.IntStream;
 
 import lombok.Getter;
 
+/**
+ * Base class for different year slicing methods
+ */
 @Getter
 public abstract class YearSliceNode extends SqlNode {
 	

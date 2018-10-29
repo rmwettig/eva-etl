@@ -7,6 +7,9 @@ import java.util.Optional;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+/**
+ * Database representation
+ */
 @EqualsAndHashCode(exclude = {"_tables"})
 @ToString
 public class Database {

@@ -18,12 +18,28 @@ import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.etl.Row;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * Appends columns from a source csv at the end of a row.
+ * Multiple key columns can be given.
+ * The csv file must have headers
+ */
 @Log4j2
 public class DynamicColumnAppender extends Transformer {
 
 	private static final String KEY_VALUE_DELIMITER = "|";
+	/**
+	 * Name of the key columns. Order must match order in csv
+	 */
 	private List<String> keyColumns;
+
+	/**
+	 * Column headers
+	 */
 	private List<RowElement> columnNames;
+
+	/**
+	 * Appended data
+	 */
 	private Map<String, List<RowElement>> newColumns;
 	
 	public DynamicColumnAppender(String db, String table, List<String> keyNames, List<RowElement> header, Map<String, List<RowElement>> key2Columns) {

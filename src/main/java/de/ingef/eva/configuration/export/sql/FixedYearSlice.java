@@ -7,6 +7,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * Calculates a year span based on the specified fixed years
+ */
 @Getter @Setter
 @JsonTypeName(value="FIXED_YEAR_SLICE")
 public class FixedYearSlice extends YearSliceNode {

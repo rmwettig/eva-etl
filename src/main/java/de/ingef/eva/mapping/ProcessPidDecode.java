@@ -25,6 +25,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * Pid decode creation command
+ */
 @Log4j2 @RequiredArgsConstructor
 public class ProcessPidDecode implements DataProcessor {
 	

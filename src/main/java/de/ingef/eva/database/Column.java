@@ -6,6 +6,9 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
+/**
+ * Database schema column
+ */
 @RequiredArgsConstructor
 @Getter
 @EqualsAndHashCode

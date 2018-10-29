@@ -6,6 +6,9 @@ import java.sql.SQLException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * Creates jdbc connections
+ */
 @Log4j2
 @RequiredArgsConstructor
 public abstract class ConnectionFactory {
@@ -16,7 +19,7 @@ public abstract class ConnectionFactory {
 	private final String jdbcDriver;
 	private int connectionCount = 0;
 	/**
-	 * creates a new db connection. Factory must be initialized by calling {@link #initialize()}
+	 * creates a new db connection. Factory must be initialized by calling {@link #initialize()} first
 	 * @return
 	 */
 	public synchronized Connection createConnection() throws SQLException {

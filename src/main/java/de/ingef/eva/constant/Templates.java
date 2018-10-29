@@ -1,5 +1,8 @@
 package de.ingef.eva.constant;
 
+/**
+ * Sql query templates
+ */
 public final class Templates {
 
 	public static final String QUERY_COLUMNS = "help column %s.%s.*";

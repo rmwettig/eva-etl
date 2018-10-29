@@ -7,6 +7,9 @@ import java.util.Optional;
 
 import lombok.ToString;
 
+/**
+ * Database lookups
+ */
 @ToString
 public class DatabaseSchema {
 	

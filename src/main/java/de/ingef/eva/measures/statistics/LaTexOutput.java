@@ -40,6 +40,9 @@ import de.ingef.eva.utility.latex.table.RowContent;
 import de.ingef.eva.utility.latex.table.Tabular;
 import de.ingef.eva.utility.latex.table.Tabular.TabularType;
 
+/**
+ * TeX file creator
+ */
 public class LaTexOutput {
 	
 	private static final String DOCUMENT_FONT = "Roboto";

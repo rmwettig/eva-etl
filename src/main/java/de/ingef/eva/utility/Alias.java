@@ -1,5 +1,8 @@
 package de.ingef.eva.utility;
 
+/**
+ * Creates alphabetic aliases, e.g. a -> z, aa -> zz
+ */
 public final class Alias {
 
 	private int _position = 0;

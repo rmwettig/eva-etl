@@ -8,14 +8,36 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Filter base class
+ */
 @Getter @Setter
 @NoArgsConstructor
 public class Filter {
-	
+
+	/**
+	 * Filter name
+	 */
 	protected String name;
+
+	/**
+	 * Database on which this filter should be applied
+	 */
 	private String database;
+
+	/**
+	 * Table on which this filter should be applied
+	 */
 	private String table;
+
+	/**
+	 * Column which is filtered
+	 */
 	private String column;
+
+	/**
+	 * Filter behaviour
+	 */
 	private FilterStrategy filterStrategy;
 	/**
 	 * Determines if values validated by the filter strategy are accepted and passed on in the pipeline

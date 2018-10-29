@@ -9,6 +9,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Data container for fetched data
+ */
 @Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor

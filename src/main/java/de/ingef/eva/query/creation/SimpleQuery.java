@@ -4,6 +4,9 @@ import de.ingef.eva.query.Query;
 import lombok.Builder;
 import lombok.Data;
 
+/**
+ * Sql query with meta data
+ */
 @Data
 @Builder
 public class SimpleQuery implements Query {

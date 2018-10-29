@@ -12,10 +12,24 @@ import de.ingef.eva.data.SimpleRowElement;
 import de.ingef.eva.data.TeradataColumnType;
 import de.ingef.eva.etl.Row;
 
+/**
+ * Based on an end date and an day count column a start date is calculated
+ */
 public class StartDateTransformer extends Transformer {
 
+	/**
+	 * Name of the end date column
+	 */
 	private String endDateColumn;
+
+	/**
+	 * Name of the day count column
+	 */
 	private String dayColumn;
+
+	/**
+	 * Name of the generated column
+	 */
 	private String outputColumn;
 	
 	public StartDateTransformer(String db, String table, String endDateColumn, String dayColumn, String outputColumn) {

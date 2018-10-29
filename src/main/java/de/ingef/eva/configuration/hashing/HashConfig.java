@@ -30,6 +30,9 @@ import lombok.extern.log4j.Log4j2;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
+/**
+ * Definition of hashing step
+ */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -59,7 +62,13 @@ public class HashConfig {
 	private static final String PID_HASH_COLUMN_NAME = "pid_hash";
 
 	private Path hashFile;
+	/**
+	 * start year from which data is being considered
+	 */
 	private int minYear;
+	/**
+	 * end year from which data is being considered
+	 */
 	private int maxYear;
 	/**
 	 * file name to column name to column index map

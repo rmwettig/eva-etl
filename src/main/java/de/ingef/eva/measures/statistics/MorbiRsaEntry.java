@@ -3,6 +3,9 @@ package de.ingef.eva.measures.statistics;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * MorbiRSA report data container
+ */
 @Getter
 @RequiredArgsConstructor
 public class MorbiRsaEntry {

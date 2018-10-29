@@ -25,7 +25,7 @@ import de.ingef.eva.etl.Row;
 import de.ingef.eva.utility.Helper;
 
 /**
- * Appends columns loaded from a file to the end of the row
+ * Appends columns loaded from a wido file to the end of the row
  * @author Martin.Wettig
  *
  */

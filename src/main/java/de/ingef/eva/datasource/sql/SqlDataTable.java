@@ -14,6 +14,9 @@ import de.ingef.eva.error.DataTableOperationException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * accesses data resulting from an sql query
+ */
 @RequiredArgsConstructor
 public class SqlDataTable implements DataTable {
 

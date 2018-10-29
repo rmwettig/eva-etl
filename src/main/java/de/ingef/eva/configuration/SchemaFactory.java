@@ -19,6 +19,9 @@ import de.ingef.eva.database.DatabaseSchema;
 import de.ingef.eva.database.Table;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * Creates a data base schema for table lookup
+ */
 @Log4j2
 public class SchemaFactory {
 	

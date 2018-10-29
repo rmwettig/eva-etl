@@ -3,6 +3,9 @@ package de.ingef.eva.etl.transformers;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * WIDO column names
+ */
 @Getter
 @RequiredArgsConstructor
 public enum WidoColumn {

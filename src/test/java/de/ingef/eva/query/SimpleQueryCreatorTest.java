@@ -49,10 +49,10 @@ public class SimpleQueryCreatorTest {
 	@Test
 	public void testQueryWithOutJoin() {
 		SimpleQueryCreator creator = new SimpleQueryCreator(schema);
-		/**
-		 * select a.column
-		 * from DB.table a
-		 * where (a.column = 1 or a.column2 = 'lol') and a.column3 like 'C%';
+		/*
+		  select a.column
+		  from DB.table a
+		  where (a.column = 1 or a.column2 = 'lol') and a.column3 like 'C%';
 		 */
 		
 		creator.setDatabase("DB");
@@ -92,12 +92,12 @@ public class SimpleQueryCreatorTest {
 	@Test
 	public void testQueryWithJoin() {
 		SimpleQueryCreator creator = new SimpleQueryCreator(schema);
-		/**
-		 * select a.column, b.column
-		 * from DB.table a
-		 * inner join DB.table2 b
-		 * on a.primary=b.primary
-		 * where (a.column=1 or a.column2='lol') and (a.column3 like 'C%') and (b.column > 100);
+		/*
+		  select a.column, b.column
+		  from DB.table a
+		  inner join DB.table2 b
+		  on a.primary=b.primary
+		  where (a.column=1 or a.column2='lol') and (a.column3 like 'C%') and (b.column > 100);
 		 */
 		
 		creator.setDatabase("DB");

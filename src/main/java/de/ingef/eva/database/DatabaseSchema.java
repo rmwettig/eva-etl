@@ -19,10 +19,6 @@ public class DatabaseSchema {
 		return _databases.stream().filter(db -> db.getName().equalsIgnoreCase(name)).findFirst();
 	}
 
-	public Collection<Database> getAllDatabases() {
-		return _databases;
-	}
-
 	public void addDatabase(Database db) {
 		_databases.add(db);
 	}

@@ -11,5 +11,4 @@ public interface DataTable {
 	public boolean open() throws DataTableOperationException;
 	public void close() throws DataTableOperationException;
 	public String getName();
-	public String getDelimiter();
 }

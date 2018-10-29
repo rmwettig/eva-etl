@@ -268,14 +268,6 @@ public class DDDTransformer extends Transformer {
 		return processedPackageName;
 	}
 
-	private static HashSet<String> createColumnExclusion() {
-		HashSet<String> excludeDatesFromResult = new HashSet<>(2);
-		excludeDatesFromResult.add(WidoColumn.ADMISSION_DATE.getLabel());
-		excludeDatesFromResult.add(WidoColumn.RETIREMENT_DATE.getLabel());
-		excludeDatesFromResult.add(WidoColumn.PACK_SIZE.getLabel());
-		return excludeDatesFromResult;
-	}
-		
 	private static Map<String, DateRange> extractValidityDateRange(Map<String, Map<String, RowElement>> pzn2Column2Value, Set<String> supplementOnlyKeys) {
 		Map<String, DateRange> checkedData = new HashMap<>(pzn2Column2Value.size());
 		for(Map.Entry<String, Map<String, RowElement>> entry : pzn2Column2Value.entrySet()) {
@@ -371,31 +363,5 @@ public class DDDTransformer extends Transformer {
 		}
 		return pzn2Column2Data;
 	}
-		
-	private static Map<String, List<RowElement>> readColumns(BufferedReader reader) throws IOException {
-		String line = null;
-		Map<String,List<RowElement>> additionalColumns = new HashMap<>();
-		while((line = reader.readLine()) != null) {
-			if(line.isEmpty())
-				continue;
-			String[] arr = line.split(";");
-			if(arr[0] == null || arr[0].isEmpty())
-				continue;
-			//first field is the key
-			List<RowElement> columns = new ArrayList<>(arr.length - 1);
-			IntStream.range(1, arr.length).forEachOrdered(i -> columns.add(new SimpleRowElement(arr[i], TeradataColumnType.CHARACTER)));
-			additionalColumns.put(arr[0], columns);
-		}
-		
-		return additionalColumns;
-	}
 
-	private static List<RowElement> readHeader(BufferedReader reader) throws IOException {
-		String header = reader.readLine();
-		String[] names = header.split(";");
-		List<RowElement> columnNames = new ArrayList<>(names.length);
-		for(String name : names)
-			columnNames.add(new SimpleRowElement(name, TeradataColumnType.CHARACTER));
-		return columnNames;
-	}
 }

@@ -16,10 +16,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.constant.OutputDirectory;
 import de.ingef.eva.constant.OutputDirectory.DirectoryType;
 import de.ingef.eva.data.RowElement;
@@ -43,7 +41,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class ETLPipeline {
 	
-	public void run(Configuration configuration, Collection<Query> queries, List<Filter> filters, List<Transformer> transformers, IOManager ioManager, TaskRunner taskRunner, ConnectionFactory connectionFactory) {
+	public void run(Collection<Query> queries, List<Filter> filters, List<Transformer> transformers, IOManager ioManager, TaskRunner taskRunner, ConnectionFactory connectionFactory) {
 		ProgressBar progress = new ProgressBar(queries.size());
 		CountDownLatch countdown = new CountDownLatch(queries.size());
 		Predicate<Row> rowFilter = createRowFilter(filters);
@@ -64,8 +62,8 @@ public class ETLPipeline {
 	 * @param q
 	 * @param taskRunner
 	 * @param connectionFactory
-	 * @param filters
-	 * @param transformers
+	 * @param rowFilter
+	 * @param rowTransformer
 	 * @param ioManager
 	 * @param progressBar
 	 * @param countdown

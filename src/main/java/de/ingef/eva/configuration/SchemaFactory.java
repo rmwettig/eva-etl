@@ -100,7 +100,7 @@ public class SchemaFactory {
 	 * fetches columns for the given table from the database
 	 * @param stm
 	 * @param db
-	 * @param tableConfig
+	 * @param tableName
 	 * @return table without columns on error
 	 */
 	private Table convertToTable(Statement stm, String db, String tableName) {

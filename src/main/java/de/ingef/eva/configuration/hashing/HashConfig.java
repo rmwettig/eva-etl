@@ -61,7 +61,6 @@ public class HashConfig {
 	private static final String MATCH_DOT = "\\.";
 	private static final String PID_HASH_COLUMN_NAME = "pid_hash";
 
-	private Path hashFile;
 	/**
 	 * start year from which data is being considered
 	 */
@@ -573,30 +572,6 @@ public class HashConfig {
 		HashDataFiles fileFinder = new HashDataFiles(minYear, maxYear);
 		Files.walkFileTree(Paths.get(cacheDirectory), fileFinder);
 		return fileFinder.getHashFiles();
-	}
-
-	/**
-	 * combines all data parts in a single data entry object
-	 * @param dataEntries
-	 * @return
-	 */
-	private DataEntry combineCategoriesIntoSingleEntry(List<DataEntry> dataEntries) {
-		DataEntry base = dataEntries.get(0);
-		DataEntry combined = new DataEntry(base.getPid());
-		combined.updateGender(base.getGender());
-		combined.updateDOB(base.getDob());
-		combined.updateDOD(base.getDod());
-
-		DataEntry residence = dataEntries.get(1);
-		combined.updateMinKgs(residence.getMinKgs());
-		combined.updateMaxKgs(residence.getMaxKgs());
-
-		DataEntry icd = dataEntries.get(2);
-		combined.getIcdCodes().addAll(icd.getIcdCodes());
-
-		DataEntry pzn = dataEntries.get(3);
-		combined.getPznCodes().addAll(pzn.getPznCodes());
-		return combined;
 	}
 
 	private String createHashMapping(DataEntry pidData) {

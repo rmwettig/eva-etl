@@ -46,10 +46,6 @@ public abstract class WhereConfig extends SqlNode {
 		builder.addWhere(table, column, prepareConditionValues(), operator, columnType);
 		builder.endOrGroup();
 	}
-	
-	public void traverseGlobalCondition(String table, QueryCreator builder) {
-		builder.addGlobalWhere(table, column, prepareConditionValues(), operator, columnType);
-	}
-	
+
 	protected abstract List<String> prepareConditionValues();
 }

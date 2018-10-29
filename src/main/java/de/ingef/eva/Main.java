@@ -100,14 +100,15 @@ public class Main {
 		Configuration config = Configuration.loadFromJson(cmd.getOptionValue(EXPORT_COMMAND));
 		TaskRunner taskRunner = new TaskRunner(config.getThreadCount());
 		ConnectionFactory connectionFactory = new TeradataConnectionFactory(config.getUser(), config.getPassword(), config.getFullConnectionUrl());
+		connectionFactory.initialize();
 		exitIfInvalidCredentials(config);
 		Collection<Query> queries = new JsonQuerySource(config).createQueries();
 		log.info("Setting up filters");
 		List<Filter> filters = config.getFilters();
 		filters.stream().forEach(filter -> filter.initialize(config));
 		log.info("Setting up transformers");
-		List<Transformer> transformers = new TransformerFactory().create(config, config.getTransformers());
-		new ETLPipeline().run(config, queries, filters, transformers, IOManager.of(config), taskRunner, connectionFactory);
+		List<Transformer> transformers = new TransformerFactory().create(config.getTransformers());
+		new ETLPipeline().run(queries, filters, transformers, IOManager.of(config), taskRunner, connectionFactory);
 		sw.stop();
 		log.info("Export done in {}", sw.createReadableDelta());
 	}

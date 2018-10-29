@@ -54,7 +54,7 @@ public class SqlNodeTypeIdResolver implements TypeIdResolver {
 	@Override
 	public void init(JavaType baseType) {
 		this.baseType = baseType;
-		initializeMappings(baseType.getRawClass());
+		initializeMappings();
 	}
 
 	@Override
@@ -67,9 +67,8 @@ public class SqlNodeTypeIdResolver implements TypeIdResolver {
 	
 	/**
 	 * run class path scanning here to obtain class type mappings
-	 * @param rawClass
 	 */
-	private static void initializeMappings(Class<?> rawClass) {
+	private static void initializeMappings() {
 		Set<Class<?>> types = new HashSet<>();
 		ScanResult result = new FastClasspathScanner()
 				.matchClassesWithAnnotation(JsonTypeName.class, types::add)

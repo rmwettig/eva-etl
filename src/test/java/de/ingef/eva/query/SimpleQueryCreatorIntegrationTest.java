@@ -67,7 +67,7 @@ public class SimpleQueryCreatorIntegrationTest {
 		
 		String queryCode = query.getQuery();
 		assertNotNull(queryCode);
-		String[] columns = queryCode.substring(0 + "select".length(), queryCode.indexOf("from")).split(",");
+		String[] columns = queryCode.substring("select".length(), queryCode.indexOf("from")).split(",");
 		assertEquals("a.columnname1", columns[0].trim());
 		assertEquals("a.columnname2", columns[1].trim());
 		String fromClause = queryCode.substring(queryCode.indexOf("from") + "from".length(), queryCode.indexOf(";"));
@@ -118,7 +118,7 @@ public class SimpleQueryCreatorIntegrationTest {
 		
 		String queryCode = query.getQuery();
 		assertNotNull(queryCode);
-		String[] columns = queryCode.substring(0 + "select".length(), queryCode.indexOf("from")).split(",");
+		String[] columns = queryCode.substring("select".length(), queryCode.indexOf("from")).split(",");
 		assertEquals("a.columnname1", columns[0].trim());
 		assertEquals("a.columnname2", columns[1].trim());
 		String fromClause = queryCode.substring(queryCode.indexOf("from") + "from".length(), queryCode.indexOf("where"));
@@ -186,7 +186,7 @@ public class SimpleQueryCreatorIntegrationTest {
 			
 			String queryCode = query.getQuery();
 			assertNotNull(queryCode);
-			String[] columns = queryCode.substring(0 + "select".length(), queryCode.indexOf("from")).split(",");
+			String[] columns = queryCode.substring("select".length(), queryCode.indexOf("from")).split(",");
 			assertEquals("a.columnname1", columns[0].trim());
 			assertEquals("a.columnname2", columns[1].trim());
 			String fromClause = queryCode.substring(queryCode.indexOf("from") + "from".length(), queryCode.indexOf("where"));

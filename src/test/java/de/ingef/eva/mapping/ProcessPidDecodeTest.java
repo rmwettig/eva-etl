@@ -67,11 +67,6 @@ public class ProcessPidDecodeTest {
 			@Override
 			public void close() throws DataTableOperationException {
 			}
-			
-			@Override
-			public String getDelimiter() {
-				return "";
-			}
 		};
 		
 		unfilteredPids = new DataTable(){
@@ -126,11 +121,6 @@ public class ProcessPidDecodeTest {
 			@Override
 			public String getName() {
 				return "unfiltered pids";
-			}
-			
-			@Override
-			public String getDelimiter() {
-				return "";
 			}
 		};
 	}

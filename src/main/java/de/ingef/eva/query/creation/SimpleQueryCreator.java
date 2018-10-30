@@ -152,7 +152,7 @@ public class SimpleQueryCreator implements QueryCreator {
 	 * Creates a where constraint
 	 * @param table column owning table
 	 * @param column name of the constraint column
-	 * @param value constraint value
+	 * @param values constraint value
 	 * @param type type of the value
 	 */
 	@Override

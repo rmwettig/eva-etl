@@ -48,7 +48,7 @@ public class ProgressBar {
 		System.out.print(assemble());
 	}
 	
-	private String progress(int current) {
+	private String progress() {
 		return IntStream
 				.range(0, RENDER_MAXIMUM_LENGTH)
 				.mapToObj(i -> i <= currentRenderFill ? SYMBOL.PROGRESS : SYMBOL.PENDING)
@@ -65,7 +65,7 @@ public class ProgressBar {
 	}
 	
 	private String assemble() {
-		String progress = progress(current);
+		String progress = progress();
 		String details = String.format("(%d %% | %d/%d)", Math.round(calculatePercentage()), current, maximum);
 		return SYMBOL.BEGIN.getSymbol() + progress + SYMBOL.END.getSymbol() + details + "\r";
 	}

@@ -13,7 +13,7 @@ public class Stopwatch {
 	}
 	
 	public String createReadableDelta() {
-		StringBuffer deltaString = new StringBuffer();
+		StringBuilder deltaString = new StringBuilder();
 		long delta = stopTime - startTime;
 
 		long secondsInMilli = 1000;

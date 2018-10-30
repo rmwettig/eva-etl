@@ -1,13 +1,10 @@
 package de.ingef.eva.measures.statistics;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import org.junit.Test;
 
 import de.ingef.eva.measures.cci.Quarter;
+
+import static org.junit.Assert.*;
 
 public class QuarterTest {
 
@@ -62,20 +59,20 @@ public class QuarterTest {
 	public void mustBeEqual() {
 		Quarter a = new Quarter(2010, 3);
 		Quarter b = new Quarter(2010, 3);
-		assertTrue(a.equals(b));
+        assertEquals(a, b);
 	}
 	
 	@Test
 	public void mustBeUnequalIfYearDiffers() {
 		Quarter a = new Quarter(2010, 3);
 		Quarter b = new Quarter(2011, 3);
-		assertFalse(a.equals(b));
+        assertNotEquals(a, b);
 	}
 	
 	@Test
 	public void mustBeUnequalIfQuarterDiffers() {
 		Quarter a = new Quarter(2010, 3);
 		Quarter b = new Quarter(2010, 4);
-		assertFalse(a.equals(b));
+        assertNotEquals(a, b);
 	}
 }

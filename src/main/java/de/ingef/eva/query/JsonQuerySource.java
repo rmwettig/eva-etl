@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import de.ingef.eva.configuration.Configuration;
 import de.ingef.eva.configuration.SchemaFactory;

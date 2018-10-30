@@ -121,28 +121,14 @@ public final class Helper {
 					}
 				});
 	}
-	
-	public static Set<String> createUniqueLookupFromFile(String path) {
-		Set<String> lookup = new HashSet<String>();
-		try(BufferedReader reader = new BufferedReader(new FileReader(path))) {
-			String line;
-			while((line = reader.readLine()) != null) {
-				lookup.add(line.trim());
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		return lookup;
-	}
-		
+
 	public static String joinIks(List<String> iks) {
 		return iks.stream().map(ik -> "'" + ik + "'").collect(Collectors.joining(","));
 	}
 	
 	/**
 	 * pads a string with leading zeros to the specified length
-	 * @param pid
+	 * @param id
 	 * @return
 	 */
 	public static String addPaddingZeros(String id, int expectedLength) {

@@ -40,7 +40,8 @@ public class PharmacyTypeTransformerTest {
 		assertNull(transformedColumns.get(0).getContent());
 		assertTrue(transformedColumns.get(1).getContent().isEmpty());
 	}
-	
+
+	@Test
 	public void appendEmptyStringIfPharmacyIdIsEmpty() {
 		Transformer transformer = new PharmacyTypeTransformer("ADB", "AM_EVO");
 		Row row = new Row(

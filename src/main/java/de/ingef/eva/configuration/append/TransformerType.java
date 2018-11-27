@@ -33,5 +33,9 @@ public enum TransformerType {
 	/**
 	 * quick fix for https://lyo-pgitl01.spectrumk.ads/eva4/dokumentation/issues/262
 	 */
-	FIX_DATES
+	FIX_DATES,
+	/**
+	 * adds a SHA-256 hashed pid to a row
+	 */
+    PSEUDO_HASH;
 }

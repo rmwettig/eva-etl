@@ -40,6 +40,8 @@ public class TransformerFactory {
 			return new StartDateTransformer(config.getTargetDb(), config.getTargetTable(), config.getEndDateColumn(), config.getDayColumn(), config.getValueName());
 		case FIX_DATES:
 			return new FixMissingDateEntries();
+		case PSEUDO_HASH:
+			return new PseudoHashTransformer();
 		default:
 			return new Transformer.NOPTransformer();
 		}

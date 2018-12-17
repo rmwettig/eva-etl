@@ -61,7 +61,7 @@
       "datasetName": "Bosch",
       "yearSlice": {
         "type": "FIXED_YEAR_SLICE",
-        "startYear": 2010,
+        "startYear": 2009,
         "endYear": 2018,
         "column": "bezugsjahr"
       },
@@ -292,6 +292,241 @@
     },
     {
       "type": "DB",
+      "db": "ACC_ADB",
+      "datasetName": "VBU",
+      "yearSlice": {
+        "type": "FIXED_YEAR_SLICE",
+        "startYear": 2010,
+        "endYear": 2018,
+        "column": "bezugsjahr"
+      },
+      "views": [
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_HZV_VERS"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_AM_EVO"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_Arzt_Diagnose"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_AU_Fall_LEIST"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_AU_Fall_LEIST_DIA"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_Arzt_Fall"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_Arzt_GOP"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_Arzt_OPS"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_DMP_Doku"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_HeMi_EVO"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_HiMi_EVO"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_HKP_EVO"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_KH_Diagnose",
+          "joins": [
+            {
+              "type": "JOIN",
+              "name": "AVK_ADB_T_KH_FALL",
+              "columns": [
+                {
+                  "type": "COLUMN",
+                  "name": "verweildauer"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "aufnahmedatum"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "aufnahmegrund"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "entlassungsgrund"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "behandlungstyp"
+                }
+              ],
+              "joinType": "INNER",
+              "onColumns": [
+                {
+                  "type": "COLUMN",
+                  "name": "pid"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "kh_fall_id"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "entlassungsdatum"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_KH_Fall"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_KH_OPS",
+          "joins": [
+            {
+              "type": "JOIN",
+              "name": "AVK_ADB_T_KH_FALL",
+              "columns": [
+                {
+                  "type": "COLUMN",
+                  "name": "verweildauer"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "aufnahmedatum"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "aufnahmegrund"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "entlassungsgrund"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "behandlungstyp"
+                }
+              ],
+              "joinType": "INNER",
+              "onColumns": [
+                {
+                  "type": "COLUMN",
+                  "name": "pid"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "kh_fall_id"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "entlassungsdatum"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_Leistungskosten"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_VERS_INFO"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_Vers_Region"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_Vers_Stamm",
+          "joins": [
+            {
+              "type": "JOIN",
+              "name": "AVK_ADB_T_Vers_Tage",
+              "columns": [
+                {
+                  "type": "COLUMN",
+                  "name": "erster_tag"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "letzter_tag"
+                }
+              ],
+              "joinType": "INNER",
+              "onColumns": [
+                {
+                  "type": "COLUMN",
+                  "name": "pid"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "bezugsjahr"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "h2ik"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_Vers_SozDem"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_Vers_Tage"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_VERS_TAGE_QUARTAL"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_ZA_Fall"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_T_ZA_LEISTDATEN"
+        }
+      ],
+      "where": [
+        {
+          "type": "WHERE_INLINE",
+          "column": "h2ik",
+          "values": ["109723913"],
+          "columnType": "STRING",
+          "operator": "EQUAL"
+        }
+      ]
+    },
+    {
+      "type": "DB",
       "db": "ACC_FDB",
       "datasetName": "1M_benchmark",
       "yearSlice": {
@@ -515,6 +750,229 @@
     },
     {
       "type": "DB",
+      "db": "ACC_FDB",
+      "datasetName": "demo",
+      "yearSlice": {
+        "type": "FIXED_YEAR_SLICE",
+        "startYear": 2010,
+        "endYear": 2018,
+        "column": "bezugsjahr"
+      },
+      "views": [
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_AM_EVO"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_AU_Fall_LEIST"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_AU_Fall_LEIST_DIA"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_Arzt_Diagnose"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_Arzt_Fall"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_Arzt_GOP"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_Arzt_OPS"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_HeMi_EVO"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_HiMi_EVO"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_HKP_EVO"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_KH_Diagnose",
+          "joins": [
+            {
+              "type": "JOIN",
+              "name": "AVK_FDB_T_KH_FALL",
+              "columns": [
+                {
+                  "type": "COLUMN",
+                  "name": "verweildauer"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "aufnahmedatum"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "aufnahmegrund"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "entlassungsgrund"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "behandlungstyp"
+                }
+              ],
+              "joinType": "INNER",
+              "onColumns": [
+                {
+                  "type": "COLUMN",
+                  "name": "pid"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "kh_fall_id"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "entlassungsdatum"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_KH_Fall"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_KH_OPS",
+          "joins": [
+            {
+              "type": "JOIN",
+              "name": "AVK_FDB_T_KH_FALL",
+              "columns": [
+                {
+                  "type": "COLUMN",
+                  "name": "verweildauer"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "aufnahmedatum"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "aufnahmegrund"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "entlassungsgrund"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "behandlungstyp"
+                }
+              ],
+              "joinType": "INNER",
+              "onColumns": [
+                {
+                  "type": "COLUMN",
+                  "name": "pid"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "kh_fall_id"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "entlassungsdatum"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_Leistungskosten"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_VERS_INFO"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_Vers_Region"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_Vers_SozDem"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_Vers_Stamm",
+          "joins": [
+            {
+              "type": "JOIN",
+              "joinType": "INNER",
+              "name": "AVK_FDB_T_VERS_TAGE_QUARTAL",
+              "columns": [
+                {
+                  "type": "COLUMN",
+                  "name": "quartal"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "vers_tage"
+                }
+              ],
+              "onColumns": [
+                {
+                  "type": "COLUMN",
+                  "name": "bezugsjahr"
+                },
+                {
+                  "type": "COLUMN",
+                  "name": "pid"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_Vers_Tage"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_VERS_TAGE_QUARTAL"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_ZA_Fall"
+        },
+        {
+          "type": "TABLE",
+          "name": "AVK_FDB_T_ZA_LEISTDATEN"
+        }
+      ],
+      "where": [
+        {
+          "type": "WHERE_INLINE",
+          "column": "flag_demo",
+          "values": ["1"],
+          "columnType": "NUMERIC",
+          "operator": "EQUAL"
+        }
+      ]
+    },
+    {
+      "type": "DB",
       "db": "ACC_ADB",
       "datasetName": "Energie-BKK",
       "yearSlice": {
@@ -524,6 +982,10 @@
         "column": "bezugsjahr"
       },
       "views": [
+        {
+          "type": "TABLE",
+          "name": "AVK_ADB_HZV_VERS"
+        },
         {
           "type": "TABLE",
           "name": "AVK_ADB_T_AM_EVO"
@@ -1220,7 +1682,7 @@
       "datasetName": "Bosch",
       "yearSlice": {
         "type": "FIXED_YEAR_SLICE",
-        "startYear": 2010,
+        "startYear": 2009,
         "endYear": 2018,
         "column": "bezugsjahr"
       },
@@ -1321,6 +1783,32 @@
     {
       "type": "DB",
       "db": "SB_HRI",
+      "datasetName": "VBU",
+      "yearSlice": {
+        "type": "FIXED_YEAR_SLICE",
+        "startYear": 2010,
+        "endYear": 2018,
+        "column": "bezugsjahr"
+      },
+      "views": [
+        {
+          "type": "TABLE",
+          "name": "EVA_ADB_AU_DIAG"
+        }
+      ],
+      "where": [
+        {
+          "type": "WHERE_INLINE",
+          "column": "h2ik",
+          "values": ["109723913"],
+          "columnType": "STRING",
+          "operator": "EQUAL"
+        }
+      ]
+    },
+    {
+      "type": "DB",
+      "db": "SB_HRI",
       "datasetName": "1M_benchmark",
       "yearSlice": {
         "type": "FIXED_YEAR_SLICE",
@@ -1332,6 +1820,41 @@
         {
           "type": "TABLE",
           "name": "EVA_FDB_AU_DIAG"
+        }
+      ],
+      "where": [
+        {
+          "type": "WHERE_INLINE",
+          "column": "flag_destatis",
+          "values": ["1"],
+          "columnType": "NUMERIC",
+          "operator": "EQUAL"
+        }
+      ]
+    },
+    {
+      "type": "DB",
+      "db": "SB_HRI",
+      "datasetName": "demo",
+      "yearSlice": {
+        "type": "FIXED_YEAR_SLICE",
+        "startYear": 2010,
+        "endYear": 2018,
+        "column": "bezugsjahr"
+      },
+      "views": [
+        {
+          "type": "TABLE",
+          "name": "EVA_FDB_AU_DIAG"
+        }
+      ],
+      "where": [
+        {
+          "type": "WHERE_INLINE",
+          "column": "flag_demo",
+          "values": ["1"],
+          "columnType": "NUMERIC",
+          "operator": "EQUAL"
         }
       ]
     }
@@ -1358,9 +1881,16 @@
     {
       "name": "Novitas",
       "h2iks": ["104491707"]
+    },
+    {
+      "name": "VBU",
+      "h2iks": ["109723913"]
     }
   ],
   "transformers": [
+    {
+      "mode": "PSEUDO_HASH"
+    },
     {
       "mode": "STATIC",
       "targetDb": "ACC_FDB",
@@ -1507,7 +2037,7 @@
         "dataset": "Bosch",
         "h2iks": [ "108036123" ],
         "views": [ "ARZT_FALL", "AM_EVO", "KH_FALL", "HEMI_EVO", "HIMI_EVO", "AU_FALL"],
-        "startYear": 2010,
+        "startYear": 2009,
         "endYear": 2018
       },
       {
@@ -1530,6 +2060,14 @@
         "db": "ADB",
         "dataset": "Novitas",
         "h2iks": [ "104491707" ],
+        "views": [ "ARZT_FALL", "AM_EVO", "KH_FALL", "HEMI_EVO", "HIMI_EVO", "AU_FALL"],
+        "startYear": 2010,
+        "endYear": 2018
+      },
+      {
+        "db": "ADB",
+        "dataset": "VBU",
+        "h2iks": [ "109723913" ],
         "views": [ "ARZT_FALL", "AM_EVO", "KH_FALL", "HEMI_EVO", "HIMI_EVO", "AU_FALL"],
         "startYear": 2010,
         "endYear": 2018

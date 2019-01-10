@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import de.ingef.eva.configuration.export.sql.DynamicYearSlice;
 import org.junit.Test;
 
 import de.ingef.eva.configuration.export.InlineCondition;
@@ -176,7 +177,7 @@ public class SimpleQueryCreatorIntegrationTest {
 		List<Query> queries = source.traverse(creator);
 		assertNotNull(queries);
 		assertEquals(4, queries.size());
-		
+		List<Integer> years = new DynamicYearSlice("", 3).calculateYearRange();
 		for(int i = 0; i < queries.size(); i++) {
 			Query query = queries.get(i);
 			assertNotNull(query);
@@ -194,7 +195,7 @@ public class SimpleQueryCreatorIntegrationTest {
 			String whereClause = queryCode.substring(queryCode.indexOf("where") + "where".length(), queryCode.indexOf(";")).trim();
 			String[] conditions = whereClause.split("and");
 			assertEquals("(a.columnname1 = 1337)", conditions[0].trim());
-			assertEquals("a.bezugsjahr = " + (2015 + i), conditions[1].trim());
+			assertEquals("a.bezugsjahr = " + years.get(i), conditions[1].trim());
 		}
 	}
 	

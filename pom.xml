@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.ingef.eva</groupId>
   <artifactId>eva-etl</artifactId>
-  <version>1.5.2-SNAPSHOT</version>
+  <version>1.5.3-SNAPSHOT</version>
 
   <dependencies>
     <dependency>
@@ -21,7 +21,7 @@
 	<dependency>
 	    <groupId>org.projectlombok</groupId>
 	    <artifactId>lombok</artifactId>
-	    <version>1.16.12</version>
+	    <version>1.18.4</version>
 	</dependency>
 	<dependency>
 	    <groupId>junit</groupId>
